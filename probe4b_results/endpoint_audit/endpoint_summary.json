@@ -1,0 +1,582 @@
+[
+  {
+    "site": "A_MET112",
+    "references": {
+      "A": {
+        "chi_degrees": [
+          -62.15906544742816,
+          177.47328580853684,
+          78.23161388530288
+        ],
+        "nearest_state": "g-/t/m+",
+        "canonical_deviations": [
+          2.159065447428162,
+          2.5267141914631566,
+          11.768386114697137
+        ],
+        "canonical_like_30deg": true,
+        "min_direct_distance": 3.232627598891539,
+        "closest_direct_atom": "CB--A:ILE113:N",
+        "min_symmetry_distance": 5.675421473496625,
+        "closest_symmetry_atom": "CG--sym6[0,0,1]/A:VAL136:CG1",
+        "polar_contacts": [],
+        "density_z_mean": 1.0672403573989868
+      },
+      "B": {
+        "chi_degrees": [
+          -68.91399276297655,
+          -61.17237631992812,
+          -63.788461715448065
+        ],
+        "nearest_state": "g-/g-/m-",
+        "canonical_deviations": [
+          8.913992762976534,
+          1.1723763199281052,
+          26.21153828455192
+        ],
+        "canonical_like_30deg": true,
+        "min_direct_distance": 3.0609339327000047,
+        "closest_direct_atom": "CE--A:HOH29:O",
+        "min_symmetry_distance": 5.270500874770808,
+        "closest_symmetry_atom": "SD--sym6[0,0,1]/A:VAL136:CG2",
+        "polar_contacts": [],
+        "density_z_mean": 1.100393533706665
+      },
+      "A_synthetic_fobs": {
+        "chi_degrees": [
+          -59.42129340165527,
+          -90.08573503894017,
+          58.673257913944646
+        ],
+        "nearest_state": "g-/g-/m+",
+        "canonical_deviations": [
+          0.5787065983447235,
+          30.085735038940186,
+          31.32674208605536
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.8864467366624353,
+        "closest_direct_atom": "CE--A:HOH29:O",
+        "min_symmetry_distance": 4.583489051894112,
+        "closest_symmetry_atom": "CE--sym6[0,0,1]/A:VAL136:CG2",
+        "polar_contacts": [],
+        "density_z_mean": 0.6218859553337097
+      },
+      "B_localized_sf": {
+        "chi_degrees": [
+          -141.24552531868233,
+          93.31548561062908,
+          144.75844187298162
+        ],
+        "nearest_state": "t/g+/t",
+        "canonical_deviations": [
+          38.754474681317674,
+          33.31548561062908,
+          35.24155812701838
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.55902863922168,
+        "closest_direct_atom": "CE--B:ASP114:OD1",
+        "min_symmetry_distance": 5.535880529472152,
+        "closest_symmetry_atom": "SD--sym6[0,0,1]/A:VAL136:CG2",
+        "polar_contacts": [],
+        "density_z_mean": 0.5553896427154541
+      },
+      "C_realspace_local": {
+        "chi_degrees": [
+          -94.7402494111154,
+          -156.72903141234596,
+          64.48640459578581
+        ],
+        "nearest_state": "g-/t/m+",
+        "canonical_deviations": [
+          34.7402494111154,
+          23.27096858765401,
+          25.513595404214186
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.8316308013239557,
+        "closest_direct_atom": "CE--B:ILE113:CG2",
+        "min_symmetry_distance": 5.8754328925379395,
+        "closest_symmetry_atom": "CG--sym6[0,0,1]/A:VAL136:CG2",
+        "polar_contacts": [],
+        "density_z_mean": 0.7445818781852722
+      }
+    }
+  },
+  {
+    "site": "A_ARG129",
+    "references": {
+      "A": {
+        "chi_degrees": [
+          -71.0683642007928,
+          178.9588109718796,
+          82.75136862515376,
+          -172.21985946879988
+        ],
+        "nearest_state": "g-/t/g+/p180",
+        "canonical_deviations": [
+          11.068364200792814,
+          1.0411890281204137,
+          22.75136862515376,
+          7.780140531200118
+        ],
+        "canonical_like_30deg": true,
+        "min_direct_distance": 3.0432759293083964,
+        "closest_direct_atom": "CB--A:ILE130:N",
+        "min_symmetry_distance": 3.122936822277718,
+        "closest_symmetry_atom": "NH2--sym6[-1,0,1]/B:HOH50:O",
+        "polar_contacts": [],
+        "density_z_mean": 0.8775960206985474
+      },
+      "B": {
+        "chi_degrees": [
+          -139.03054961236055,
+          167.3261518718908,
+          -43.46817082141823,
+          174.32552482764476
+        ],
+        "nearest_state": "t/t/g-/p-180",
+        "canonical_deviations": [
+          40.96945038763943,
+          12.67384812810917,
+          16.531829178581773,
+          5.674475172355187
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.8664948125051968,
+        "closest_direct_atom": "NH2--A:HOH5:O",
+        "min_symmetry_distance": 3.305688253117643,
+        "closest_symmetry_atom": "CG--sym6[-1,0,1]/B:HOH12:O",
+        "polar_contacts": [
+          "NH1--A:HOH24:O:3.44A",
+          "NH1--A:HOH16:O:3.37A",
+          "NH2--A:HOH25:O:3.34A",
+          "NH2--A:HOH5:O:2.87A"
+        ],
+        "density_z_mean": 0.8836446404457092
+      },
+      "A_synthetic_fobs": {
+        "chi_degrees": [
+          65.70236268315567,
+          169.85071273253257,
+          70.99448204454076,
+          -156.10529853734042
+        ],
+        "nearest_state": "g+/t/g+/p180",
+        "canonical_deviations": [
+          5.702362683155684,
+          10.149287267467429,
+          10.994482044540746,
+          23.894701462659555
+        ],
+        "canonical_like_30deg": true,
+        "min_direct_distance": 2.3860848884911676,
+        "closest_direct_atom": "CG--A:LEU126:O",
+        "min_symmetry_distance": 3.9434406483361806,
+        "closest_symmetry_atom": "NH1--sym7[1,-1,1]/B:HOH41:O",
+        "polar_contacts": [
+          "NH2--A:HOH24:O:3.40A",
+          "NH2--A:HOH16:O:3.46A"
+        ],
+        "density_z_mean": 0.1507367342710495
+      },
+      "B_localized_sf": {
+        "chi_degrees": [
+          -91.96166698505168,
+          123.31981678538892,
+          93.39553542770163,
+          177.8895448573141
+        ],
+        "nearest_state": "g-/t/g+/p-180",
+        "canonical_deviations": [
+          31.961666985051693,
+          56.68018321461108,
+          33.395535427701645,
+          2.1104551426858507
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.865456251520466,
+        "closest_direct_atom": "NH1--A:HOH5:O",
+        "min_symmetry_distance": 3.2571877708989834,
+        "closest_symmetry_atom": "CD--sym6[-1,0,1]/B:ILE121:CD1",
+        "polar_contacts": [
+          "NH1--A:HOH25:O:3.18A",
+          "NH1--A:HOH5:O:2.87A",
+          "NH2--A:HOH24:O:2.93A",
+          "NH2--A:HOH16:O:3.39A"
+        ],
+        "density_z_mean": 0.44480010867118835
+      },
+      "C_realspace_local": {
+        "chi_degrees": [
+          -113.96199999979706,
+          -111.0807256795622,
+          165.5845492561859,
+          -170.92765597972516
+        ],
+        "nearest_state": "g-/g-/t/p180",
+        "canonical_deviations": [
+          53.96199999979706,
+          51.08072567956219,
+          14.415450743814063,
+          9.07234402027484
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 1.8439064410308275,
+        "closest_direct_atom": "NH1--A:LYS133:NZ",
+        "min_symmetry_distance": 0.6763302791107919,
+        "closest_symmetry_atom": "CZ--sym6[-1,0,1]/B:HOH12:O",
+        "polar_contacts": [
+          "NE--A:LYS133:NZ:3.41A"
+        ],
+        "density_z_mean": 0.540060818195343
+      }
+    }
+  },
+  {
+    "site": "B_MET112",
+    "references": {
+      "A": {
+        "chi_degrees": [
+          -70.2494176891191,
+          -177.76680635792897,
+          77.4853200958306
+        ],
+        "nearest_state": "g-/t/m+",
+        "canonical_deviations": [
+          10.249417689119099,
+          2.233193642071001,
+          12.514679904169384
+        ],
+        "canonical_like_30deg": true,
+        "min_direct_distance": 3.0843139640824013,
+        "closest_direct_atom": "CB--B:ILE113:N",
+        "min_symmetry_distance": 3.4845672467778037,
+        "closest_symmetry_atom": "CE--sym1[1,1,0]/A:HOH28:O",
+        "polar_contacts": [],
+        "density_z_mean": 2.2512149810791016
+      },
+      "B": {
+        "chi_degrees": [
+          -66.81275336671382,
+          161.56604843914394,
+          -167.15273336886418
+        ],
+        "nearest_state": "g-/t/t",
+        "canonical_deviations": [
+          6.812753366713821,
+          18.43395156085603,
+          12.847266631135824
+        ],
+        "canonical_like_30deg": true,
+        "min_direct_distance": 3.1928099946741586,
+        "closest_direct_atom": "CB--B:ILE113:N",
+        "min_symmetry_distance": 3.5701115140724577,
+        "closest_symmetry_atom": "CB--sym1[1,1,0]/A:HOH30:O",
+        "polar_contacts": [],
+        "density_z_mean": 1.835335612297058
+      },
+      "A_synthetic_fobs": {
+        "chi_degrees": [
+          -21.529372688452785,
+          -140.46827711189155,
+          140.50692232221547
+        ],
+        "nearest_state": "g-/t/t",
+        "canonical_deviations": [
+          38.47062731154722,
+          39.53172288810845,
+          39.49307767778453
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.9005152204712883,
+        "closest_direct_atom": "CG--B:ARG108:O",
+        "min_symmetry_distance": 3.60169757703319,
+        "closest_symmetry_atom": "CB--sym1[1,1,0]/A:HOH30:O",
+        "polar_contacts": [],
+        "density_z_mean": 1.6084942817687988
+      },
+      "B_localized_sf": {
+        "chi_degrees": [
+          107.58950863625603,
+          151.2171097332807,
+          137.4750286704035
+        ],
+        "nearest_state": "g+/t/t",
+        "canonical_deviations": [
+          47.58950863625603,
+          28.782890266719278,
+          42.5249713295965
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.8335088555687484,
+        "closest_direct_atom": "CG--B:ILE113:N",
+        "min_symmetry_distance": 1.6698034279982352,
+        "closest_symmetry_atom": "CE--sym1[1,1,0]/A:ILE113:CB",
+        "polar_contacts": [],
+        "density_z_mean": 0.7484382390975952
+      },
+      "C_realspace_local": {
+        "chi_degrees": [
+          155.77336500405613,
+          -165.50932155266742,
+          102.98454045632008
+        ],
+        "nearest_state": "t/t/m+",
+        "canonical_deviations": [
+          24.22663499594387,
+          14.490678447332584,
+          12.984540456320076
+        ],
+        "canonical_like_30deg": true,
+        "min_direct_distance": 3.0843139640824013,
+        "closest_direct_atom": "CB--B:ILE113:N",
+        "min_symmetry_distance": 1.2338065441611765,
+        "closest_symmetry_atom": "CE--sym1[1,1,0]/A:ILE113:CG2",
+        "polar_contacts": [],
+        "density_z_mean": 0.8334517478942871
+      }
+    }
+  },
+  {
+    "site": "B_ASP114",
+    "references": {
+      "A": {
+        "chi_degrees": [
+          172.44134884320505,
+          -111.75265236935138
+        ],
+        "nearest_state": "t/p180",
+        "canonical_deviations": [
+          7.558651156794895,
+          68.24734763064862
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.8507423958472136,
+        "closest_direct_atom": "OD2--B:HOH14:O",
+        "min_symmetry_distance": 5.076230098556972,
+        "closest_symmetry_atom": "OD2--sym6[0,0,1]/A:LYS133:NZ",
+        "polar_contacts": [
+          "OD1--B:HOH54:O:3.47A",
+          "OD2--B:HOH14:O:2.85A",
+          "OD2--B:HOH50:O:3.07A"
+        ],
+        "density_z_mean": 0.3274502456188202
+      },
+      "B": {
+        "chi_degrees": [
+          -145.00144634327233,
+          14.564767103121476
+        ],
+        "nearest_state": "t/p0",
+        "canonical_deviations": [
+          34.998553656727665,
+          14.564767103121483
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.805812293976308,
+        "closest_direct_atom": "OD1--B:HOH14:O",
+        "min_symmetry_distance": 5.034722421668448,
+        "closest_symmetry_atom": "OD1--sym6[0,0,1]/A:LYS133:NZ",
+        "polar_contacts": [
+          "OD1--B:HOH14:O:2.81A",
+          "OD2--B:HOH54:O:3.24A"
+        ],
+        "density_z_mean": 0.7387749552726746
+      },
+      "A_synthetic_fobs": {
+        "chi_degrees": [
+          -155.91548758030575,
+          -51.086054972557285
+        ],
+        "nearest_state": "t/p0",
+        "canonical_deviations": [
+          24.08451241969425,
+          51.08605497255729
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.660467349409504,
+        "closest_direct_atom": "OD1--B:HOH14:O",
+        "min_symmetry_distance": 5.409704707208762,
+        "closest_symmetry_atom": "OD1--sym6[0,0,1]/A:LYS133:NZ",
+        "polar_contacts": [
+          "OD1--B:HOH14:O:2.66A",
+          "OD1--B:HOH50:O:3.11A",
+          "OD2--B:HOH54:O:3.43A"
+        ],
+        "density_z_mean": 0.282076895236969
+      },
+      "B_localized_sf": {
+        "chi_degrees": [
+          103.55760015787331,
+          -178.96139278338586
+        ],
+        "nearest_state": "g+/p180",
+        "canonical_deviations": [
+          43.55760015787331,
+          1.038607216614139
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 1.9233931057851883,
+        "closest_direct_atom": "OD2--B:LYS115:N",
+        "min_symmetry_distance": 6.958796403118124,
+        "closest_symmetry_atom": "OD2--sym1[1,1,0]/A:HOH30:O",
+        "polar_contacts": [
+          "OD1--B:HOH54:O:2.34A",
+          "OD2--B:GLU111:O:2.99A"
+        ],
+        "density_z_mean": 0.3700569272041321
+      },
+      "C_realspace_local": {
+        "chi_degrees": [
+          126.05694679337984,
+          -65.59208927900582
+        ],
+        "nearest_state": "t/p0",
+        "canonical_deviations": [
+          53.943053206620164,
+          65.59208927900582
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.4712206357419215,
+        "closest_direct_atom": "OD1--B:LYS115:N",
+        "min_symmetry_distance": 6.213204378916505,
+        "closest_symmetry_atom": "OD2--sym6[0,0,1]/A:ARG129:NH2",
+        "polar_contacts": [
+          "OD1--B:LYS115:N:2.47A",
+          "OD1--B:GLU111:O:2.99A"
+        ],
+        "density_z_mean": 0.3033917546272278
+      }
+    }
+  },
+  {
+    "site": "B_ARG129",
+    "references": {
+      "A": {
+        "chi_degrees": [
+          -67.07891900848004,
+          -153.5116844641898,
+          -57.16028222032761,
+          163.18330063081956
+        ],
+        "nearest_state": "g-/t/g-/p180",
+        "canonical_deviations": [
+          7.078919008480057,
+          26.488315535810187,
+          2.839717779672384,
+          16.81669936918044
+        ],
+        "canonical_like_30deg": true,
+        "min_direct_distance": 2.826568458610359,
+        "closest_direct_atom": "NH1--B:HOH53:O",
+        "min_symmetry_distance": 3.252261443667846,
+        "closest_symmetry_atom": "NH2--sym1[1,1,0]/A:TYR131:CZ",
+        "polar_contacts": [
+          "NH1--B:HOH53:O:2.83A",
+          "NH1--B:HOH59:O:3.44A",
+          "NH2--B:HOH38:O:3.37A",
+          "NH2--B:HOH40:O:2.96A"
+        ],
+        "density_z_mean": 0.4290907680988312
+      },
+      "B": {
+        "chi_degrees": [
+          -177.0691844964822,
+          84.52825599811091,
+          -167.5519579258514,
+          -90.24635376746218
+        ],
+        "nearest_state": "t/g+/t/p180",
+        "canonical_deviations": [
+          2.930815503517806,
+          24.52825599811092,
+          12.448042074148589,
+          89.75364623253779
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.7950632218925353,
+        "closest_direct_atom": "CD--B:HOH49:O",
+        "min_symmetry_distance": 2.82839431643297,
+        "closest_symmetry_atom": "NE--sym6[0,0,1]/A:HOH46:O",
+        "polar_contacts": [
+          "NE--B:HOH49:O:2.85A"
+        ],
+        "density_z_mean": 0.3030533790588379
+      },
+      "A_synthetic_fobs": {
+        "chi_degrees": [
+          -56.04728923469569,
+          -76.31613514389699,
+          -63.70774253983685,
+          178.61809381532268
+        ],
+        "nearest_state": "g-/g-/g-/p-180",
+        "canonical_deviations": [
+          3.9527107653043174,
+          16.316135143896986,
+          3.7077425398368575,
+          1.381906184677291
+        ],
+        "canonical_like_30deg": true,
+        "min_direct_distance": 2.9358397569408288,
+        "closest_direct_atom": "CG--B:GLU125:O",
+        "min_symmetry_distance": 1.0177508744627786,
+        "closest_symmetry_atom": "NH1--sym6[0,0,1]/A:THR118:CG2",
+        "polar_contacts": [],
+        "density_z_mean": 0.2127063125371933
+      },
+      "B_localized_sf": {
+        "chi_degrees": [
+          -136.2389010344146,
+          135.15928035306737,
+          -7.442174973419539,
+          149.15821750987206
+        ],
+        "nearest_state": "t/t/g-/p-180",
+        "canonical_deviations": [
+          43.761098965585404,
+          44.8407196469326,
+          52.557825026580474,
+          30.841782490127912
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.0621403959829188,
+        "closest_direct_atom": "NH1--B:HOH53:O",
+        "min_symmetry_distance": 3.0778828154873312,
+        "closest_symmetry_atom": "CZ--sym6[0,0,1]/A:HOH32:O",
+        "polar_contacts": [
+          "NE--B:GLU125:O:3.39A",
+          "NH2--B:GLU125:O:3.34A"
+        ],
+        "density_z_mean": -0.03135114163160324
+      },
+      "C_realspace_local": {
+        "chi_degrees": [
+          -106.53617735302417,
+          -110.62328059008976,
+          -28.006398389693565,
+          170.1521563013619
+        ],
+        "nearest_state": "g-/g-/g-/p180",
+        "canonical_deviations": [
+          46.536177353024186,
+          50.62328059008976,
+          31.993601610306428,
+          9.847843698638087
+        ],
+        "canonical_like_30deg": false,
+        "min_direct_distance": 2.2648006710836297,
+        "closest_direct_atom": "NH2--B:LYS133:NZ",
+        "min_symmetry_distance": 1.288807949227161,
+        "closest_symmetry_atom": "NH2--sym1[1,1,0]/A:TYR131:CZ",
+        "polar_contacts": [
+          "NH1--B:LYS133:NZ:3.37A",
+          "NH2--B:LYS133:NZ:2.26A"
+        ],
+        "density_z_mean": 0.25029653310775757
+      }
+    }
+  }
+]

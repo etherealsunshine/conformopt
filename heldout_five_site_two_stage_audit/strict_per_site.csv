@@ -1,0 +1,6 @@
+site,ensembles,active_conformers,both_found_conventional,recovery_and_occupancy,all_active_strict_physical,strict_joint_success,tmol_valid_conformers,canonical_conformers,clash_free_conformers
+3A1C_B_ARG447,50,179,0,0,9,0,122,172,179
+4C16_A_MET258,50,173,13,9,16,5,149,146,170
+6H59_B_ARG144,50,115,8,7,18,6,106,105,81
+7F72_A_MET103,50,97,38,37,43,33,94,92,97
+8Q6Q_B_ASP81,50,145,12,11,49,11,145,144,145

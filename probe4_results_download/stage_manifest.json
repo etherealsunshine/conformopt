@@ -1,0 +1,87 @@
+{
+  "protein": "2O1K",
+  "stages": {
+    "training": {
+      "status": "complete",
+      "updated_at": 1784179289.8152757,
+      "completed_steps": 10000
+    },
+    "altloc_test": {
+      "status": "complete",
+      "updated_at": 1784179301.235387,
+      "hits_B": {
+        "A_MET112": 50,
+        "A_ARG129": 50,
+        "B_MET112": 0,
+        "B_ASP114": 0,
+        "B_ARG129": 50
+      }
+    },
+    "energy_landscape": {
+      "status": "complete",
+      "updated_at": 1784179304.1349342,
+      "site": "A_ARG129"
+    },
+    "rfree_test": {
+      "status": "complete",
+      "updated_at": 1784179313.516222,
+      "rfree_ebt": 0.33752313256263733,
+      "rfree_deposited": 0.32346174120903015
+    },
+    "perturbation_test": {
+      "status": "complete",
+      "updated_at": 1784179318.805966,
+      "fractions": {
+        "50_50": {
+          "A": 0.0,
+          "B": 1.0
+        },
+        "70_30": {
+          "A": 0.0,
+          "B": 1.0
+        }
+      }
+    },
+    "generalization_test": {
+      "status": "complete",
+      "updated_at": 1784179328.7321436,
+      "results": [
+        {
+          "site": "A_MET112",
+          "split": "train",
+          "hits_B": 50,
+          "mean_rmsd_to_B": 0.6934681463241578
+        },
+        {
+          "site": "A_ARG129",
+          "split": "train",
+          "hits_B": 50,
+          "mean_rmsd_to_B": 2.259383201599121
+        },
+        {
+          "site": "B_MET112",
+          "split": "train",
+          "hits_B": 0,
+          "mean_rmsd_to_B": 1.5989544796943664
+        },
+        {
+          "site": "B_ASP114",
+          "split": "held_out",
+          "hits_B": 0,
+          "mean_rmsd_to_B": 1.0746824741363525
+        },
+        {
+          "site": "B_ARG129",
+          "split": "held_out",
+          "hits_B": 50,
+          "mean_rmsd_to_B": 2.561329970359802
+        }
+      ]
+    },
+    "pipeline": {
+      "status": "complete",
+      "updated_at": 1784179329.3331966
+    }
+  },
+  "created_at": 1784177689.6598601
+}

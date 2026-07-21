@@ -1,0 +1,81 @@
+{
+  "active_conformers": 548,
+  "all_active_strict_physical": 71,
+  "both_found_conventional": 44,
+  "canonical_conformers": 211,
+  "clash_free_conformers": 516,
+  "criteria": {
+    "both_found": true,
+    "conventional_rmsd_A": 1.0,
+    "direct_and_symmetry_clash_A": 2.0,
+    "occupancy_tolerance": 0.2,
+    "rotamer_max_deviation_degrees": 30.0,
+    "tmol_delta_vs_best_deposited_AB": 10.0
+  },
+  "ensembles": 250,
+  "per_site": [
+    {
+      "active_conformers": 120,
+      "all_active_strict_physical": 0,
+      "both_found_conventional": 0,
+      "canonical_conformers": 5,
+      "clash_free_conformers": 113,
+      "ensembles": 50,
+      "recovery_and_occupancy": 0,
+      "site": "3A1C_B_ARG447",
+      "strict_joint_success": 0,
+      "tmol_valid_conformers": 26
+    },
+    {
+      "active_conformers": 141,
+      "all_active_strict_physical": 1,
+      "both_found_conventional": 12,
+      "canonical_conformers": 18,
+      "clash_free_conformers": 137,
+      "ensembles": 50,
+      "recovery_and_occupancy": 9,
+      "site": "4C16_A_MET258",
+      "strict_joint_success": 0,
+      "tmol_valid_conformers": 39
+    },
+    {
+      "active_conformers": 82,
+      "all_active_strict_physical": 10,
+      "both_found_conventional": 9,
+      "canonical_conformers": 25,
+      "clash_free_conformers": 61,
+      "ensembles": 50,
+      "recovery_and_occupancy": 8,
+      "site": "6H59_B_ARG144",
+      "strict_joint_success": 0,
+      "tmol_valid_conformers": 63
+    },
+    {
+      "active_conformers": 68,
+      "all_active_strict_physical": 44,
+      "both_found_conventional": 10,
+      "canonical_conformers": 61,
+      "clash_free_conformers": 68,
+      "ensembles": 50,
+      "recovery_and_occupancy": 7,
+      "site": "7F72_A_MET103",
+      "strict_joint_success": 5,
+      "tmol_valid_conformers": 66
+    },
+    {
+      "active_conformers": 137,
+      "all_active_strict_physical": 16,
+      "both_found_conventional": 13,
+      "canonical_conformers": 102,
+      "clash_free_conformers": 137,
+      "ensembles": 50,
+      "recovery_and_occupancy": 13,
+      "site": "8Q6Q_B_ASP81",
+      "strict_joint_success": 4,
+      "tmol_valid_conformers": 104
+    }
+  ],
+  "recovery_and_occupancy": 37,
+  "strict_joint_success": 9,
+  "tmol_valid_conformers": 298
+}

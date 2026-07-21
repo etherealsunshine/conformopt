@@ -1,0 +1,97 @@
+{
+  "protein": "2O1K",
+  "created_at": 1784238588.914814,
+  "stages": {
+    "calibration": {
+      "status": "complete",
+      "updated_at": 1784238588.914816,
+      "calibrated_sites": [
+        "A_MET112",
+        "A_ARG129"
+      ]
+    },
+    "density_only::A_MET112": {
+      "status": "complete",
+      "updated_at": 1784239258.1946328,
+      "completed_starts": 50
+    },
+    "density_only::A_ARG129": {
+      "status": "complete",
+      "updated_at": 1784240061.7786849,
+      "completed_starts": 50
+    },
+    "density_only::B_MET112": {
+      "status": "complete",
+      "updated_at": 1784240795.656,
+      "completed_starts": 50
+    },
+    "density_only::B_ASP114": {
+      "status": "complete",
+      "updated_at": 1784241467.2772803,
+      "completed_starts": 50
+    },
+    "density_only::B_ARG129": {
+      "status": "complete",
+      "updated_at": 1784242279.1590784,
+      "completed_starts": 50
+    },
+    "soft_physics::A_MET112": {
+      "status": "complete",
+      "updated_at": 1784243326.2076445,
+      "completed_starts": 50
+    },
+    "soft_physics::A_ARG129": {
+      "status": "complete",
+      "updated_at": 1784244543.5610247,
+      "completed_starts": 50
+    },
+    "soft_physics::B_MET112": {
+      "status": "complete",
+      "updated_at": 1784245553.8911407,
+      "completed_starts": 50
+    },
+    "soft_physics::B_ASP114": {
+      "status": "complete",
+      "updated_at": 1784246377.8647096,
+      "completed_starts": 50
+    },
+    "soft_physics::B_ARG129": {
+      "status": "complete",
+      "updated_at": 1784247587.6180673,
+      "completed_starts": 50
+    },
+    "tmol::A_MET112": {
+      "status": "complete",
+      "updated_at": 1784247638.9578624,
+      "completed_endpoints": 100
+    },
+    "tmol::A_ARG129": {
+      "status": "complete",
+      "updated_at": 1784247664.1202157,
+      "completed_endpoints": 100
+    },
+    "tmol::B_MET112": {
+      "status": "complete",
+      "updated_at": 1784247679.8549573,
+      "completed_endpoints": 100
+    },
+    "tmol::B_ASP114": {
+      "status": "complete",
+      "updated_at": 1784247694.17489,
+      "completed_endpoints": 100
+    },
+    "tmol::B_ARG129": {
+      "status": "complete",
+      "updated_at": 1784247718.4023585,
+      "completed_endpoints": 100
+    },
+    "pipeline": {
+      "status": "complete",
+      "updated_at": 1784247721.1196887,
+      "calibrated_sites": [
+        "A_MET112",
+        "A_ARG129"
+      ]
+    }
+  }
+}

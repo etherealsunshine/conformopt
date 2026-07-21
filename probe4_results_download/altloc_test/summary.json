@@ -1,0 +1,10 @@
+{
+  "hits_B_of_50": {
+    "A_MET112": 50,
+    "A_ARG129": 50,
+    "B_MET112": 0,
+    "B_ASP114": 0,
+    "B_ARG129": 50
+  },
+  "probe2_A_ARG129_baseline_hits_B": 3
+}

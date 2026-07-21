@@ -1,0 +1,105 @@
+{
+  "protein": "2O1K",
+  "stages": {
+    "training": {
+      "status": "complete",
+      "updated_at": 1784187817.9723601,
+      "completed_steps": 10000
+    },
+    "altloc_test": {
+      "status": "complete",
+      "updated_at": 1784187843.5574248,
+      "hits_B_relative": {
+        "A_MET112": 0,
+        "A_ARG129": 0,
+        "B_MET112": 0,
+        "B_ASP114": 0,
+        "B_ARG129": 0
+      },
+      "hits_B_rmsd_lt_0_50A": {
+        "A_MET112": 0,
+        "A_ARG129": 0,
+        "B_MET112": 0,
+        "B_ASP114": 0,
+        "B_ARG129": 0
+      },
+      "hits_B_rmsd_lt_0_75A": {
+        "A_MET112": 50,
+        "A_ARG129": 0,
+        "B_MET112": 0,
+        "B_ASP114": 0,
+        "B_ARG129": 0
+      }
+    },
+    "oracle_analysis": {
+      "status": "complete",
+      "updated_at": 1784187846.112789
+    },
+    "energy_landscape": {
+      "status": "complete",
+      "updated_at": 1784187849.8189838,
+      "site": "A_ARG129"
+    },
+    "rfree_test": {
+      "status": "complete",
+      "updated_at": 1784187872.1881113,
+      "rfree_ebt": 0.33062565326690674,
+      "rfree_deposited": 0.32346174120903015
+    },
+    "perturbation_test": {
+      "status": "complete",
+      "updated_at": 1784187883.0650585,
+      "fractions": {
+        "50_50": {
+          "A": 1.0,
+          "B": 0.0
+        },
+        "70_30": {
+          "A": 1.0,
+          "B": 0.0
+        }
+      }
+    },
+    "generalization_test": {
+      "status": "complete",
+      "updated_at": 1784187905.1936097,
+      "results": [
+        {
+          "site": "A_MET112",
+          "split": "train",
+          "hits_B": 0,
+          "mean_rmsd_to_B": 0.5773442387580872
+        },
+        {
+          "site": "A_ARG129",
+          "split": "train",
+          "hits_B": 0,
+          "mean_rmsd_to_B": 1.111725962162018
+        },
+        {
+          "site": "B_MET112",
+          "split": "train",
+          "hits_B": 0,
+          "mean_rmsd_to_B": 0.9449333691596985
+        },
+        {
+          "site": "B_ASP114",
+          "split": "held_out",
+          "hits_B": 0,
+          "mean_rmsd_to_B": 1.1198527812957764
+        },
+        {
+          "site": "B_ARG129",
+          "split": "held_out",
+          "hits_B": 0,
+          "mean_rmsd_to_B": 1.5826224088668823
+        }
+      ]
+    },
+    "pipeline": {
+      "status": "complete",
+      "updated_at": 1784187905.8729231
+    }
+  },
+  "created_at": 1784186378.9004562
+}

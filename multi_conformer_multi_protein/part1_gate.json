@@ -1,0 +1,9 @@
+{
+  "success_threshold": 30,
+  "successful_sites": [
+    "A_MET112",
+    "B_MET112"
+  ],
+  "part2_allowed": true,
+  "kill_criterion_triggered": false
+}

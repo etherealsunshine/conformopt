@@ -1,0 +1,2 @@
+site,target,loss_A_only,loss_B_only,loss_A_plus_B,A_plus_B_best,kinematic_to_deposited_B_rmsd,physics_A_vdw,physics_A_rotamer,physics_A_symmetry,physics_A_soft,physics_B_vdw,physics_B_rotamer,physics_B_symmetry,physics_B_soft,physics_B_minus_A,physics_calibration_pass
+3A1C_B_ARG447,denoised,1.324973225593567,0.8767433166503906,0.5980814099311829,True,0.09029421955347061,0.6724874377250671,0.27258551120758057,0.0,0.8087801933288574,0.7418351173400879,0.18318146467208862,0.0,0.8334258794784546,0.024645686149597168,True

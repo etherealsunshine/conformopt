@@ -1,0 +1,125 @@
+{
+  "dunbrack": {
+    "both_with_valid_occupancies": 0,
+    "endpoint_physical_valid": 38,
+    "found_A": 1,
+    "found_B": 5,
+    "starts": 50,
+    "strict_joint_success": 0,
+    "test": "dunbrack"
+  },
+  "dunbrack_source": {
+    "library": "Dunbrack 2010 backbone-dependent",
+    "queried_grid_phi_degrees": -80,
+    "queried_grid_psi_degrees": -30,
+    "target_phi_degrees": -76.89901050950502,
+    "target_psi_degrees": -29.883162887937022,
+    "top_rotamers": [
+      {
+        "chi_degrees": [
+          -69.1,
+          178.4,
+          -179.9,
+          174.7
+        ],
+        "probability": 0.151778
+      },
+      {
+        "chi_degrees": [
+          -68.4,
+          177.7,
+          66.1,
+          -167.7
+        ],
+        "probability": 0.079612
+      },
+      {
+        "chi_degrees": [
+          -68.2,
+          178.8,
+          -67.9,
+          170.8
+        ],
+        "probability": 0.073363
+      },
+      {
+        "chi_degrees": [
+          -70.0,
+          -168.5,
+          -64.2,
+          -87.4
+        ],
+        "probability": 0.072473
+      },
+      {
+        "chi_degrees": [
+          -69.5,
+          -178.3,
+          -176.5,
+          -84.3
+        ],
+        "probability": 0.069068
+      },
+      {
+        "chi_degrees": [
+          -68.9,
+          -178.4,
+          178.6,
+          88.0
+        ],
+        "probability": 0.057179
+      },
+      {
+        "chi_degrees": [
+          -69.6,
+          176.9,
+          63.5,
+          84.6
+        ],
+        "probability": 0.041968
+      },
+      {
+        "chi_degrees": [
+          -65.2,
+          -65.8,
+          -175.8,
+          -173.5
+        ],
+        "probability": 0.03642
+      },
+      {
+        "chi_degrees": [
+          -175.5,
+          173.7,
+          178.1,
+          -178.0
+        ],
+        "probability": 0.032639
+      },
+      {
+        "chi_degrees": [
+          -65.4,
+          -65.5,
+          -66.0,
+          167.2
+        ],
+        "probability": 0.026876
+      }
+    ]
+  },
+  "random_baseline": {
+    "starts": 50,
+    "strict_joint_success": 0
+  },
+  "site": "3A1C_B_ARG447",
+  "status": "complete",
+  "transfer": {
+    "both_with_valid_occupancies": 0,
+    "endpoint_physical_valid": 39,
+    "found_A": 0,
+    "found_B": 8,
+    "starts": 50,
+    "strict_joint_success": 0,
+    "test": "transfer"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "run_name": "multi_conformer_multi_protein",
+  "n_starts": 50,
+  "n_steps": 500,
+  "lr": 1.0,
+  "K": 4,
+  "seed": 41,
+  "grid_radius": 4.0,
+  "grid_spacing": 0.5,
+  "nontrivial_occupancy": 0.05,
+  "occupancy_tolerance": 0.2,
+  "success_starts": 30,
+  "checkpoint_starts": 5,
+  "force": false
+}

@@ -1,0 +1,24 @@
+{
+  "name": "coarse_to_fine_4A_2A_full",
+  "n_steps": 300,
+  "lr": 1.0,
+  "init": "random",
+  "noise": 0.0,
+  "blur_schedule": [
+    [
+      4.0,
+      100
+    ],
+    [
+      2.0,
+      100
+    ],
+    [
+      0.0,
+      100
+    ]
+  ],
+  "n_starts": 50,
+  "target": "kinematic_complex_SF",
+  "reflection_split_seed": 41
+}
