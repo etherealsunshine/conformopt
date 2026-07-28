@@ -5,6 +5,11 @@ import math
 import torch
 
 
+AUDIT_RULE_VERSION = (
+    "2026-07-24-altloc-minstate-rotwidth-hisunion-aromatic45-matched-tmol-v2"
+)
+
+
 # Production sidechain topology for every non-ring standard residue with at
 # least one chi angle. PRO is excluded because independent bond rotations do
 # not preserve its pyrrolidine ring closure; ALA and GLY have no sidechain chi.
@@ -121,22 +126,74 @@ EQUIVALENT_ATOM_SWAP_GROUPS = {
 
 
 def canonical_centers_radians(resname: str, chi_index: int) -> tuple[float, ...]:
-    """Simple chemistry-aware centers used by the validated soft prior.
+    """Chemistry-aware centers shared by the soft prior and endpoint audit.
 
-    The prior remains intentionally broad. It is a guardrail against torsions in
-    disallowed regions, not a probability model replacing the density target.
+    These are deliberately broad marginal centers rather than a joint,
+    backbone-conditioned rotamer probability model.
     """
     if (resname, chi_index) in {
         ("ASP", 1), ("ASN", 1), ("GLU", 2), ("GLN", 2),
     }:
         return (0.0, math.pi, -math.pi)
-    if (resname, chi_index) in {
-        ("ARG", 3), ("HIS", 1), ("PHE", 1), ("TRP", 1), ("TYR", 1),
-    }:
+    if (resname, chi_index) == ("ARG", 3):
+        return (-math.pi / 2, math.pi / 2, math.pi, -math.pi)
+    if (resname, chi_index) == ("TRP", 1):
+        return (0.0, math.radians(-105.0), math.radians(105.0))
+    if (resname, chi_index) == ("HIS", 1):
+        return (
+            math.radians(-170.0), math.radians(-80.0),
+            math.radians(80.0), math.radians(170.0),
+        )
+    if resname in {"PHE", "TYR"} and chi_index == 1:
         return (-math.pi / 2, math.pi / 2)
     if resname == "MET" and chi_index == 2:
         return (-math.pi / 2, math.pi / 2, math.pi, -math.pi)
     return (-math.pi / 3, math.pi / 3, math.pi, -math.pi)
+
+
+def canonical_width_degrees(resname: str, chi_index: int) -> float:
+    """Allowed marginal deviation for the shared rotamer guardrail.
+
+    Chi1 remains tight, internal chis are moderately broad, and chemically
+    broad terminal amide/carboxyl torsions are effectively exempt because the
+    nearest 0/180-degree center is always at most 90 degrees away.
+    """
+    if (resname, chi_index) in {
+        ("ASP", 1), ("ASN", 1), ("GLU", 2), ("GLN", 2),
+    }:
+        return 90.0
+    if resname in {"PHE", "TYR"} and chi_index == 1:
+        return 45.0
+    if chi_index == 0:
+        return 45.0
+    if chi_index == len(CHI_SPECS[resname]["dihedrals"]) - 1:
+        return 60.0
+    return 45.0
+
+
+def angular_delta_degrees(value: float, target: float) -> float:
+    return abs(((value - target + 180.0) % 360.0) - 180.0)
+
+
+def classify_rotamer_degrees(
+    resname: str, angles: list[float]
+) -> tuple[str, list[float], list[float], bool]:
+    """Classify marginal chis using the shared centers and per-chi widths."""
+    labels, deviations, widths = [], [], []
+    for index, angle in enumerate(angles):
+        label, center = min(
+            canonical_centers_degrees(resname, index),
+            key=lambda item: angular_delta_degrees(angle, item[1]),
+        )
+        labels.append(label)
+        deviations.append(angular_delta_degrees(angle, center))
+        widths.append(canonical_width_degrees(resname, index))
+    return (
+        "/".join(labels),
+        deviations,
+        widths,
+        all(deviation <= width for deviation, width in zip(deviations, widths)),
+    )
 
 
 def canonical_centers_degrees(
@@ -146,6 +203,9 @@ def canonical_centers_degrees(
     labels = {
         -180.0: "t", -90.0: "m-", -60.0: "g-", 0.0: "p0",
         60.0: "g+", 90.0: "m+", 180.0: "t",
+        -105.0: "m-105", 105.0: "m+105",
+        -80.0: "m-80", 80.0: "m+80",
+        -170.0: "t-170", 170.0: "t+170",
     }
     return [(labels[round(math.degrees(value), 6)], math.degrees(value)) for value in centers]
 

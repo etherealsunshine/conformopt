@@ -16,8 +16,16 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from probe4_core import dihedral, torsion_to_coords, wrap_angles
+from experiments.probe4.core import dihedral, torsion_to_coords, wrap_angles
 
+from .clash_environment import (
+    OPTIMIZER_PHYSICS_ENVIRONMENT_RULE,
+    SoftEnvironmentRecord,
+    normalized_altloc,
+    partition_soft_environment,
+    soft_clash_barrier_penalty,
+    soft_clash_penalty,
+)
 from .data_pipeline import (
     _calculate_fcalc,
     _grid_coordinates,
@@ -32,6 +40,7 @@ from .model import ResidualDensityDenoiser
 from .residue_geometry import (
     CHI_SPECS,
     canonical_centers_radians,
+    canonical_width_degrees,
     symmetry_aware_rmsd,
 )
 
@@ -51,6 +60,23 @@ DUNBRACK_3A1C_ARG447_TOP10 = (
     (0.032639, (-175.5, 173.7, 178.1, -178.0)),
     (0.026876, (-65.4, -65.5, -66.0, 167.2)),
 )
+
+
+def _production_density_schedule(
+    n_chi: int,
+    n_steps: int,
+    learning_rate: float,
+    per_residue_class: bool,
+    four_chi_stage_steps: int = 100,
+) -> tuple[tuple[float, float, int], ...]:
+    """Return (blur FWHM, learning rate, steps) for production stage 1."""
+    if per_residue_class and n_chi == 4:
+        return (
+            (4.0, learning_rate, four_chi_stage_steps),
+            (2.0, learning_rate * 0.1, four_chi_stage_steps),
+            (0.0, learning_rate * 0.01, four_chi_stage_steps),
+        )
+    return ((0.0, learning_rate, n_steps),)
 
 
 def _atomic_json(path: Path, value: dict) -> None:
@@ -115,37 +141,20 @@ def _canonical_centers(resname: str, chi_index: int) -> list[float]:
 
 
 def _selected_protein_heavy_atoms(structure: gemmi.Structure) -> list[tuple]:
-    """Select blank atoms plus one highest-coverage altloc per protein residue."""
+    """Select protein and water heavy atoms for altloc-aware soft physics."""
     selected = []
     for chain in structure[0]:
         for residue in chain:
             if residue.name not in CHI_SPECS and residue.name not in {
                 "ALA", "ASN", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
                 "LEU", "LYS", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
+                "HOH", "WAT", "DOD",
             }:
                 continue
-            blank = {}
-            alternate = {}
             for atom in residue:
                 if atom.element.name == "H":
                     continue
-                name = atom.name.strip()
-                alt = "" if atom.altloc in ("\x00", " ") else atom.altloc
-                if not alt:
-                    blank[name] = atom
-                else:
-                    alternate.setdefault(alt, {})[name] = atom
-            if alternate:
-                _alt, atoms = max(
-                    alternate.items(),
-                    key=lambda item: (
-                        len(item[1]), sum(float(atom.occ) for atom in item[1].values())
-                    ),
-                )
-                chosen = {**blank, **atoms}
-            else:
-                chosen = blank
-            selected.extend((chain, residue, atom) for atom in chosen.values())
+                selected.append((chain, residue, atom))
     return selected
 
 
@@ -174,6 +183,20 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--n-starts", type=int, default=50)
     parser.add_argument("--n-steps", type=int, default=500)
+    parser.add_argument(
+        "--per-residue-class-schedule", action="store_true",
+        help=(
+            "use the frozen full-resolution --n-steps schedule for 1-3 chi "
+            "residues and 4A/2A/full 100-step Adam-reset stages for 4-chi residues"
+        ),
+    )
+    parser.add_argument(
+        "--four-chi-stage-steps", type=int, default=100,
+        help=(
+            "steps at each 4A/2A/full stage for four-chi residues when "
+            "--per-residue-class-schedule is enabled (default: 100)"
+        ),
+    )
     parser.add_argument(
         "--fixed-occupancy-steps", type=int, default=0,
         help=(
@@ -225,6 +248,17 @@ def main() -> None:
     parser.add_argument("--lambda-clash", type=float, default=5.0)
     parser.add_argument("--vdw-threshold", type=float, default=3.0)
     parser.add_argument("--clash-threshold", type=float, default=2.5)
+    parser.add_argument("--symmetry-hard-threshold", type=float, default=2.0)
+    parser.add_argument("--symmetry-barrier-buffer", type=float, default=0.25)
+    parser.add_argument(
+        "--symmetry-barrier-scale",
+        type=float,
+        default=0.0,
+        help=(
+            "raw quartic symmetry-barrier value at the hard threshold; "
+            "zero preserves the historical squared hinge"
+        ),
+    )
     parser.add_argument("--physics-calibration-max-gap", type=float, default=5.0)
     parser.add_argument("--site", action="append", default=[])
     parser.add_argument(
@@ -236,9 +270,24 @@ def main() -> None:
 
     if args.physics_refinement_steps < 0:
         raise ValueError("--physics-refinement-steps must be non-negative")
+    if args.symmetry_barrier_buffer <= 0:
+        raise ValueError("--symmetry-barrier-buffer must be positive")
+    if args.symmetry_barrier_scale < 0:
+        raise ValueError("--symmetry-barrier-scale must be non-negative")
+    if args.four_chi_stage_steps <= 0:
+        raise ValueError("--four-chi-stage-steps must be positive")
     if not 0 <= args.fixed_occupancy_steps <= args.n_steps:
         raise ValueError(
             "--fixed-occupancy-steps must be between zero and --n-steps"
+        )
+    if args.per_residue_class_schedule and args.fixed_occupancy_steps:
+        raise ValueError(
+            "--per-residue-class-schedule does not support fixed occupancy steps"
+        )
+    if args.per_residue_class_schedule and args.soft_physics:
+        raise ValueError(
+            "--per-residue-class-schedule is a density-first schedule; use "
+            "--physics-refinement-steps for the physics stage"
         )
     if args.sequential_two_stage:
         if args.fixed_occupancy_steps or args.seed_deposited_a or args.soft_physics:
@@ -554,36 +603,59 @@ def main() -> None:
                 continue
             if np.linalg.norm(np.asarray(atom.pos.tolist()) - ca_position) <= environment_radius:
                 direct_context.append((context_chain, context_residue, atom))
-        direct_environment = torch.tensor(
-            [atom.pos.tolist() for _, _, atom in direct_context],
-            dtype=torch.float32, device=device,
-        )
+
+        direct_records = [
+            SoftEnvironmentRecord(
+                xyz=tuple(atom.pos.tolist()),
+                group_key=(
+                    f"{context_chain.name}:{context_residue.seqid.num}:"
+                    f"{context_residue.seqid.icode}"
+                ),
+                atom_name=atom.name.strip(),
+                altloc=normalized_altloc(atom.altloc),
+                occupancy=float(atom.occ),
+                is_water=context_residue.name in {"HOH", "WAT", "DOD"},
+            )
+            for context_chain, context_residue, atom in direct_context
+        ]
+        (
+            direct_environment,
+            direct_environment_weights,
+            direct_alternate_states,
+            invariant_direct_records,
+        ) = partition_soft_environment(direct_records, device)
         direct_pair_mask = torch.ones(
-            (len(names), len(direct_context)), dtype=torch.bool, device=device
+            (len(names), len(direct_environment)), dtype=torch.bool, device=device
         )
         for moving_index, moving_name in enumerate(names):
-            for environment_index, (context_chain, context_residue, atom) in enumerate(
-                direct_context
+            for environment_index, environment_record in enumerate(
+                invariant_direct_records
             ):
                 same_target = (
-                    context_chain.name == site.chain
-                    and context_residue.seqid.num == site.residue_number
-                    and context_residue.seqid.icode == site.insertion_code
+                    environment_record.group_key
+                    == (
+                        f"{site.chain}:{site.residue_number}:"
+                        f"{site.insertion_code}"
+                    )
                 )
                 # CB--CA is the only moving-sidechain/backbone covalent bond.
-                if same_target and moving_name == "CB" and atom.name.strip() == "CA":
+                if (
+                    same_target
+                    and moving_name == "CB"
+                    and environment_record.atom_name == "CA"
+                ):
                     direct_pair_mask[moving_index, environment_index] = False
 
         cell = structure.cell
         spacegroup = gemmi.find_spacegroup_by_name(structure.spacegroup_hm)
-        symmetry_positions = []
+        symmetry_records = []
         for operation_index, operation in enumerate(spacegroup.operations()):
             for tx in (-1, 0, 1):
                 for ty in (-1, 0, 1):
                     for tz in (-1, 0, 1):
                         if operation_index == 0 and tx == ty == tz == 0:
                             continue
-                        for _context_chain, _context_residue, atom in heavy_atoms:
+                        for context_chain, context_residue, atom in heavy_atoms:
                             transformed = operation.apply_to_xyz(
                                 cell.fractionalize(atom.pos).tolist()
                             )
@@ -594,10 +666,28 @@ def main() -> None:
                             ))
                             xyz = np.asarray(position.tolist())
                             if np.linalg.norm(xyz - ca_position) <= environment_radius:
-                                symmetry_positions.append(xyz)
-        symmetry_environment = torch.tensor(
-            np.asarray(symmetry_positions), dtype=torch.float32, device=device
-        ) if symmetry_positions else torch.empty((0, 3), dtype=torch.float32, device=device)
+                                symmetry_records.append(SoftEnvironmentRecord(
+                                    xyz=tuple(xyz.tolist()),
+                                    group_key=(
+                                        f"sym{operation_index}[{tx},{ty},{tz}]/"
+                                        f"{context_chain.name}:"
+                                        f"{context_residue.seqid.num}:"
+                                        f"{context_residue.seqid.icode}"
+                                    ),
+                                    atom_name=atom.name.strip(),
+                                    altloc=normalized_altloc(atom.altloc),
+                                    occupancy=float(atom.occ),
+                                    is_water=(
+                                        context_residue.name
+                                        in {"HOH", "WAT", "DOD"}
+                                    ),
+                                ))
+        (
+            symmetry_environment,
+            symmetry_environment_weights,
+            symmetry_alternate_states,
+            _invariant_symmetry_records,
+        ) = partition_soft_environment(symmetry_records, device)
 
         def physical_chi(
             candidate: torch.Tensor,
@@ -638,8 +728,12 @@ def main() -> None:
             occupancies: torch.Tensor,
             resname=residue.name,
             direct_environment=direct_environment,
+            direct_environment_weights=direct_environment_weights,
             direct_pair_mask=direct_pair_mask,
+            direct_alternate_states=direct_alternate_states,
             symmetry_environment=symmetry_environment,
+            symmetry_environment_weights=symmetry_environment_weights,
+            symmetry_alternate_states=symmetry_alternate_states,
             physical_chi=physical_chi,
         ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
             zero = torch.zeros((), dtype=torch.float32, device=device)
@@ -651,14 +745,14 @@ def main() -> None:
             vdw_terms, rotamer_terms, symmetry_terms = [], [], []
             for index_tensor in active:
                 candidate = conformers[int(index_tensor)]
-                if direct_environment.numel():
-                    distances = torch.cdist(candidate, direct_environment)
-                    penalties = torch.clamp(
-                        args.vdw_threshold - distances, min=0.0
-                    ).square()
-                    vdw_terms.append(penalties.masked_select(direct_pair_mask).sum())
-                else:
-                    vdw_terms.append(zero)
+                vdw_terms.append(soft_clash_penalty(
+                    candidate,
+                    direct_environment,
+                    direct_environment_weights,
+                    direct_alternate_states,
+                    args.vdw_threshold,
+                    direct_pair_mask,
+                ))
                 chis = physical_chi(candidate)
                 rotamer_terms.append(torch.stack([
                     (
@@ -668,17 +762,21 @@ def main() -> None:
                                 dtype=value.dtype, device=device,
                             )
                         )
-                    ).min()
+                    ).min() * (
+                        30.0 / canonical_width_degrees(resname, chi_index)
+                    ) ** 2
                     for chi_index, value in enumerate(chis)
                 ]).sum())
-                if symmetry_environment.numel():
-                    symmetry_terms.append(torch.clamp(
-                        args.clash_threshold - torch.cdist(
-                            candidate, symmetry_environment
-                        ), min=0.0
-                    ).square().sum())
-                else:
-                    symmetry_terms.append(zero)
+                symmetry_terms.append(soft_clash_barrier_penalty(
+                    candidate,
+                    symmetry_environment,
+                    symmetry_environment_weights,
+                    symmetry_alternate_states,
+                    args.clash_threshold,
+                    args.symmetry_hard_threshold,
+                    args.symmetry_barrier_buffer,
+                    args.symmetry_barrier_scale,
+                ))
             return (
                 torch.stack(vdw_terms).sum(),
                 torch.stack(rotamer_terms).sum(),
@@ -701,9 +799,21 @@ def main() -> None:
         with torch.no_grad():
             native_synthetic, _ = render(control_chi, control_logits)
         target_vectors["synthetic"] = native_synthetic.detach()
+        with torch.no_grad():
+            target_vectors_by_blur["synthetic"] = {
+                blur: render(control_chi, control_logits, blur)[0].detach()
+                for blur in blur_levels
+            }
         np.save(
             args.output / f"{short_key}_optimizer_synthetic_vector.npy",
             native_synthetic.cpu().numpy(),
+        )
+        np.savez_compressed(
+            args.output / f"{short_key}_optimizer_synthetic_by_blur.npz",
+            **{
+                f"fwhm_{blur:g}A": vector.cpu().numpy()
+                for blur, vector in target_vectors_by_blur["synthetic"].items()
+            },
         )
 
         sites.append({
@@ -729,6 +839,8 @@ def main() -> None:
             "direct_environment": direct_environment,
             "direct_pair_mask": direct_pair_mask,
             "symmetry_environment": symmetry_environment,
+            "symmetry_environment_weights": symmetry_environment_weights,
+            "symmetry_alternate_states": symmetry_alternate_states,
         })
     if {site["key"] for site in sites} != wanted_sites:
         raise RuntimeError(
@@ -737,11 +849,29 @@ def main() -> None:
 
     config = {
         **vars(args),
+        "optimizer_physics_environment_rule": (
+            OPTIMIZER_PHYSICS_ENVIRONMENT_RULE
+        ),
         "pdb": str(args.pdb), "mtz": str(args.mtz),
         "selection": str(args.selection) if args.selection else None,
         "checkpoint": str(args.checkpoint), "output": str(args.output),
         "transfer_endpoint_root": str(args.transfer_endpoint_root),
         "targets": targets, "sites": sorted(wanted_sites),
+        "resolved_density_schedules": {
+            site["key"]: [
+                {
+                    "blur_fwhm_angstrom": blur_fwhm,
+                    "learning_rate": stage_lr,
+                    "steps": stage_steps,
+                }
+                for blur_fwhm, stage_lr, stage_steps in _production_density_schedule(
+                    site["n_chi"], args.n_steps, args.lr,
+                    args.per_residue_class_schedule,
+                    args.four_chi_stage_steps,
+                )
+            ]
+            for site in sites
+        },
         "interpretation": (
             "untouched test proteins; held-out denoiser and optimizer generalization"
             if args.selection else "2O1K was in denoiser training; integration upper bound only"
@@ -784,6 +914,17 @@ def main() -> None:
         physics_gap = (
             physics_values["kinematic_B"]["soft"] - physics_values["A"]["soft"]
         )
+        symmetry_probe_loss = float("nan")
+        if site["symmetry_environment"].numel():
+            translated_probe = (
+                site["kinematic_a"]
+                + site["symmetry_environment"][0]
+                - site["kinematic_a"][0]
+            )
+            _probe_vdw, _probe_rotamer, probe_symmetry = site["physics_terms"](
+                [translated_probe], torch.ones(1, device=device)
+            )
+            symmetry_probe_loss = float(probe_symmetry.detach().cpu())
         physics_pass = physics_gap <= args.physics_calibration_max_gap
         if physics_enabled and not physics_pass:
             physics_calibration_failures.append({
@@ -815,6 +956,13 @@ def main() -> None:
                 "physics_B_vdw": physics_values["kinematic_B"]["vdw"],
                 "physics_B_rotamer": physics_values["kinematic_B"]["rotamer"],
                 "physics_B_symmetry": physics_values["kinematic_B"]["symmetry"],
+                "symmetry_invariant_atoms": int(
+                    site["symmetry_environment"].shape[0]
+                ),
+                "symmetry_alternate_residue_groups": len(
+                    site["symmetry_alternate_states"]
+                ),
+                "symmetry_overlap_probe_loss": symmetry_probe_loss,
                 "physics_B_soft": physics_values["kinematic_B"]["soft"],
                 "physics_B_minus_A": physics_gap,
                 "physics_calibration_pass": physics_pass,
@@ -1005,7 +1153,12 @@ def main() -> None:
                         ).cpu()))
                     maximum_deviation = max(deviations)
                     rotamer_deviations.append(maximum_deviation)
-                    canonical_flags.append(maximum_deviation <= 30.0)
+                    canonical_flags.append(all(
+                        deviation <= canonical_width_degrees(
+                            site["resname"], chi_index
+                        )
+                        for chi_index, deviation in enumerate(deviations)
+                    ))
 
             assignments = []
             for occupancy, distance_a, distance_b in zip(
@@ -1524,7 +1677,12 @@ def main() -> None:
                     ).cpu()))
                 maximum_deviation = max(deviations)
                 rotamer_deviations.append(maximum_deviation)
-                canonical_flags.append(maximum_deviation <= 30.0)
+                canonical_flags.append(all(
+                    deviation <= canonical_width_degrees(
+                        site["resname"], chi_index
+                    )
+                    for chi_index, deviation in enumerate(deviations)
+                ))
 
         assignments = []
         for occupancy, distance_a, distance_b in zip(occupancies, rmsd_a, rmsd_b):
@@ -1653,101 +1811,145 @@ def main() -> None:
                 fixed_boundary_found_a = False
                 fixed_boundary_found_b = False
 
-                if args.fixed_occupancy_steps:
-                    # Equal weights prevent a slot from starving its own coordinate
-                    # gradient before it has had a chance to discover a second basin.
-                    optimizer = torch.optim.Adam([all_chi], lr=args.lr)
-                else:
-                    optimizer = torch.optim.Adam([all_chi, logits], lr=args.lr)
-                for _step in range(args.fixed_occupancy_steps):
-                    optimizer.zero_grad(set_to_none=True)
-                    density, current_coordinates = site["render"](all_chi, logits)
-                    density_loss = (
-                        density - site["target_vectors"][target_label]
-                    ).square().mean()
-                    if args.soft_physics:
-                        current_occupancies = torch.softmax(logits, dim=0)
-                        vdw_loss, rotamer_loss, symmetry_loss = site["physics_terms"](
-                            current_coordinates, current_occupancies
-                        )
-                        loss = (
-                            density_loss
-                            + args.lambda_vdw * vdw_loss
-                            + args.lambda_rot * rotamer_loss
-                            + args.lambda_clash * symmetry_loss
-                        )
-                    else:
-                        loss = density_loss
-                    loss.backward()
-                    optimizer.step()
-                    with torch.no_grad():
-                        all_chi.copy_(wrap_angles(all_chi))
-                    best_stage1_loss = min(
-                        best_stage1_loss, float(loss.detach().cpu())
-                    )
-                if args.fixed_occupancy_steps:
-                    with torch.no_grad():
-                        fixed_rendered, fixed_coordinates = site["render"](
-                            all_chi, logits
-                        )
-                        fixed_boundary_density_loss = float((
-                            fixed_rendered - site["target_vectors"][target_label]
-                        ).square().mean().cpu())
-                        fixed_boundary_occupancies = (
-                            torch.softmax(logits, dim=0).cpu().numpy().copy()
-                        )
-                        fixed_boundary_chi = (
-                            all_chi.detach().cpu().numpy().copy()
-                        )
-                        fixed_boundary_rmsd_a = np.asarray([
-                            float(site["rmsd"](xyz, site["kinematic_a"]).cpu())
-                            for xyz in fixed_coordinates
-                        ])
-                        fixed_boundary_rmsd_b = np.asarray([
-                            float(site["rmsd"](xyz, site["kinematic_b"]).cpu())
-                            for xyz in fixed_coordinates
-                        ])
-                        fixed_boundary_found_a = bool(
-                            (fixed_boundary_rmsd_a < 1.0).any()
-                        )
-                        fixed_boundary_found_b = bool(
-                            (fixed_boundary_rmsd_b < 1.0).any()
-                        )
-
-                    # Release occupancies with a clean optimizer state. The total
-                    # density-stage budget remains exactly --n-steps.
-                    logits.requires_grad_(True)
-                    optimizer = torch.optim.Adam([all_chi, logits], lr=args.lr)
-
-                released_occupancy_steps = (
-                    args.n_steps - args.fixed_occupancy_steps
+                density_schedule = _production_density_schedule(
+                    site["n_chi"], args.n_steps, args.lr,
+                    args.per_residue_class_schedule,
+                    args.four_chi_stage_steps,
                 )
-                for _step in range(released_occupancy_steps):
-                    optimizer.zero_grad(set_to_none=True)
-                    density, current_coordinates = site["render"](all_chi, logits)
-                    density_loss = (
-                        density - site["target_vectors"][target_label]
-                    ).square().mean()
-                    if args.soft_physics:
-                        current_occupancies = torch.softmax(logits, dim=0)
-                        vdw_loss, rotamer_loss, symmetry_loss = site["physics_terms"](
-                            current_coordinates, current_occupancies
+                if args.per_residue_class_schedule:
+                    # Each schedule boundary intentionally gets a clean Adam state.
+                    # For 1-3 chi this is a single stage identical to the frozen
+                    # full-resolution production run. Four-chi residues use the
+                    # validated 4A -> 2A -> full-resolution schedule.
+                    for blur_fwhm, stage_lr, stage_steps in density_schedule:
+                        optimizer = torch.optim.Adam(
+                            [all_chi, logits], lr=stage_lr
                         )
-                        loss = (
-                            density_loss
-                            + args.lambda_vdw * vdw_loss
-                            + args.lambda_rot * rotamer_loss
-                            + args.lambda_clash * symmetry_loss
-                        )
-                    else:
-                        loss = density_loss
-                    loss.backward()
-                    optimizer.step()
-                    with torch.no_grad():
-                        all_chi.copy_(wrap_angles(all_chi))
-                    best_stage1_loss = min(
-                        best_stage1_loss, float(loss.detach().cpu())
+                        if blur_fwhm == 0.0:
+                            # Use the exact frozen full-resolution tensors so the
+                            # 1-3 chi path is numerically identical to production.
+                            target_vector = site["target_vectors"][target_label]
+                        else:
+                            target_vector = site["target_vectors_by_blur"][
+                                target_label
+                            ][blur_fwhm]
+                        for _step in range(stage_steps):
+                            optimizer.zero_grad(set_to_none=True)
+                            if blur_fwhm == 0.0:
+                                density, _current_coordinates = site["render"](
+                                    all_chi, logits
+                                )
+                            else:
+                                density, _current_coordinates = site["render"](
+                                    all_chi, logits, blur_fwhm
+                                )
+                            loss = (density - target_vector).square().mean()
+                            loss.backward()
+                            optimizer.step()
+                            with torch.no_grad():
+                                all_chi.copy_(wrap_angles(all_chi))
+                            best_stage1_loss = min(
+                                best_stage1_loss, float(loss.detach().cpu())
+                            )
+                    released_occupancy_steps = sum(
+                        stage_steps for _blur, _lr, stage_steps in density_schedule
                     )
+                else:
+                    if args.fixed_occupancy_steps:
+                        # Equal weights prevent a slot from starving its own coordinate
+                        # gradient before it has had a chance to discover a second basin.
+                        optimizer = torch.optim.Adam([all_chi], lr=args.lr)
+                    else:
+                        optimizer = torch.optim.Adam([all_chi, logits], lr=args.lr)
+                    for _step in range(args.fixed_occupancy_steps):
+                        optimizer.zero_grad(set_to_none=True)
+                        density, current_coordinates = site["render"](all_chi, logits)
+                        density_loss = (
+                            density - site["target_vectors"][target_label]
+                        ).square().mean()
+                        if args.soft_physics:
+                            current_occupancies = torch.softmax(logits, dim=0)
+                            vdw_loss, rotamer_loss, symmetry_loss = site["physics_terms"](
+                                current_coordinates, current_occupancies
+                            )
+                            loss = (
+                                density_loss
+                                + args.lambda_vdw * vdw_loss
+                                + args.lambda_rot * rotamer_loss
+                                + args.lambda_clash * symmetry_loss
+                            )
+                        else:
+                            loss = density_loss
+                        loss.backward()
+                        optimizer.step()
+                        with torch.no_grad():
+                            all_chi.copy_(wrap_angles(all_chi))
+                        best_stage1_loss = min(
+                            best_stage1_loss, float(loss.detach().cpu())
+                        )
+                    if args.fixed_occupancy_steps:
+                        with torch.no_grad():
+                            fixed_rendered, fixed_coordinates = site["render"](
+                                all_chi, logits
+                            )
+                            fixed_boundary_density_loss = float((
+                                fixed_rendered - site["target_vectors"][target_label]
+                            ).square().mean().cpu())
+                            fixed_boundary_occupancies = (
+                                torch.softmax(logits, dim=0).cpu().numpy().copy()
+                            )
+                            fixed_boundary_chi = (
+                                all_chi.detach().cpu().numpy().copy()
+                            )
+                            fixed_boundary_rmsd_a = np.asarray([
+                                float(site["rmsd"](xyz, site["kinematic_a"]).cpu())
+                                for xyz in fixed_coordinates
+                            ])
+                            fixed_boundary_rmsd_b = np.asarray([
+                                float(site["rmsd"](xyz, site["kinematic_b"]).cpu())
+                                for xyz in fixed_coordinates
+                            ])
+                            fixed_boundary_found_a = bool(
+                                (fixed_boundary_rmsd_a < 1.0).any()
+                            )
+                            fixed_boundary_found_b = bool(
+                                (fixed_boundary_rmsd_b < 1.0).any()
+                            )
+
+                        # Release occupancies with a clean optimizer state. The total
+                        # density-stage budget remains exactly --n-steps.
+                        logits.requires_grad_(True)
+                        optimizer = torch.optim.Adam([all_chi, logits], lr=args.lr)
+
+                    released_occupancy_steps = (
+                        args.n_steps - args.fixed_occupancy_steps
+                    )
+                    for _step in range(released_occupancy_steps):
+                        optimizer.zero_grad(set_to_none=True)
+                        density, current_coordinates = site["render"](all_chi, logits)
+                        density_loss = (
+                            density - site["target_vectors"][target_label]
+                        ).square().mean()
+                        if args.soft_physics:
+                            current_occupancies = torch.softmax(logits, dim=0)
+                            vdw_loss, rotamer_loss, symmetry_loss = site["physics_terms"](
+                                current_coordinates, current_occupancies
+                            )
+                            loss = (
+                                density_loss
+                                + args.lambda_vdw * vdw_loss
+                                + args.lambda_rot * rotamer_loss
+                                + args.lambda_clash * symmetry_loss
+                            )
+                        else:
+                            loss = density_loss
+                        loss.backward()
+                        optimizer.step()
+                        with torch.no_grad():
+                            all_chi.copy_(wrap_angles(all_chi))
+                        best_stage1_loss = min(
+                            best_stage1_loss, float(loss.detach().cpu())
+                        )
                 with torch.no_grad():
                     stage1_rendered, stage1_coordinates = site["render"](all_chi, logits)
                     stage1_density_loss = float((
@@ -1850,7 +2052,12 @@ def main() -> None:
                             deviations.append(float(torch.rad2deg(deviation).cpu()))
                         maximum_deviation = max(deviations)
                         rotamer_deviations.append(maximum_deviation)
-                        canonical_flags.append(maximum_deviation <= 30.0)
+                        canonical_flags.append(all(
+                            deviation <= canonical_width_degrees(
+                                site["resname"], chi_index
+                            )
+                            for chi_index, deviation in enumerate(deviations)
+                        ))
                 assignments = []
                 for occupancy, distance_a, distance_b in zip(occupancies, rmsd_a, rmsd_b):
                     if occupancy <= args.nontrivial_occupancy:
@@ -1904,6 +2111,10 @@ def main() -> None:
                     "final_loss": final_loss, "best_loss": reported_best_loss,
                     "best_stage1_loss": best_stage1_loss,
                     "best_refinement_loss": best_refinement_loss,
+                    "density_schedule": "|".join(
+                        f"{blur_fwhm:g}A:{stage_steps}:lr{stage_lr:g}"
+                        for blur_fwhm, stage_lr, stage_steps in density_schedule
+                    ),
                     "fixed_occupancy_steps": args.fixed_occupancy_steps,
                     "released_occupancy_steps": released_occupancy_steps,
                     "fixed_boundary_density_loss": fixed_boundary_density_loss,

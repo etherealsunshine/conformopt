@@ -2,6 +2,11 @@
 
 This file is the source of truth for agents and contributors working in this repository. Read it before editing code, running experiments, moving results, or changing the pod.
 
+After reading the operating rules here, read
+[`CURRENT_HANDOFF.md`](CURRENT_HANDOFF.md). It contains the latest 20-site
+denoised and synthetic results, current pod result roots, exact launch and
+monitoring commands, resolved diagnostics, and the active research backlog.
+
 ## 1. Non-negotiable operating rules
 
 1. **Source is local; runtime is remote.** Edit `/Users/utkarsh/qfitonsteroids` on the Mac. Run tests, preprocessing, training, optimization, and tmol on the `qfit-unet` pod.
