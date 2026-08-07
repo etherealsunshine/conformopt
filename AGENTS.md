@@ -236,9 +236,9 @@ Soft physics belongs in the downstream optimizer. It does not alter the trained 
 |---|---|
 | `five_site_tmol_audit.py` | Restartable CUDA/tmol scorer used by the current pod pipeline. Use the `.venv-tmol` interpreter. |
 | `inject_interactive_landscape_data.py` | Injects downsampled five-site surface arrays into a specific local interactive HTML visualization. Its absolute visualization path is session-specific; update deliberately before reuse. |
-| `test_density_denoiser.py` | U-Net shape, omit subtraction, frame, rigid-rotation invariance, landscape-rendering, and physics-center tests. |
-| `test_probe4_core.py` | Differentiability and geometry tests for the original Probe 4 kinematic core. |
-| `test_residue_geometry.py` | Coverage, residue-specific rotamers, and equivalent-atom RMSD tests for production residue support. |
+| `tests/test_density_denoiser.py` | U-Net shape, omit subtraction, frame, rigid-rotation invariance, landscape-rendering, and physics-center tests. |
+| `tests/test_probe4_core.py` | Differentiability and geometry tests for the original Probe 4 kinematic core. |
+| `tests/test_residue_geometry.py` | Coverage, residue-specific rotamers, and equivalent-atom RMSD tests for production residue support. |
 
 ### Probe 2 and shared learned-energy core
 
@@ -385,7 +385,7 @@ Run focused tests while iterating, then the full suite before production:
 
 ```bash
 /home/dev/qfit_unet_data/.venv/bin/python -m pytest -q \
-  test_density_denoiser.py test_probe4_core.py test_residue_geometry.py
+  tests/test_density_denoiser.py tests/test_probe4_core.py tests/test_residue_geometry.py
 ```
 
 ### Audit prepared data
