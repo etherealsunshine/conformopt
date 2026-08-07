@@ -1,0 +1,737 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/pqurwb",
+    "id": "pqurwb",
+    "slide": 3,
+    "layoutId": "29f99694-1165-4fa8-b7a7-dc6e227fa3a4",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "d6ea0af7-d600-4d0a-8542-e0b37c7f0c9a",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "29f99694-1165-4fa8-b7a7-dc6e227fa3a4",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "d6ea0af7-d600-4d0a-8542-e0b37c7f0c9a",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "d6ea0af7-d600-4d0a-8542-e0b37c7f0c9a",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pg3qpoja",
+      "id": "1",
+      "name": "kicker",
+      "bbox": [
+        72,
+        42,
+        520,
+        28
+      ],
+      "geometry": "rect",
+      "text": "SYNTHETIC 20-SITE AUDIT",
+      "textPreview": "SYNTHETIC 20-SITE AUDIT",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SYNTHETIC 20-SITE AUDIT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SYNTHETIC 20-SITE AUDIT",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#59616D",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "SYNTHETIC 20-SITE AUDIT",
+              "fontSize": 14,
+              "color": "#59616D",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2dc7e9kz",
+      "id": "2",
+      "name": "title",
+      "bbox": [
+        72,
+        78,
+        950,
+        92
+      ],
+      "geometry": "rect",
+      "text": "Single-recovery failures mostly lose the minor state",
+      "textPreview": "Single-recovery failures mostly lose the minor state",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Single-recovery failures mostly lose the minor state"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Single-recovery failures mostly lose the minor state",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Single-recovery failures mostly lose the minor state",
+              "fontSize": 38,
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3el8ne14",
+      "id": "3",
+      "name": "rule",
+      "bbox": [
+        72,
+        170,
+        1136,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#B8BCC4",
+      "lineColor": "#B8BCC4",
+      "lineWidth": 1
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cjepkj21",
+      "id": "4",
+      "name": "metric-single-recovery starts",
+      "bbox": [
+        112,
+        235,
+        240,
+        62
+      ],
+      "geometry": "rect",
+      "text": "187",
+      "textPreview": "187",
+      "resolvedFontSize": 48,
+      "resolvedTextStyle": {
+        "fontSize": 48,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "187"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "187",
+          "resolvedTextStyle": {
+            "fontSize": 48,
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "187",
+              "fontSize": 48,
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dknqtojm",
+      "id": "5",
+      "name": "metric-label-single-recovery starts",
+      "bbox": [
+        112,
+        297,
+        265,
+        54
+      ],
+      "geometry": "rect",
+      "text": "single-recovery starts",
+      "textPreview": "single-recovery starts",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "single-recovery starts"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "single-recovery starts",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#59616D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "single-recovery starts",
+              "fontSize": 18,
+              "color": "#59616D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qhc7itkv",
+      "id": "6",
+      "name": "metric-missed the minor conformer",
+      "bbox": [
+        395,
+        235,
+        240,
+        62
+      ],
+      "geometry": "rect",
+      "text": "142",
+      "textPreview": "142",
+      "resolvedFontSize": 48,
+      "resolvedTextStyle": {
+        "fontSize": 48,
+        "typeface": "+mn-lt",
+        "color": "#C9473A",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "142"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "142",
+          "resolvedTextStyle": {
+            "fontSize": 48,
+            "color": "#C9473A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "142",
+              "fontSize": 48,
+              "color": "#C9473A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/bi58re1g",
+      "id": "7",
+      "name": "metric-label-missed the minor conformer",
+      "bbox": [
+        395,
+        297,
+        265,
+        54
+      ],
+      "geometry": "rect",
+      "text": "missed the minor conformer",
+      "textPreview": "missed the minor conformer",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "missed the minor conformer"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "missed the minor conformer",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#59616D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "missed the minor conformer",
+              "fontSize": 18,
+              "color": "#59616D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/07epo3ix",
+      "id": "8",
+      "name": "metric-missed the major conformer",
+      "bbox": [
+        705,
+        235,
+        240,
+        62
+      ],
+      "geometry": "rect",
+      "text": "45",
+      "textPreview": "45",
+      "resolvedFontSize": 48,
+      "resolvedTextStyle": {
+        "fontSize": 48,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "45"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "45",
+          "resolvedTextStyle": {
+            "fontSize": 48,
+            "color": "#59616D",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "45",
+              "fontSize": 48,
+              "color": "#59616D",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l8nqx8ji",
+      "id": "9",
+      "name": "metric-label-missed the major conformer",
+      "bbox": [
+        705,
+        297,
+        265,
+        54
+      ],
+      "geometry": "rect",
+      "text": "missed the major conformer",
+      "textPreview": "missed the major conformer",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "missed the major conformer"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "missed the major conformer",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#59616D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "missed the major conformer",
+              "fontSize": 18,
+              "color": "#59616D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "chart",
+      "scope": "slide",
+      "aid": "ch/dgvm50ze",
+      "id": "10",
+      "bbox": [
+        140,
+        440,
+        700,
+        150
+      ],
+      "chartType": "bar"
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0n6xg3q5",
+      "id": "11",
+      "name": "minor-note",
+      "bbox": [
+        890,
+        345,
+        285,
+        120
+      ],
+      "geometry": "rect",
+      "text": "The asymmetry is occupancy-rank based, not an A/B label artifact.",
+      "textPreview": "The asymmetry is occupancy-rank based, not an A/B label artifact.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The asymmetry is"
+          },
+          {
+            "index": 2,
+            "text": "occupancy-rank"
+          },
+          {
+            "index": 3,
+            "text": "based, not an A/B label"
+          },
+          {
+            "index": 4,
+            "text": "artifact."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The asymmetry is occupancy-rank based, not an A/B label artifact.",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "The asymmetry is occupancy-rank based, not an A/B label artifact.",
+              "fontSize": 24,
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/f2xw7ipk",
+      "id": "12",
+      "name": "footer",
+      "bbox": [
+        1176,
+        664,
+        32,
+        24
+      ],
+      "geometry": "rect",
+      "text": "3",
+      "textPreview": "3",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "fontSize": 13,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "3"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "3",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "color": "#59616D",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "3",
+              "fontSize": 13,
+              "color": "#59616D",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

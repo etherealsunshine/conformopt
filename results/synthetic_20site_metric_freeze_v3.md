@@ -138,6 +138,36 @@ V3 preserves the +13 recovery correction, including 2VFP 1→14, and restores
 not blindly reproduce v1 occupancy: geometrically separated slots previously
 sharing a greedy state label are not merged.
 
+## Deposited-pair symmetry caveat
+
+A deposited-coordinate-only diagnostic found that 2VFP TYR417 is a
+symmetry-degenerate pair. Its fixed-label local A/B RMSD is `1.751495 Å`, but
+the valid `CD1↔CD2` plus `CE1↔CE2` ring permutation reduces the residual to
+the tabulated `0.566776 Å`. Thus the deposited records are chemically the same
+ring orientation up to equivalent labels plus about `0.57 Å` of residual
+motion, rather than two cleanly resolved, widely separated states.
+
+This explains the site's recovery history: `1/50` under greedy assignment and
+`14/50` under one-to-one assignment, with 8 of the 14 assigned pairs compressed
+to `0.19–0.23 Å`. A single produced geometry can legitimately be within the
+`<1.0 Å` recovery neighborhoods of both deposited records. This is a property
+of the site, not solely a matching artifact. The frozen v3 metric and its
+`626/1000` baseline remain unchanged, but 2VFP's recovery number is not
+directly comparable to an ordinary genuinely distinct two-state site.
+
+5KWB PHE591 is the only other near-degenerate ring-flip pair: fixed-label
+local RMSD `1.879860 Å`, falling to `0.616975 Å` after `CD1↔CD2` and
+`CE1↔CE2`. Its assigned pairs did not show 2VFP's anomalous compression
+(`0.597 Å` median versus `0.617 Å` deposited across 49 recoveries), but its
+structural recovery count carries the same overlapping-neighborhood caveat.
+8DJ2 VAL893 and 7T7A LEU396 are also label-sensitive, but retain
+`1.093311 Å` and `1.747144 Å` residual local displacement after their methyl
+swaps.
+
+The full four-definition, 20-site audit is
+`results/deposited_panel_separation_diagnostic_v1.md`. The new low-separation
+anchor under fixed-label local RMSD is 5Z8H MET730 at `1.229525 Å`.
+
 ## Hidden greedy same-state duplication
 
 Under v1 greedy labels:

@@ -1,0 +1,69 @@
+{
+  "chain": "A",
+  "deposited_A_B_separation_A": 1.229525089263916,
+  "deposited_altloc_A": "A",
+  "deposited_altloc_B": "B",
+  "deposited_occupancy_raw": {
+    "A": 0.2800000011920929,
+    "B": 0.7200000286102295,
+    "sum": 1.0000000298023224
+  },
+  "first_voxel_center_A": [
+    2.415375000000001,
+    -19.004875,
+    67.74699999999999
+  ],
+  "frozen_metric": "qfit-synth20-merge050-one-to-one-tmol044-v3",
+  "grid_frame": "crystal Cartesian axes",
+  "grid_shape": [
+    32,
+    32,
+    32
+  ],
+  "grid_spacing_A": 0.5,
+  "insertion_code": " ",
+  "last_voxel_center_A": [
+    17.915375,
+    -3.5048749999999984,
+    83.24699999999999
+  ],
+  "map_type": "omit_mfo_dfc",
+  "optimizer_target_occupancy_normalized": {
+    "A": 0.2799999928474428,
+    "B": 0.7200000071525572
+  },
+  "patch_center_A": [
+    10.165375000000001,
+    -11.254874999999998,
+    75.49699999999999
+  ],
+  "pdb_id": "5Z8H",
+  "residue_name": "MET",
+  "residue_number": 730,
+  "resolution_high_A": 1.7898941452187602,
+  "selection_record": {
+    "chain": "A",
+    "deposited_A_occupancy": 0.2800000011920929,
+    "deposited_A_to_B_rmsd_conventional": 1.229525089263916,
+    "deposited_B_occupancy": 0.7200000286102295,
+    "error": "",
+    "insertion_code": " ",
+    "key": "5Z8H_A_MET730",
+    "kinematic_to_deposited_B_rmsd_conventional": 0.08493686467409134,
+    "n_chi": 3,
+    "pair_path": "/home/dev/qfit_unet_data/cache/test/pairs/5Z8H_A_MET730.npz",
+    "pdb_id": "5Z8H",
+    "pdb_path": "/home/dev/qfit_unet_data/test/5z8h.pdb",
+    "representable": true,
+    "residue_name": "MET",
+    "residue_number": 730
+  },
+  "separation_definition": "sqrt(mean_atoms(sum_xyz(delta^2))), minimized over valid equivalent terminal-atom permutations",
+  "separation_source": "frozen v3 audit tmol_inputs.json deposited A/B arrays + density_denoiser.residue_geometry.symmetry_aware_rmsd",
+  "site": "5Z8H_A_MET730",
+  "synthetic_B_rule": "per-atom deposited B_iso; sigma^2=max(B_iso/(8*pi^2),0.04) A^2",
+  "synthetic_target_scope": "sidechain heavy atoms",
+  "synthetic_weight_rule": "occupancy * atomic_number * normalized 3D Gaussian; optimizer divides moving-atom weights by deposited B median before applying learned ensemble occupancy",
+  "voxel_cell_extent_A": 16.0,
+  "voxel_center_span_A": 15.5
+}

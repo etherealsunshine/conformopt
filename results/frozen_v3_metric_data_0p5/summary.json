@@ -1,0 +1,38 @@
+{
+  "baseline_optimizer_physics_environment_rule": "2026-07-24-altloc-minstate-water-minstate-v2",
+  "geometry_rule": "2026-07-24-altloc-minstate-rotwidth-hisunion-aromatic45-matched-tmol-v2",
+  "kind": "derived single-rule 20-site composite; no endpoint files were overwritten",
+  "replaced_sites": [
+    "2VFP_A_TYR417",
+    "7UO8_A_GLN53"
+  ],
+  "replacement_optimizer_physics_environment_rule": "2026-07-24-altloc-minstate-water-minstate-v2",
+  "tmol_rule": "frozen_matched_deposited_minstate_v1",
+  "tmol_tolerance_promoted": false,
+  "totals": {
+    "active_conformers": 2488,
+    "assigned_pair_tmol_site_q99": 512,
+    "assigned_pair_tmol_tol_0_0": 395,
+    "assigned_pair_tmol_tol_0_5": 625,
+    "assigned_pair_tmol_tol_1_0": 664,
+    "assigned_pair_tmol_tol_2_0": 677,
+    "both_found": 729,
+    "both_found_delta_vs_completed_current_728": 1,
+    "both_found_delta_vs_stale": 56,
+    "completed_current_728_both_found": 728,
+    "plus_all_active_direct_clash": 706,
+    "plus_all_active_rotamer": 707,
+    "plus_all_active_symmetry_clash": 706,
+    "plus_all_active_tmol_site_q99": 441,
+    "plus_all_active_tmol_tol_0_0": 330,
+    "plus_all_active_tmol_tol_0_5": 536,
+    "plus_all_active_tmol_tol_1_0": 559,
+    "plus_all_active_tmol_tol_2_0": 572,
+    "recovery_and_occupancy": 715,
+    "site": "TOTAL",
+    "site_positive_margin_q99": "per-site",
+    "site_q99_effective_tolerance": "per-site",
+    "stale_both_found": 673,
+    "starts": 1000
+  }
+}

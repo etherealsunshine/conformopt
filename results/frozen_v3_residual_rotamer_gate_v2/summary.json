@@ -1,0 +1,1663 @@
+{
+  "cohorts": {
+    "all_single_recovery": {
+      "actionable_canonical_fit_count": 27,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.1443850267379679,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.18400062571833506,
+        "mean": 0.03997456811866885,
+        "median": 0.023261437904412766,
+        "min": 0.0,
+        "n": 187,
+        "q05": 0.0,
+        "q25": 2.765467400723864e-07,
+        "q75": 0.07415081038207331,
+        "q95": 0.11095272272135473
+      },
+      "best_rotamer_pearson": {
+        "max": 0.6448351679292518,
+        "mean": 0.17384339764188605,
+        "median": 0.11899457412666785,
+        "min": -0.035997376022611265,
+        "n": 187,
+        "q05": -0.01241907013267534,
+        "q25": -0.0014588687277909702,
+        "q75": 0.3105571641632339,
+        "q95": 0.46131072743349244
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 5.550609111785889,
+        "mean": 2.5884338893036154,
+        "median": 1.886313557624817,
+        "min": 0.14059969782829285,
+        "n": 187,
+        "q05": 0.39867904782295227,
+        "q25": 0.8061068058013916,
+        "q75": 4.779751300811768,
+        "q95": 5.550609111785889
+      },
+      "best_rotamer_within_1A_of_missed_count": 49,
+      "best_rotamer_within_1A_of_missed_fraction": 0.2620320855614973,
+      "ceiling_pearson_at_least_0p2_fraction": 0.7433155080213903,
+      "ceiling_pearson_at_least_0p5_fraction": 0.1925133689839572,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.6358329362276327,
+        "mean": 0.3065784227329296,
+        "median": 0.3212164941829859,
+        "min": -0.1899386376671018,
+        "n": 187,
+        "q05": -0.07723523315268013,
+        "q25": 0.18879290280300293,
+        "q75": 0.4437283069749971,
+        "q95": 0.5610691434683243
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.29466464370468803,
+        "mean": 0.07331437764381486,
+        "median": 0.06962548730418783,
+        "min": 0.0,
+        "n": 187,
+        "q05": 0.0,
+        "q25": 0.03725452114621865,
+        "q75": 0.08687576304798544,
+        "q95": 0.19488908572489738
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.6867451199181832,
+        "mean": 0.3277921555502235,
+        "median": 0.3395642268597354,
+        "min": -0.20507640634587737,
+        "n": 187,
+        "q05": -0.08000650853086316,
+        "q25": 0.19786119136694147,
+        "q75": 0.48878855153156753,
+        "q95": 0.61446499048183
+      },
+      "starts": 187
+    },
+    "missed_major": {
+      "actionable_canonical_fit_count": 15,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.3333333333333333,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.10294186886464447,
+        "mean": 0.06082721510170639,
+        "median": 0.06693797622454119,
+        "min": 0.009424016614142198,
+        "n": 45,
+        "q05": 0.014455259624128967,
+        "q25": 0.038017036243541115,
+        "q75": 0.08487391464899627,
+        "q95": 0.09871700509291621
+      },
+      "best_rotamer_pearson": {
+        "max": 0.47601034463954073,
+        "mean": 0.25864675727636444,
+        "median": 0.2777490612678573,
+        "min": 0.01201701148572092,
+        "n": 45,
+        "q05": 0.05133529084755137,
+        "q25": 0.12970890848414438,
+        "q75": 0.3649589989112233,
+        "q95": 0.4669145458455799
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 4.871551036834717,
+        "mean": 2.1023093819618226,
+        "median": 2.0276618003845215,
+        "min": 0.39867904782295227,
+        "n": 45,
+        "q05": 0.39867904782295227,
+        "q25": 0.39867904782295227,
+        "q75": 2.9983744621276855,
+        "q95": 4.779751300811768
+      },
+      "best_rotamer_within_1A_of_missed_count": 18,
+      "best_rotamer_within_1A_of_missed_fraction": 0.4,
+      "ceiling_pearson_at_least_0p2_fraction": 0.6888888888888889,
+      "ceiling_pearson_at_least_0p5_fraction": 0.2,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.613162592540816,
+        "mean": 0.2468835616147902,
+        "median": 0.29203487392254046,
+        "min": -0.1899386376671018,
+        "n": 45,
+        "q05": -0.11151896534667835,
+        "q25": 0.12899389831219213,
+        "q75": 0.39251522953523904,
+        "q95": 0.57114278877746
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.2634928708575397,
+        "mean": 0.0816522951964902,
+        "median": 0.07457405881942547,
+        "min": 0.0,
+        "n": 45,
+        "q05": 0.0,
+        "q25": 0.021025310076113416,
+        "q75": 0.1008238309267608,
+        "q95": 0.2361391802200096
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.6867451199181832,
+        "mean": 0.27260233118008,
+        "median": 0.31559749628119005,
+        "min": -0.20507640634587737,
+        "n": 45,
+        "q05": -0.1165728456725224,
+        "q25": 0.14188820343814237,
+        "q75": 0.4153259542400989,
+        "q95": 0.6459033900755068
+      },
+      "starts": 45
+    },
+    "missed_minor": {
+      "actionable_canonical_fit_count": 12,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.08450704225352113,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.18400062571833506,
+        "mean": 0.033366334919818906,
+        "median": 0.007570502299859313,
+        "min": 0.0,
+        "n": 142,
+        "q05": 0.0,
+        "q25": 0.0,
+        "q75": 0.06488693497515954,
+        "q95": 0.1297752573087953
+      },
+      "best_rotamer_pearson": {
+        "max": 0.6448351679292518,
+        "mean": 0.14696909353236823,
+        "median": 0.05831083467223665,
+        "min": -0.035997376022611265,
+        "n": 142,
+        "q05": -0.01678590386439288,
+        "q25": -0.006074304904818949,
+        "q75": 0.2747296275434692,
+        "q95": 0.4603091769998576
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 5.550609111785889,
+        "mean": 2.742487430362634,
+        "median": 1.7565711736679077,
+        "min": 0.14059969782829285,
+        "n": 142,
+        "q05": 0.4224196970462799,
+        "q25": 1.357365369796753,
+        "q75": 5.064950108528137,
+        "q95": 5.550609111785889
+      },
+      "best_rotamer_within_1A_of_missed_count": 31,
+      "best_rotamer_within_1A_of_missed_fraction": 0.21830985915492956,
+      "ceiling_pearson_at_least_0p2_fraction": 0.7605633802816901,
+      "ceiling_pearson_at_least_0p5_fraction": 0.19014084507042253,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.6358329362276327,
+        "mean": 0.3254958082985372,
+        "median": 0.3360550373820367,
+        "min": -0.17938884794646365,
+        "n": 142,
+        "q05": 0.042270373807963675,
+        "q25": 0.20878822224420282,
+        "q75": 0.449537415101584,
+        "q95": 0.5473043383789876
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.29466464370468803,
+        "mean": 0.07067207982782618,
+        "median": 0.06950956098031245,
+        "min": 0.0,
+        "n": 142,
+        "q05": 0.010322972386173615,
+        "q25": 0.03926103901861507,
+        "q75": 0.0854560680353607,
+        "q95": 0.16572543915462326
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.665698803712203,
+        "mean": 0.34528188862526904,
+        "median": 0.3494294883621916,
+        "min": -0.18418627936279652,
+        "n": 142,
+        "q05": 0.04026695914044827,
+        "q25": 0.2210704831596259,
+        "q75": 0.4943571437797857,
+        "q95": 0.6114795449400231
+      },
+      "starts": 142
+    },
+    "tail_sites": {
+      "actionable_canonical_fit_count": 20,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.14492753623188406,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.18400062571833506,
+        "mean": 0.034791491896149905,
+        "median": 0.00682079530082451,
+        "min": 0.0,
+        "n": 138,
+        "q05": 0.0,
+        "q25": 0.0,
+        "q75": 0.07601603630365282,
+        "q95": 0.11438615829448083
+      },
+      "best_rotamer_pearson": {
+        "max": 0.6448351679292518,
+        "mean": 0.15668064736776638,
+        "median": 0.05831083467223665,
+        "min": -0.035997376022611265,
+        "n": 138,
+        "q05": -0.017988194391825946,
+        "q25": -0.006266891231927653,
+        "q75": 0.3213127755038112,
+        "q95": 0.4682659335820194
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 5.550609111785889,
+        "mean": 2.6577139492484108,
+        "median": 1.7517917156219482,
+        "min": 0.39867904782295227,
+        "n": 138,
+        "q05": 0.39867904782295227,
+        "q25": 0.6287176609039307,
+        "q75": 5.065920352935791,
+        "q95": 5.550609111785889
+      },
+      "best_rotamer_within_1A_of_missed_count": 38,
+      "best_rotamer_within_1A_of_missed_fraction": 0.2753623188405797,
+      "ceiling_pearson_at_least_0p2_fraction": 0.7463768115942029,
+      "ceiling_pearson_at_least_0p5_fraction": 0.08695652173913043,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.6358329362276327,
+        "mean": 0.29439179667911186,
+        "median": 0.31283446174363905,
+        "min": -0.17938884794646365,
+        "n": 138,
+        "q05": -0.0762402076074493,
+        "q25": 0.1899159964214634,
+        "q75": 0.42659018477904204,
+        "q95": 0.4649452902977281
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.29466464370468803,
+        "mean": 0.062176806935173155,
+        "median": 0.06876363761359189,
+        "min": 0.0,
+        "n": 138,
+        "q05": 0.0,
+        "q25": 0.036966424011521525,
+        "q75": 0.08072811919085847,
+        "q95": 0.10707059198531138
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.665698803712203,
+        "mean": 0.3090982696772821,
+        "median": 0.32068066354325186,
+        "min": -0.18418627936279652,
+        "n": 138,
+        "q05": -0.07934388154949236,
+        "q25": 0.1984375012947372,
+        "q75": 0.46057476804194536,
+        "q95": 0.5127158837628425
+      },
+      "starts": 138
+    }
+  },
+  "guards": {
+    "major_only_missed_minor": 142,
+    "maximum_active_coordinate_reconstruction_rmsd_A": 8.313940270454623e-06,
+    "maximum_target_reconstruction_absolute_error": 3.27302447700184e-05,
+    "maximum_target_reconstruction_relative_l2": 3.8588240489793024e-06,
+    "minimum_target_reconstruction_pearson_correlation": 0.9999999999925591,
+    "minor_only_missed_major": 45,
+    "total_single_recovery": 187
+  },
+  "provenance": {
+    "baseline_root": "/home/dev/qfit_unet_data/density_denoiser/heldout_eighteen_synthetic_water_minstate_v2",
+    "density_space": "native additive density before z-scoring",
+    "endpoint_source": "saved frozen-v3 optimizer CSV rows",
+    "fit": "single-column raw-density least squares with occupancy q>=0; best minimizes SSE, Pearson reported separately",
+    "frozen_root": "/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_water_minstate_v2_single_rule_v1",
+    "mask": "saved Stage-1 radial mask",
+    "metric": "qfit-synth20-merge050-one-to-one-tmol044-v3",
+    "optimizer_runs": 0,
+    "replacement_root": "/home/dev/qfit_unet_data/density_denoiser/heldout_7uo8_2vfp_water_minstate_v1",
+    "rotamer_pool": "Cartesian pool of physically unique residue-specific marginal canonical chi centers used by production"
+  },
+  "sites": {
+    "1ZV8_E_ASN1": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 10,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.04994558972930107,
+        "mean": 0.0137170974687592,
+        "median": 9.10896884937546e-05,
+        "min": 0.0,
+        "n": 21,
+        "q05": 0.0,
+        "q25": 0.0,
+        "q75": 0.043274327928570507,
+        "q95": 0.047609516879580684
+      },
+      "best_rotamer_pearson": {
+        "max": 0.3236085494334556,
+        "mean": 0.07500103658453128,
+        "median": 0.000104690758816404,
+        "min": -0.035997376022611265,
+        "n": 21,
+        "q05": -0.03259340588518475,
+        "q25": -0.02896766912996489,
+        "q75": 0.28595922975249927,
+        "q95": 0.29386009697583154
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 3.2146410942077637,
+        "mean": 2.5824350175403414,
+        "median": 2.2910284996032715,
+        "min": 1.7517917156219482,
+        "n": 21,
+        "q05": 1.7517917156219482,
+        "q25": 2.1742820739746094,
+        "q75": 3.2146410942077637,
+        "q95": 3.2146410942077637
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.9523809523809523,
+      "ceiling_pearson_at_least_0p5_fraction": 0.3333333333333333,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.45600934582948405,
+        "mean": 0.40964749994552996,
+        "median": 0.44201705185582735,
+        "min": -0.09324420471536264,
+        "n": 21,
+        "q05": 0.38307135040754503,
+        "q25": 0.4297488963092349,
+        "q75": 0.4468411659755305,
+        "q95": 0.45586407134905244
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.08073791747763362,
+        "mean": 0.06849739888201932,
+        "median": 0.07130509300214173,
+        "min": 0.0,
+        "n": 21,
+        "q05": 0.06673545444676104,
+        "q25": 0.06962548730418783,
+        "q75": 0.07230091562938853,
+        "q95": 0.07879519190200365
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.5150653131755261,
+        "mean": 0.4625196208198907,
+        "median": 0.49842362888495323,
+        "min": -0.10540373701621258,
+        "n": 21,
+        "q05": 0.43358765426307666,
+        "q25": 0.4862495119175462,
+        "q75": 0.5042405874473453,
+        "q95": 0.5147698131975006
+      },
+      "missed_major_starts": 1,
+      "missed_minor_starts": 20,
+      "starts": 21,
+      "starts_with_active_slot_below_0p10": 9,
+      "tail_site": true
+    },
+    "2V05_A_HIS168": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 6,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.04528934270828095,
+        "mean": 0.024971572159847886,
+        "median": 0.022488712168652267,
+        "min": 0.014366853078600488,
+        "n": 10,
+        "q05": 0.014565767806039567,
+        "q25": 0.016191874746469097,
+        "q75": 0.03230939833384458,
+        "q95": 0.040184167261335495
+      },
+      "best_rotamer_pearson": {
+        "max": 0.29922995024100285,
+        "mean": 0.12804319310892032,
+        "median": 0.0791761150319859,
+        "min": 0.01201701148572092,
+        "n": 10,
+        "q05": 0.018506420006859925,
+        "q25": 0.03516107778977208,
+        "q75": 0.2381217788488675,
+        "q95": 0.2991185122162068
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 4.871551036834717,
+        "mean": 3.8244590759277344,
+        "median": 4.091254234313965,
+        "min": 2.8451285362243652,
+        "n": 10,
+        "q05": 2.8451285362243652,
+        "q25": 2.8451285362243652,
+        "q75": 4.46923303604126,
+        "q95": 4.871551036834717
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.1,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.28073075544078857,
+        "mean": 0.02797606322549248,
+        "median": 0.041584976557548295,
+        "min": -0.1899386376671018,
+        "n": 10,
+        "q05": -0.189550647065971,
+        "q25": -0.11343567882321812,
+        "q75": 0.11886131793967837,
+        "q95": 0.253377370729827
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.059394908922358956,
+        "mean": 0.016547428177420408,
+        "median": 0.007383784665531478,
+        "min": 0.0,
+        "n": 10,
+        "q05": 0.0,
+        "q25": 0.0,
+        "q75": 0.02454549106133963,
+        "q95": 0.0536613188527123
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.2792643780390619,
+        "mean": 0.004037372953698837,
+        "median": 0.00765638793963605,
+        "min": -0.20507640634587737,
+        "n": 10,
+        "q05": -0.20478933884099845,
+        "q25": -0.11770433316295821,
+        "q75": 0.08160543683054083,
+        "q95": 0.24082022035662617
+      },
+      "missed_major_starts": 6,
+      "missed_minor_starts": 4,
+      "starts": 10,
+      "starts_with_active_slot_below_0p10": 6,
+      "tail_site": false
+    },
+    "2VFP_A_TYR417": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 28,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.010130777588048638,
+        "mean": 0.00045018780757112174,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 44,
+        "q05": 0.0,
+        "q25": 0.0,
+        "q75": 0.0,
+        "q95": 0.0026408142234900477
+      },
+      "best_rotamer_pearson": {
+        "max": 0.03465333225609052,
+        "mean": -0.0057929963174976696,
+        "median": -0.00687245994318645,
+        "min": -0.013874485693573003,
+        "n": 44,
+        "q05": -0.012260115503630993,
+        "q25": -0.009628708193823483,
+        "q75": -0.004338099983247144,
+        "q95": 0.00010404978161332123
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 5.550609111785889,
+        "mean": 4.826408758759499,
+        "median": 5.550609111785889,
+        "min": 0.5389745235443115,
+        "n": 44,
+        "q05": 0.5389745235443115,
+        "q25": 5.065920352935791,
+        "q75": 5.550609111785889,
+        "q95": 5.550609111785889
+      },
+      "best_rotamer_within_1A_of_missed_count": 5,
+      "best_rotamer_within_1A_of_missed_fraction": 0.11363636363636363,
+      "ceiling_pearson_at_least_0p2_fraction": 0.4772727272727273,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.4266729780530256,
+        "mean": 0.21343177813800562,
+        "median": 0.19000858499908552,
+        "min": -0.17938884794646365,
+        "n": 44,
+        "q05": -0.01328000876543648,
+        "q25": 0.16521875010227896,
+        "q75": 0.31697499697548404,
+        "q95": 0.356039356006894
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.099456465339113,
+        "mean": 0.05089058167318903,
+        "median": 0.048605006232197184,
+        "min": 0.0,
+        "n": 44,
+        "q05": 0.0016459401078224654,
+        "q25": 0.04217177809166602,
+        "q75": 0.0702784002151037,
+        "q95": 0.07785413999092249
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.42920480551928086,
+        "mean": 0.20800476349943642,
+        "median": 0.1812876047710824,
+        "min": -0.18418627936279652,
+        "n": 44,
+        "q05": -0.01772972375018278,
+        "q25": 0.15439103726492462,
+        "q75": 0.31354045573512557,
+        "q95": 0.35082349650507455
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 44,
+      "starts": 44,
+      "starts_with_active_slot_below_0p10": 23,
+      "tail_site": true
+    },
+    "3A1C_B_ARG447": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 3,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.051109443023025745,
+        "mean": 0.04074091226421963,
+        "median": 0.038017036243541115,
+        "min": 0.03309625752609203,
+        "n": 3,
+        "q05": 0.033588335397836934,
+        "q25": 0.03555664688481657,
+        "q75": 0.04456323963328343,
+        "q95": 0.04980020234507728
+      },
+      "best_rotamer_pearson": {
+        "max": 0.4289654322673888,
+        "mean": 0.3459101626477854,
+        "median": 0.3649589989112233,
+        "min": 0.24380605676474407,
+        "n": 3,
+        "q05": 0.255921350979392,
+        "q25": 0.3043825278379837,
+        "q75": 0.39696221558930606,
+        "q95": 0.42256478893177224
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 2.466658353805542,
+        "mean": 2.284011642138163,
+        "median": 2.466658353805542,
+        "min": 1.9187182188034058,
+        "n": 3,
+        "q05": 1.9735122323036194,
+        "q25": 2.192688286304474,
+        "q75": 2.466658353805542,
+        "q95": 2.466658353805542
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 1.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.3143561593355675,
+        "mean": 0.2801337744906995,
+        "median": 0.30882698163435024,
+        "min": 0.21721818250218056,
+        "n": 3,
+        "q05": 0.22637906241539751,
+        "q25": 0.2630225820682654,
+        "q75": 0.3115915704849589,
+        "q95": 0.31380324156544576
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.05600933992374092,
+        "mean": 0.05103708472258903,
+        "median": 0.05578877249749259,
+        "min": 0.04131314174653357,
+        "n": 3,
+        "q05": 0.04276070482162947,
+        "q25": 0.04855095712201308,
+        "q75": 0.055899056210616756,
+        "q95": 0.055987283181116086
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.3783474183187007,
+        "mean": 0.3547937751940224,
+        "median": 0.37043641098217633,
+        "min": 0.31559749628119005,
+        "n": 3,
+        "q05": 0.3210813877512887,
+        "q25": 0.34301695363168316,
+        "q75": 0.37439191465043853,
+        "q95": 0.37755631758504826
+      },
+      "missed_major_starts": 2,
+      "missed_minor_starts": 1,
+      "starts": 3,
+      "starts_with_active_slot_below_0p10": 3,
+      "tail_site": false
+    },
+    "3GMI_A_GLU5": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 5,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.08069136461719573,
+        "mean": 0.06337836317516966,
+        "median": 0.06492517116330526,
+        "min": 0.035742288405749695,
+        "n": 9,
+        "q05": 0.04067296632841656,
+        "q25": 0.051220219481331486,
+        "q75": 0.07887203255811735,
+        "q95": 0.08026223515530176
+      },
+      "best_rotamer_pearson": {
+        "max": 0.2539992682149572,
+        "mean": 0.22718806771772723,
+        "median": 0.24370489835869708,
+        "min": 0.18129111432856196,
+        "n": 9,
+        "q05": 0.18357314664266883,
+        "q25": 0.21138115299130747,
+        "q75": 0.24811472430491624,
+        "q95": 0.25214983141399505
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 3.326728105545044,
+        "mean": 2.061460336049398,
+        "median": 1.4288264513015747,
+        "min": 1.4288264513015747,
+        "n": 9,
+        "q05": 1.4288264513015747,
+        "q25": 1.4288264513015747,
+        "q75": 3.326728105545044,
+        "q95": 3.326728105545044
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 1.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.8888888888888888,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.5864999460409897,
+        "mean": 0.5302748132012867,
+        "median": 0.5477397628892297,
+        "min": 0.40020100191710417,
+        "n": 9,
+        "q05": 0.4369984500255467,
+        "q25": 0.49622157805227535,
+        "q75": 0.5762855525183721,
+        "q95": 0.5853182818572898
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.19504244297144321,
+        "mean": 0.1540996540348527,
+        "median": 0.1803557758712169,
+        "min": 0.10338182118072696,
+        "n": 9,
+        "q05": 0.10511194684562068,
+        "q25": 0.10803626125213646,
+        "q75": 0.19452832974843634,
+        "q95": 0.19483796664271544
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.6152114321079146,
+        "mean": 0.5534674394364536,
+        "median": 0.5718920552748037,
+        "min": 0.4135466867240875,
+        "n": 9,
+        "q05": 0.45366788317384904,
+        "q25": 0.5171988300290252,
+        "q75": 0.6000145398952362,
+        "q95": 0.6139600457680168
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 9,
+      "starts": 9,
+      "starts_with_active_slot_below_0p10": 4,
+      "tail_site": false
+    },
+    "3K8W_A_SER337": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 0,
+      "best_rotamer_fitted_occupancy": {
+        "n": 0
+      },
+      "best_rotamer_pearson": {
+        "n": 0
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "n": 0
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_pearson": {
+        "n": 0
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 0,
+      "starts": 0,
+      "starts_with_active_slot_below_0p10": 0,
+      "tail_site": false
+    },
+    "3NY7_B_LYS19": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 1,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.05167827914558392,
+        "mean": 0.026937555390871948,
+        "median": 0.026937555390871948,
+        "min": 0.0021968316361599726,
+        "n": 2,
+        "q05": 0.00467090401163117,
+        "q25": 0.014567193513515958,
+        "q75": 0.03930791726822794,
+        "q95": 0.049204206770112724
+      },
+      "best_rotamer_pearson": {
+        "max": 0.2752121900091909,
+        "mean": 0.16125348172511195,
+        "median": 0.16125348172511195,
+        "min": 0.047294773441033,
+        "n": 2,
+        "q05": 0.05869064426944089,
+        "q25": 0.10427412758307247,
+        "q75": 0.21823283586715142,
+        "q95": 0.26381631918078297
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 3.634579658508301,
+        "mean": 2.551559627056122,
+        "median": 2.551559627056122,
+        "min": 1.4685395956039429,
+        "n": 2,
+        "q05": 1.5768415987491609,
+        "q25": 2.0100496113300323,
+        "q75": 3.0930696427822113,
+        "q95": 3.526277655363083
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.5,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.16713748946423476,
+        "mean": 0.10086326854668552,
+        "median": 0.10086326854668552,
+        "min": 0.034589047629136276,
+        "n": 2,
+        "q05": 0.0412164697208912,
+        "q25": 0.0677261580879109,
+        "q75": 0.13400037900546014,
+        "q95": 0.16051006737247983
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.038684240622098444,
+        "mean": 0.023170607195346513,
+        "median": 0.023170607195346513,
+        "min": 0.00765697376859458,
+        "n": 2,
+        "q05": 0.009208337111269773,
+        "q25": 0.015413790481970547,
+        "q75": 0.030927423908722478,
+        "q95": 0.03713287727942325
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.21211036494375093,
+        "mean": 0.14350721653553897,
+        "median": 0.14350721653553897,
+        "min": 0.07490406812732701,
+        "n": 2,
+        "q05": 0.08176438296814821,
+        "q25": 0.109205642331433,
+        "q75": 0.17780879073964495,
+        "q95": 0.20525005010292974
+      },
+      "missed_major_starts": 1,
+      "missed_minor_starts": 1,
+      "starts": 2,
+      "starts_with_active_slot_below_0p10": 1,
+      "tail_site": false
+    },
+    "4C16_A_MET258": {
+      "actionable_canonical_fit_count": 15,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.625,
+      "active_slots_below_0p10_total": 15,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.18400062571833506,
+        "mean": 0.05999144645428878,
+        "median": 0.06564884725225975,
+        "min": 0.009888053603347175,
+        "n": 24,
+        "q05": 0.010447549944167885,
+        "q25": 0.023532968039252956,
+        "q75": 0.07903029493272415,
+        "q95": 0.10247709470869194
+      },
+      "best_rotamer_pearson": {
+        "max": 0.4120950547435619,
+        "mean": 0.24511455674671298,
+        "median": 0.2744994716771856,
+        "min": 0.07038095920115954,
+        "n": 24,
+        "q05": 0.07405465320627262,
+        "q25": 0.12867962202452446,
+        "q75": 0.32657107278441805,
+        "q95": 0.3985589056456457
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 2.9283454418182373,
+        "mean": 0.935319242378076,
+        "median": 0.39867904782295227,
+        "min": 0.39867904782295227,
+        "n": 24,
+        "q05": 0.39867904782295227,
+        "q25": 0.39867904782295227,
+        "q75": 1.5003966987133026,
+        "q95": 2.0276618003845215
+      },
+      "best_rotamer_within_1A_of_missed_count": 16,
+      "best_rotamer_within_1A_of_missed_fraction": 0.6666666666666666,
+      "ceiling_pearson_at_least_0p2_fraction": 1.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.041666666666666664,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.6186131286815011,
+        "mean": 0.33608502827449627,
+        "median": 0.3189374711665668,
+        "min": 0.24324593767549407,
+        "n": 24,
+        "q05": 0.25345070983518864,
+        "q25": 0.2912778621515465,
+        "q75": 0.36295840742833413,
+        "q95": 0.4228812246628652
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.29466464370468803,
+        "mean": 0.08174552898839381,
+        "median": 0.07804447879330309,
+        "min": 0.04311785829554071,
+        "n": 24,
+        "q05": 0.04520924184079047,
+        "q25": 0.05089143032024038,
+        "q75": 0.08913558415825137,
+        "q95": 0.10556581448084597
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.6586916676120963,
+        "mean": 0.3537241477573702,
+        "median": 0.3376050236704654,
+        "min": 0.2506916992655246,
+        "n": 24,
+        "q05": 0.2585724813123034,
+        "q25": 0.30916676938655663,
+        "q75": 0.37812141037452035,
+        "q95": 0.4421681995982792
+      },
+      "missed_major_starts": 17,
+      "missed_minor_starts": 7,
+      "starts": 24,
+      "starts_with_active_slot_below_0p10": 13,
+      "tail_site": true
+    },
+    "4MKM_A_THR77": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 0,
+      "best_rotamer_fitted_occupancy": {
+        "n": 0
+      },
+      "best_rotamer_pearson": {
+        "n": 0
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "n": 0
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_pearson": {
+        "n": 0
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 0,
+      "starts": 0,
+      "starts_with_active_slot_below_0p10": 0,
+      "tail_site": false
+    },
+    "5DBA_A_TRP325": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 3,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.13471684019743016,
+        "mean": 0.07173147101168154,
+        "median": 0.06693823164317626,
+        "min": 0.054657437501735,
+        "n": 13,
+        "q05": 0.057002544429062066,
+        "q25": 0.06693652630239043,
+        "q75": 0.06855238772075242,
+        "q95": 0.09888039096430377
+      },
+      "best_rotamer_pearson": {
+        "max": 0.38841444703318584,
+        "mean": 0.1815505632846412,
+        "median": 0.1501320475036076,
+        "min": 0.1055741579402064,
+        "n": 13,
+        "q05": 0.11306043509871741,
+        "q25": 0.15012898634659372,
+        "q75": 0.19439161209466074,
+        "q95": 0.3204570114855365
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 4.824881553649902,
+        "mean": 3.2901771251971903,
+        "median": 2.9983744621276855,
+        "min": 1.7612786293029785,
+        "n": 13,
+        "q05": 2.368838882446289,
+        "q25": 2.9983744621276855,
+        "q75": 2.9983744621276855,
+        "q95": 4.824881553649902
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 1.0,
+      "ceiling_pearson_at_least_0p5_fraction": 1.0,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.613162592540816,
+        "mean": 0.49528288096769474,
+        "median": 0.5002073783501637,
+        "min": 0.42666286157545064,
+        "n": 13,
+        "q05": 0.42666322025133774,
+        "q25": 0.42666396560146874,
+        "q75": 0.5290650575467015,
+        "q95": 0.6034322324646519
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.2634928708575397,
+        "mean": 0.19387094985102143,
+        "median": 0.2044746906516171,
+        "min": 0.1288413765774688,
+        "n": 13,
+        "q05": 0.13275623835852338,
+        "q25": 0.15521425860434448,
+        "q75": 0.21273633458292363,
+        "q95": 0.2613374490737328
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.6867451199181832,
+        "mean": 0.5983346929471901,
+        "median": 0.6127232933542994,
+        "min": 0.5272529999545519,
+        "n": 13,
+        "q05": 0.5322088639953216,
+        "q25": 0.5355146447953021,
+        "q75": 0.6492731408572467,
+        "q95": 0.6816756183816434
+      },
+      "missed_major_starts": 8,
+      "missed_minor_starts": 5,
+      "starts": 13,
+      "starts_with_active_slot_below_0p10": 3,
+      "tail_site": false
+    },
+    "5KWB_A_PHE591": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 0,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.01721936981537519,
+        "mean": 0.01721936981537519,
+        "median": 0.01721936981537519,
+        "min": 0.01721936981537519,
+        "n": 1,
+        "q05": 0.01721936981537519,
+        "q25": 0.01721936981537519,
+        "q75": 0.01721936981537519,
+        "q95": 0.01721936981537519
+      },
+      "best_rotamer_pearson": {
+        "max": 0.07449896156377729,
+        "mean": 0.07449896156377729,
+        "median": 0.07449896156377729,
+        "min": 0.07449896156377729,
+        "n": 1,
+        "q05": 0.07449896156377729,
+        "q25": 0.07449896156377729,
+        "q75": 0.07449896156377729,
+        "q95": 0.07449896156377729
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 0.15999114513397217,
+        "mean": 0.15999114513397217,
+        "median": 0.15999114513397217,
+        "min": 0.15999114513397217,
+        "n": 1,
+        "q05": 0.15999114513397217,
+        "q25": 0.15999114513397217,
+        "q75": 0.15999114513397217,
+        "q95": 0.15999114513397217
+      },
+      "best_rotamer_within_1A_of_missed_count": 1,
+      "best_rotamer_within_1A_of_missed_fraction": 1.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.04983027692586441,
+        "mean": 0.04983027692586441,
+        "median": 0.04983027692586441,
+        "min": 0.04983027692586441,
+        "n": 1,
+        "q05": 0.04983027692586441,
+        "q25": 0.04983027692586441,
+        "q75": 0.04983027692586441,
+        "q95": 0.04983027692586441
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.010288763877438028,
+        "mean": 0.010288763877438028,
+        "median": 0.010288763877438028,
+        "min": 0.010288763877438028,
+        "n": 1,
+        "q05": 0.010288763877438028,
+        "q25": 0.010288763877438028,
+        "q75": 0.010288763877438028,
+        "q95": 0.010288763877438028
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.03944720466946092,
+        "mean": 0.03944720466946092,
+        "median": 0.03944720466946092,
+        "min": 0.03944720466946092,
+        "n": 1,
+        "q05": 0.03944720466946092,
+        "q25": 0.03944720466946092,
+        "q75": 0.03944720466946092,
+        "q95": 0.03944720466946092
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 1,
+      "starts": 1,
+      "starts_with_active_slot_below_0p10": 0,
+      "tail_site": false
+    },
+    "5Z8H_A_MET730": {
+      "actionable_canonical_fit_count": 5,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.17857142857142858,
+      "active_slots_below_0p10_total": 9,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.16337478115154547,
+        "mean": 0.039696603907953994,
+        "median": 0.008880250140935872,
+        "min": 0.003292184744511227,
+        "n": 28,
+        "q05": 0.003401992426212069,
+        "q25": 0.004445257620401529,
+        "q75": 0.05554560126562005,
+        "q95": 0.1624448475096448
+      },
+      "best_rotamer_pearson": {
+        "max": 0.4694447154024537,
+        "mean": 0.1592282106801537,
+        "median": 0.0848444895988574,
+        "min": 0.03189887192833201,
+        "n": 28,
+        "q05": 0.032134968356283634,
+        "q25": 0.040392478131431125,
+        "q75": 0.25386262209717825,
+        "q95": 0.43091863361324834
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 1.7299764156341553,
+        "mean": 1.02445550262928,
+        "median": 0.6287176609039307,
+        "min": 0.40928998589515686,
+        "n": 28,
+        "q05": 0.48608967214822774,
+        "q25": 0.6287176609039307,
+        "q75": 1.6639395952224731,
+        "q95": 1.7068635284900664
+      },
+      "best_rotamer_within_1A_of_missed_count": 17,
+      "best_rotamer_within_1A_of_missed_fraction": 0.6071428571428571,
+      "ceiling_pearson_at_least_0p2_fraction": 0.8214285714285714,
+      "ceiling_pearson_at_least_0p5_fraction": 0.03571428571428571,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.49965505414463923,
+        "mean": 0.2804386592179505,
+        "median": 0.26775179925495474,
+        "min": 0.1702602734723275,
+        "n": 28,
+        "q05": 0.18244418045043176,
+        "q25": 0.21085736649980708,
+        "q75": 0.330464761984283,
+        "q95": 0.44010047134354513
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.16521004903777187,
+        "mean": 0.05278455177813098,
+        "median": 0.029854237354831697,
+        "min": 0.01912590258040817,
+        "n": 28,
+        "q05": 0.020379837194371107,
+        "q25": 0.023860895011057856,
+        "q75": 0.06190044073048469,
+        "q95": 0.16411814201938787
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.5263384845856847,
+        "mean": 0.295012141211986,
+        "median": 0.2805136090317255,
+        "min": 0.1800579943644348,
+        "n": 28,
+        "q05": 0.19266278694407896,
+        "q25": 0.22321787128253712,
+        "q75": 0.3493187591445362,
+        "q95": 0.4645534914178106
+      },
+      "missed_major_starts": 2,
+      "missed_minor_starts": 26,
+      "starts": 28,
+      "starts_with_active_slot_below_0p10": 8,
+      "tail_site": true
+    },
+    "6H59_B_ARG144": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 0,
+      "best_rotamer_fitted_occupancy": {
+        "n": 0
+      },
+      "best_rotamer_pearson": {
+        "n": 0
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "n": 0
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_pearson": {
+        "n": 0
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 0,
+      "starts": 0,
+      "starts_with_active_slot_below_0p10": 0,
+      "tail_site": false
+    },
+    "6Y4G_B_CYS260": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 0,
+      "best_rotamer_fitted_occupancy": {
+        "n": 0
+      },
+      "best_rotamer_pearson": {
+        "n": 0
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "n": 0
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_pearson": {
+        "n": 0
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 0,
+      "starts": 0,
+      "starts_with_active_slot_below_0p10": 0,
+      "tail_site": false
+    },
+    "7F72_A_MET103": {
+      "actionable_canonical_fit_count": 1,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.2,
+      "active_slots_below_0p10_total": 5,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.06477222641072236,
+        "mean": 0.03215871418998273,
+        "median": 0.032857811791962,
+        "min": 0.009424016614142198,
+        "n": 5,
+        "q05": 0.009849668131803222,
+        "q25": 0.011552274202447317,
+        "q75": 0.0421872419306398,
+        "q95": 0.06025522951470585
+      },
+      "best_rotamer_pearson": {
+        "max": 0.45421119224649015,
+        "mean": 0.23165020417798363,
+        "median": 0.22683378972252674,
+        "min": 0.06338060817828532,
+        "n": 5,
+        "q05": 0.06637239348148942,
+        "q25": 0.07833953469430581,
+        "q75": 0.3354858960483101,
+        "q95": 0.4304661330068541
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 1.886313557624817,
+        "mean": 0.7343858242034912,
+        "median": 0.4703880846500397,
+        "min": 0.4224196970462799,
+        "n": 5,
+        "q05": 0.4224196970462799,
+        "q25": 0.4224196970462799,
+        "q75": 0.4703880846500397,
+        "q95": 1.6031284630298612
+      },
+      "best_rotamer_within_1A_of_missed_count": 4,
+      "best_rotamer_within_1A_of_missed_fraction": 0.8,
+      "ceiling_pearson_at_least_0p2_fraction": 0.6,
+      "ceiling_pearson_at_least_0p5_fraction": 0.2,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.46450952734827794,
+        "mean": 0.27357057352981584,
+        "median": 0.2950247669303806,
+        "min": 0.12899389831219213,
+        "n": 5,
+        "q05": 0.1318045822658218,
+        "q25": 0.14304731808034052,
+        "q75": 0.3362773569778881,
+        "q95": 0.4388630932741999
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.07275986637726746,
+        "mean": 0.04198168118371641,
+        "median": 0.04630102476736981,
+        "min": 0.021025310076113416,
+        "n": 5,
+        "q05": 0.021439836650976214,
+        "q25": 0.023097942950427407,
+        "q75": 0.046724261747403954,
+        "q95": 0.06755274545129475
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.5107178592095977,
+        "mean": 0.3006279861617426,
+        "median": 0.3246913152028714,
+        "min": 0.14188820343814237,
+        "n": 5,
+        "q05": 0.14495245752919184,
+        "q25": 0.15720947389338963,
+        "q75": 0.3686330790647121,
+        "q95": 0.4823009031806205
+      },
+      "missed_major_starts": 2,
+      "missed_minor_starts": 3,
+      "starts": 5,
+      "starts_with_active_slot_below_0p10": 4,
+      "tail_site": false
+    },
+    "7T7A_A_LEU396": {
+      "actionable_canonical_fit_count": 5,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 1.0,
+      "active_slots_below_0p10_total": 2,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.09023276510238154,
+        "mean": 0.08733846166840868,
+        "median": 0.08670664952680164,
+        "min": 0.08423826324030871,
+        "n": 5,
+        "q05": 0.08463015670004236,
+        "q25": 0.0861977305389769,
+        "q75": 0.08931689993357465,
+        "q95": 0.09004959206862016
+      },
+      "best_rotamer_pearson": {
+        "max": 0.44621708361508705,
+        "mean": 0.4292141724442075,
+        "median": 0.4275079298470892,
+        "min": 0.4196950232192926,
+        "n": 5,
+        "q05": 0.4203523282147969,
+        "q25": 0.4229815481968142,
+        "q75": 0.4296692773427546,
+        "q95": 0.4429075223606206
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 0.35498034954071045,
+        "mean": 0.35498034954071045,
+        "median": 0.35498034954071045,
+        "min": 0.35498034954071045,
+        "n": 5,
+        "q05": 0.35498034954071045,
+        "q25": 0.35498034954071045,
+        "q75": 0.35498034954071045,
+        "q95": 0.35498034954071045
+      },
+      "best_rotamer_within_1A_of_missed_count": 5,
+      "best_rotamer_within_1A_of_missed_fraction": 1.0,
+      "ceiling_pearson_at_least_0p2_fraction": 1.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.4,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.4806161129609133,
+        "mean": 0.4637736859378732,
+        "median": 0.4604739303156023,
+        "min": 0.452116223506409,
+        "n": 5,
+        "q05": 0.4524496330224997,
+        "q25": 0.45378327108686245,
+        "q75": 0.4718788918195792,
+        "q95": 0.47886866873264644
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.10346994907583332,
+        "mean": 0.1005872170877746,
+        "median": 0.09925456336061762,
+        "min": 0.09852524842761727,
+        "n": 5,
+        "q05": 0.09863526598677202,
+        "q25": 0.09907533622339104,
+        "q75": 0.10261098835141381,
+        "q95": 0.10329815693094942
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.5119932420365314,
+        "mean": 0.49461961411115996,
+        "median": 0.4913275911455888,
+        "min": 0.4825592768809912,
+        "n": 5,
+        "q05": 0.4829177911856773,
+        "q25": 0.48435184840442164,
+        "q75": 0.5028661120882668,
+        "q95": 0.5101678160468784
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 5,
+      "starts": 5,
+      "starts_with_active_slot_below_0p10": 2,
+      "tail_site": false
+    },
+    "7UO8_A_GLN53": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 5,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.17756268611271547,
+        "mean": 0.09247899747457008,
+        "median": 0.08490144633658699,
+        "min": 0.07987471738035017,
+        "n": 21,
+        "q05": 0.08133009705628459,
+        "q25": 0.0821624123331231,
+        "q75": 0.09066339995940345,
+        "q95": 0.132524707126567
+      },
+      "best_rotamer_pearson": {
+        "max": 0.6448351679292518,
+        "mean": 0.4743171497848139,
+        "median": 0.4572471245919333,
+        "min": 0.4453308426403924,
+        "n": 21,
+        "q05": 0.4465828239701489,
+        "q25": 0.45206998760432177,
+        "q75": 0.4704847362842916,
+        "q95": 0.5763073392669132
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 4.779751300811768,
+        "mean": 2.3351899215153287,
+        "median": 1.357365369796753,
+        "min": 1.357365369796753,
+        "n": 21,
+        "q05": 1.357365369796753,
+        "q25": 1.357365369796753,
+        "q75": 4.779751300811768,
+        "q95": 4.779751300811768
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.7142857142857143,
+      "ceiling_pearson_at_least_0p5_fraction": 0.14285714285714285,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.6358329362276327,
+        "mean": 0.31972138419516793,
+        "median": 0.4538943657760745,
+        "min": -0.11173253552731621,
+        "n": 21,
+        "q05": -0.11066468462412693,
+        "q25": -0.059976096797050696,
+        "q75": 0.4596568467206546,
+        "q95": 0.6304960556867412
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.18210547715712452,
+        "mean": 0.06966229720962164,
+        "median": 0.08510151843009907,
+        "min": 0.0,
+        "n": 21,
+        "q05": 0.0,
+        "q25": 0.0,
+        "q75": 0.08624130041837598,
+        "q95": 0.1509134718223081
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.665698803712203,
+        "mean": 0.3352723849599774,
+        "median": 0.4756146434433787,
+        "min": -0.11679085427767504,
+        "n": 21,
+        "q05": -0.1157008112519118,
+        "q25": -0.06250769299214563,
+        "q75": 0.48167332706475113,
+        "q95": 0.6605804989881002
+      },
+      "missed_major_starts": 6,
+      "missed_minor_starts": 15,
+      "starts": 21,
+      "starts_with_active_slot_below_0p10": 5,
+      "tail_site": true
+    },
+    "8DJ2_A_VAL893": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 0,
+      "best_rotamer_fitted_occupancy": {
+        "n": 0
+      },
+      "best_rotamer_pearson": {
+        "n": 0
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "n": 0
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_pearson": {
+        "n": 0
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 0,
+      "starts": 0,
+      "starts_with_active_slot_below_0p10": 0,
+      "tail_site": false
+    },
+    "8FBE_B_ILE92": {
+      "actionable_canonical_fit_count": 1,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 1.0,
+      "active_slots_below_0p10_total": 0,
+      "best_rotamer_fitted_occupancy": {
+        "max": 0.13058514651378508,
+        "mean": 0.13058514651378508,
+        "median": 0.13058514651378508,
+        "min": 0.13058514651378508,
+        "n": 1,
+        "q05": 0.13058514651378508,
+        "q25": 0.13058514651378508,
+        "q75": 0.13058514651378508,
+        "q95": 0.13058514651378508
+      },
+      "best_rotamer_pearson": {
+        "max": 0.46244586296352674,
+        "mean": 0.46244586296352674,
+        "median": 0.46244586296352674,
+        "min": 0.46244586296352674,
+        "n": 1,
+        "q05": 0.46244586296352674,
+        "q25": 0.46244586296352674,
+        "q75": 0.46244586296352674,
+        "q95": 0.46244586296352674
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "max": 0.14059969782829285,
+        "mean": 0.14059969782829285,
+        "median": 0.14059969782829285,
+        "min": 0.14059969782829285,
+        "n": 1,
+        "q05": 0.14059969782829285,
+        "q25": 0.14059969782829285,
+        "q75": 0.14059969782829285,
+        "q95": 0.14059969782829285
+      },
+      "best_rotamer_within_1A_of_missed_count": 1,
+      "best_rotamer_within_1A_of_missed_fraction": 1.0,
+      "ceiling_pearson_at_least_0p2_fraction": 1.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "max": 0.43450627086408145,
+        "mean": 0.43450627086408145,
+        "median": 0.43450627086408145,
+        "min": 0.43450627086408145,
+        "n": 1,
+        "q05": 0.43450627086408145,
+        "q25": 0.43450627086408145,
+        "q75": 0.43450627086408145,
+        "q95": 0.43450627086408145
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "max": 0.1341100223949701,
+        "mean": 0.1341100223949701,
+        "median": 0.1341100223949701,
+        "min": 0.1341100223949701,
+        "n": 1,
+        "q05": 0.1341100223949701,
+        "q25": 0.1341100223949701,
+        "q75": 0.1341100223949701,
+        "q95": 0.1341100223949701
+      },
+      "deposited_missed_ceiling_pearson": {
+        "max": 0.4745592149612197,
+        "mean": 0.4745592149612197,
+        "median": 0.4745592149612197,
+        "min": 0.4745592149612197,
+        "n": 1,
+        "q05": 0.4745592149612197,
+        "q25": 0.4745592149612197,
+        "q75": 0.4745592149612197,
+        "q95": 0.4745592149612197
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 1,
+      "starts": 1,
+      "starts_with_active_slot_below_0p10": 0,
+      "tail_site": false
+    },
+    "8Q6Q_B_ASP81": {
+      "actionable_canonical_fit_count": 0,
+      "actionable_canonical_fit_definition": "best rotamer within 1.0 A of missed, Pearson r>=0.2, and fitted occupancy>=0.05",
+      "actionable_canonical_fit_fraction": 0.0,
+      "active_slots_below_0p10_total": 0,
+      "best_rotamer_fitted_occupancy": {
+        "n": 0
+      },
+      "best_rotamer_pearson": {
+        "n": 0
+      },
+      "best_rotamer_rmsd_to_missed_A": {
+        "n": 0
+      },
+      "best_rotamer_within_1A_of_missed_count": 0,
+      "best_rotamer_within_1A_of_missed_fraction": 0.0,
+      "ceiling_pearson_at_least_0p2_fraction": 0.0,
+      "ceiling_pearson_at_least_0p5_fraction": 0.0,
+      "deposited_missed_ceiling_cosine": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_fitted_occupancy": {
+        "n": 0
+      },
+      "deposited_missed_ceiling_pearson": {
+        "n": 0
+      },
+      "missed_major_starts": 0,
+      "missed_minor_starts": 0,
+      "starts": 0,
+      "starts_with_active_slot_below_0p10": 0,
+      "tail_site": false
+    }
+  }
+}

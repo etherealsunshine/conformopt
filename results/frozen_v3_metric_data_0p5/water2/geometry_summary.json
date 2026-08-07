@@ -1,0 +1,29 @@
+{
+  "active_conformers": 220,
+  "audit_rule_version": "2026-07-24-altloc-minstate-rotwidth-hisunion-aromatic45-matched-tmol-v2",
+  "both_found_conventional": 32,
+  "conformer_matching_version": "optimal_one_to_one_AB_rmsd_v1",
+  "criteria": {
+    "active_occupancy": 0.05,
+    "altloc_clash_partition": "per-neighbor min over protein altloc states; labeled waters match assigned A/B; unlabeled waters use occupancy-scaled cutoff",
+    "clash_cutoff_A": 2.0,
+    "conformer_matching": "Hungarian optimal one-to-one A/B assignment; maximize valid matches then minimize total conventional RMSD",
+    "conventional_rmsd_cutoff_A": 1.0,
+    "found_occupancy": 0.1,
+    "merge_method": "A/B-protected single-linkage connected components; protected anchor or occupancy-weighted medoid geometry; summed cluster occupancy",
+    "merge_rmsd_threshold_A": 0.5,
+    "occupancy_tolerance": 0.2,
+    "rotamer_gate": "shared residue/chi centers and per-chi widths",
+    "tmol_gate": "no worse than matched deposited conformer"
+  },
+  "ensembles": 100,
+  "geometric_occupancy_success": 26,
+  "geometry_physical_valid_ensembles": 70,
+  "joint_geometry_success": 24,
+  "merge_rmsd_threshold_A": 0.5,
+  "noncanonical_active_conformers": 34,
+  "noncanonical_deposited_controls": 0,
+  "status": "geometry_complete",
+  "sub2A_direct_active_conformers": 32,
+  "sub2A_symmetry_active_conformers": 0
+}

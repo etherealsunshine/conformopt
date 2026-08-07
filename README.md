@@ -4,6 +4,10 @@ Research code for learning and optimizing crystallographic side-chain ensembles 
 
 This repository is an experiment record as well as an active codebase. The Probe 2/4/4b/4c scripts and their saved results document how the project progressed from learned-energy feasibility tests to experimental-density multi-conformer fitting.
 
+> **New agent/chat:** read [`AGENTS.md`](AGENTS.md) for operating rules, then
+> [`CURRENT_HANDOFF.md`](CURRENT_HANDOFF.md) for the latest results, exact pod
+> paths and commands, current scientific interpretation, and next experiments.
+
 ## Current production pipeline
 
 ```text
@@ -36,16 +40,12 @@ The strict success criterion is:
 | Path | Purpose |
 |---|---|
 | `density_denoiser/` | Active data, U-Net, optimizer, validation, and audit package. |
+| `docs/` | Navigation, current research reports, and long-form context. Start at [`docs/README.md`](docs/README.md). |
+| `scripts/` | Reproducible audit, analysis, and visualization entry points. See [`scripts/README.md`](scripts/README.md). |
+| `experiments/` | Organised historical Probe and control experiments. |
 | `data/` | Small checked-in 2O1K reference PDB/CIF/MTZ files. |
-| `probe2*.py` | Early direct-coordinate and tmol/SFcalculator controls. |
-| `probe4*.py` | Learned-energy, localized-loss, physics, and endpoint-audit experiments. |
-| `direct_optimization_modal.py` | Direct kinematic landscape control without a learned model. |
-| `multi_conformer_modal.py` | Synthetic K=4 multi-conformer fitting on 2O1K. |
-| `experimental_multi_conformer_modal.py` | Experimental-map multi-conformer variants. |
 | `five_site_tmol_audit.py` | Restartable local/pod tmol endpoint scorer. |
-| `*_results/`, `*_audit/`, `results/` | Curated experiment outputs and reports. |
-| `PROBE*.md`, `ARG129_*.md` | Scientific experiment write-ups. |
-| `EBT_RESEARCH_CONTEXT.md` | Original long-form scientific motivation and project context. |
+| `results/` | Curated, compact result artifacts; full run trees live on the pod. See [`results/README.md`](results/README.md). |
 | `AGENTS.md` | Detailed operational manual, complete source-file catalog, and pod layout. |
 
 ## Runtime model
@@ -148,8 +148,14 @@ The tests cover differentiable torsion kinematics, omit-map subtraction, canonic
 ## More documentation
 
 - Read `AGENTS.md` before changing or launching anything.
+- Read `CURRENT_HANDOFF.md` for the latest 20-site denoised/synthetic results,
+  current run roots, launch commands, diagnostics, and open ideas.
 - Read `density_denoiser/README.md` for the density-pair preparation conventions.
-- Read `PROBE4_FULL_EXPERIMENT_REPORT.md` and `PROBE4C1_4C2_REPORT.md` for the main experimental findings.
-- Read `EBT_RESEARCH_CONTEXT.md` for the original motivation, terminology, and long-range research plan.
+- Read [`docs/reports/README.md`](docs/reports/README.md) for the scientific-report index.
+- Read [`docs/reports/PROBE4_FULL_EXPERIMENT_REPORT.md`](docs/reports/PROBE4_FULL_EXPERIMENT_REPORT.md)
+  and [`docs/reports/PROBE4C1_4C2_REPORT.md`](docs/reports/PROBE4C1_4C2_REPORT.md)
+  for the main Probe findings.
+- Read [`docs/research/EBT_RESEARCH_CONTEXT.md`](docs/research/EBT_RESEARCH_CONTEXT.md)
+  for the original motivation, terminology, and long-range research plan.
 
 This is research software. Saved outputs are evidence tied to exact run configurations, not interchangeable benchmark numbers.

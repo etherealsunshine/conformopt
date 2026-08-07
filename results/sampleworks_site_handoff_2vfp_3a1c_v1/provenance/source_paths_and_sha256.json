@@ -1,0 +1,82 @@
+{
+  "cluster_sources": {
+    "/home/dev/qfit_unet_data/cache/test/mtz/2VFP.mtz": {
+      "copied_as": null,
+      "sha256": "6360d4408c47f737a07905f3ad4c42453020818e5d8a15e3d02fc4ca62d7965c"
+    },
+    "/home/dev/qfit_unet_data/cache/test/mtz/3A1C.mtz": {
+      "copied_as": null,
+      "sha256": "f7e056e0af33240c7be6499e79bba2c6e407f42cf2784120f67bcc5c10f8e8f5"
+    },
+    "/home/dev/qfit_unet_data/cache/test/pairs/2VFP_A_TYR417.npz": {
+      "copied_as": null,
+      "sha256": "d50a659f9cece6b7bea4f8a1a746a8fcc9226107263d695fdea1e51c48469955"
+    },
+    "/home/dev/qfit_unet_data/cache/test/pairs/3A1C_B_ARG447.npz": {
+      "copied_as": null,
+      "sha256": "38b18169c3fb067801c1af5636cd45d4393da1c5aba82f57d84c9063c749371e"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/expanded_heldout_selection_15_v2_symmetry/selection.json": {
+      "copied_as": null,
+      "sha256": "8909bbe8a2af4985799f9a7242a47389b73bc1aae55f9158aa306ff371e66422"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_7uo8_2vfp_water_minstate_v1/shards/2VFP_A_TYR417/run_config.json": {
+      "copied_as": "provenance/2VFP_A_TYR417_run_config.json",
+      "sha256": "bcd233df57646a675ff42977d174d94ffd85c142cca92b0ff35e216d72a1eb9e"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_7uo8_2vfp_water_minstate_v1/shards/2VFP_A_TYR417/synthetic/2VFP_A_TYR417_starts.csv": {
+      "copied_as": "provenance/2VFP_A_TYR417_all_50_starts.csv",
+      "sha256": "661ce62d273e47a75542f0bfef630c8c9125f488d0f444ac0e2d742743ab16c3"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_eighteen_synthetic_water_minstate_v2/shards/original5/3A1C_B_ARG447/run_config.json": {
+      "copied_as": "provenance/3A1C_B_ARG447_run_config.json",
+      "sha256": "08c98b263378ccae108bb91c06b3098d8000ec442c1fef3144ea49f036ff83f5"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_eighteen_synthetic_water_minstate_v2/shards/original5/3A1C_B_ARG447/synthetic/3A1C_B_ARG447_starts.csv": {
+      "copied_as": "provenance/3A1C_B_ARG447_all_50_starts.csv",
+      "sha256": "0e1835fd5c496dc66a3cd018723e84fe449f0da454b47f1f5fac830e22c3c74c"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_five_site_selection_v3/selection.json": {
+      "copied_as": null,
+      "sha256": "0c8b90f110a3c7b9ec710f2515f14db91ae8d674f356a32c954035c676b2217d"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/analysis/metric_v3_protected_merge_sweep/0p5/original5/ensemble_strict_audit.csv": {
+      "copied_as": "provenance/3A1C_B_ARG447_frozen_v3_ensemble_strict_audit.csv",
+      "sha256": "0b0cab709d1f79baee4668343bcbb99f22b9a87a3d2f61a7e7037bd73ff19b64"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/analysis/metric_v3_protected_merge_sweep/0p5/original5/tmol_inputs.json": {
+      "copied_as": null,
+      "sha256": "2fe54854dea35906af5e83d362dd2b8ddb94ab4bc1759118d08774270c85ef2b"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/analysis/metric_v3_protected_merge_sweep/0p5/water2/ensemble_strict_audit.csv": {
+      "copied_as": "provenance/2VFP_A_TYR417_frozen_v3_ensemble_strict_audit.csv",
+      "sha256": "d5f0d09e71ce94fb10e2a3919c715766c48884a0c403df7d3e83d1c0533b5ec0"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/analysis/metric_v3_protected_merge_sweep/0p5/water2/tmol_inputs.json": {
+      "copied_as": null,
+      "sha256": "d6cec7b3222072af8ecfe7038287aa4c905a0e4005522364264c6dd0e5b5f180"
+    },
+    "/home/dev/qfit_unet_data/test/2vfp.pdb": {
+      "copied_as": null,
+      "sha256": "60a6e05c5dc43b79d38ead09c4eae190286150a3a84f9188064967ab11641c6d"
+    },
+    "/home/dev/qfit_unet_data/test/3a1c.pdb": {
+      "copied_as": null,
+      "sha256": "59c46b6d1515bca7829c36313ba6a7f6f540db233b60979eeb302bbb43cc3834"
+    },
+    "/home/dev/workspace/density_denoiser/data_pipeline.py": {
+      "copied_as": "provenance/data_pipeline.py",
+      "sha256": "d2ca044098f6af3238f03eaaefb14c3eddc4dc5a8920ca9467bce52a1d2db81e"
+    },
+    "/home/dev/workspace/density_denoiser/residue_geometry.py": {
+      "copied_as": "provenance/residue_geometry.py",
+      "sha256": "2e6d2b57338e464928024f69d704968aa78cba0f83fc0ea382782b8add06c2b4"
+    },
+    "/home/dev/workspace/scripts/diagnose_assigned_pair_separation.py": {
+      "copied_as": "provenance/diagnose_assigned_pair_separation.py",
+      "sha256": "5f7c9055763d1df6206fe958a3a9e4fc59a9147b7227f2b9fd573b1b1c2c670b"
+    }
+  },
+  "frozen_metric": "qfit-synth20-merge050-one-to-one-tmol044-v3",
+  "package_version": "v1"
+}

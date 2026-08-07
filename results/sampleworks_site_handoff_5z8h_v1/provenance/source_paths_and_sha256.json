@@ -1,0 +1,58 @@
+{
+  "cluster_sources": {
+    "/home/dev/qfit_unet_data/cache/test/mtz/5Z8H.mtz": {
+      "copied_as": null,
+      "sha256": "f6f4d059095f5e711c99c920f543f45df6cbca8a7bb2b4f6e35fa8e3d424a921"
+    },
+    "/home/dev/qfit_unet_data/cache/test/pairs/5Z8H_A_MET730.npz": {
+      "copied_as": null,
+      "sha256": "eb22780e65a307adf912da8d8a39f183736e65efa8d7ddf969d40b2c7a1493d8"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/expanded_heldout_selection_15_v2_symmetry/selection.json": {
+      "copied_as": null,
+      "sha256": "8909bbe8a2af4985799f9a7242a47389b73bc1aae55f9158aa306ff371e66422"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_eighteen_synthetic_water_minstate_v2/shards/expanded15/5Z8H_A_MET730/run_config.json": {
+      "copied_as": "provenance/5Z8H_A_MET730_run_config.json",
+      "sha256": "6c9e9809b314e3bebbe8f11527b91894f513df25fb875309cad32dc6eb7d1837"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_eighteen_synthetic_water_minstate_v2/shards/expanded15/5Z8H_A_MET730/synthetic/5Z8H_A_MET730_starts.csv": {
+      "copied_as": "provenance/5Z8H_A_MET730_all_50_starts.csv",
+      "sha256": "afe3a96046c79312886f17388fa4f1242647ffa73a1bc2804610e7830b8ce175"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/analysis/metric_v3_protected_merge_sweep/0p5/expanded13/active_conformer_strict_audit.csv": {
+      "copied_as": "provenance/5Z8H_A_MET730_frozen_v3_active_conformer_strict_audit.csv",
+      "sha256": "9c326a27f553635a699f08aba2a6098004b9c4a37f86bbb50eb2fdd2d2d0c27d"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/analysis/metric_v3_protected_merge_sweep/0p5/expanded13/ensemble_strict_audit.csv": {
+      "copied_as": "provenance/5Z8H_A_MET730_frozen_v3_ensemble_strict_audit.csv",
+      "sha256": "59e1a11c0742ee87ac08846c157224ce1354bdf445d52a6a518793a7aa09f198"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/analysis/metric_v3_protected_merge_sweep/0p5/expanded13/tmol_inputs.json": {
+      "copied_as": null,
+      "sha256": "0d05166e5db8a40e5ad415f8cf514201b70d3479f90aef69de0b6a53644abeb1"
+    },
+    "/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/site_rule_provenance.csv": {
+      "copied_as": null,
+      "sha256": "4e042476b925cd337702f52a7eed714a4169fe29e15c288cc74731422d5b3da6"
+    },
+    "/home/dev/qfit_unet_data/test/5z8h.pdb": {
+      "copied_as": null,
+      "sha256": "cb697d62d13936f59ff607576b2469bef3e23eb1c03a444da896e6607666197c"
+    },
+    "/home/dev/workspace/density_denoiser/data_pipeline.py": {
+      "copied_as": "provenance/data_pipeline.py",
+      "sha256": "d2ca044098f6af3238f03eaaefb14c3eddc4dc5a8920ca9467bce52a1d2db81e"
+    },
+    "/home/dev/workspace/density_denoiser/residue_geometry.py": {
+      "copied_as": "provenance/residue_geometry.py",
+      "sha256": "2e6d2b57338e464928024f69d704968aa78cba0f83fc0ea382782b8add06c2b4"
+    },
+    "/home/dev/workspace/scripts/diagnose_assigned_pair_separation.py": {
+      "copied_as": "provenance/diagnose_assigned_pair_separation.py",
+      "sha256": "5f7c9055763d1df6206fe958a3a9e4fc59a9147b7227f2b9fd573b1b1c2c670b"
+    }
+  },
+  "frozen_metric": "qfit-synth20-merge050-one-to-one-tmol044-v3",
+  "package_version": "v1"
+}

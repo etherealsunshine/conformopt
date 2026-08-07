@@ -1,0 +1,31 @@
+{
+  "best_coverage_wrong_candidate_counts": {
+    "A_alone": 7,
+    "A_duplicated": 0,
+    "B_alone": 13
+  },
+  "primary_quantity": "coverage_margin",
+  "provenance": {
+    "cascade": [
+      742,
+      714,
+      710,
+      710,
+      710,
+      626
+    ],
+    "density_renders": 0,
+    "endpoint_rows_read": 0,
+    "metric": "qfit-synth20-merge050-one-to-one-tmol044-v3",
+    "optimizer_runs": 0,
+    "scatter_recomputed": false,
+    "sigma_recomputed": false,
+    "source": "/home/dev/workspace/results/frozen_v3_coverage_discriminability_v4"
+  },
+  "spearman_separation_vs_coverage_margin": 0.35488721804511275,
+  "verification": {
+    "A_duplicate_density_invariance_failures": 0,
+    "A_duplicate_rscc_invariance_failures": 0,
+    "maximum_target_reconstruction_relative_l2": 3.8588240489793024e-06
+  }
+}

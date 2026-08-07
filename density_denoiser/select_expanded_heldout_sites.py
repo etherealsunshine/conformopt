@@ -10,7 +10,7 @@ import gemmi
 import numpy as np
 import torch
 
-from probe4_core import dihedral, torsion_to_coords, wrap_angles
+from experiments.probe4.core import dihedral, torsion_to_coords, wrap_angles
 
 from .data_pipeline import _pdb_id, discover_pdbs
 from .dataset import manifest_path, read_manifest

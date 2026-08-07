@@ -1,0 +1,99 @@
+{
+  "active_conformers": 634,
+  "all_active_strict_physical": 97,
+  "assigned_pair_strict_joint_success": 132,
+  "audit_rule_version": "2026-07-24-altloc-minstate-rotwidth-hisunion-aromatic45-matched-tmol-v2",
+  "both_found_conventional": 203,
+  "canonical_conformers": 620,
+  "clash_free_conformers": 633,
+  "conformer_matching_version": "optimal_one_to_one_AB_rmsd_v1",
+  "criteria": {
+    "assigned_pair_selection": "optimal one-to-one A/B RMSD assignment among conformers with occupancy > 0.1; one conformer per state",
+    "both_found": true,
+    "conventional_rmsd_A": 1.0,
+    "direct_and_symmetry_clash_A": 2.0,
+    "occupancy_tolerance": 0.2,
+    "rotamer_gate": "shared residue/chi centers and per-chi widths",
+    "tmol_delta_vs_matched_deposited_AB": 0.44,
+    "tmol_environment_rules": [
+      "frozen_matched_deposited_minstate_v1"
+    ]
+  },
+  "ensembles": 250,
+  "occupancy_conditioned_all_active_strict_physical": 96,
+  "per_site": [
+    {
+      "active_conformers": 119,
+      "all_active_strict_physical": 34,
+      "assigned_pair_strict_joint_success": 44,
+      "both_found_conventional": 47,
+      "canonical_conformers": 118,
+      "clash_free_conformers": 119,
+      "ensembles": 50,
+      "occupancy_conditioned_all_active_strict_physical": 34,
+      "recovery_and_occupancy": 45,
+      "site": "3A1C_B_ARG447",
+      "strict_joint_success": 34,
+      "tmol_valid_conformers": 96
+    },
+    {
+      "active_conformers": 135,
+      "all_active_strict_physical": 13,
+      "assigned_pair_strict_joint_success": 19,
+      "both_found_conventional": 20,
+      "canonical_conformers": 124,
+      "clash_free_conformers": 135,
+      "ensembles": 50,
+      "occupancy_conditioned_all_active_strict_physical": 12,
+      "recovery_and_occupancy": 20,
+      "site": "4C16_A_MET258",
+      "strict_joint_success": 12,
+      "tmol_valid_conformers": 62
+    },
+    {
+      "active_conformers": 108,
+      "all_active_strict_physical": 36,
+      "assigned_pair_strict_joint_success": 39,
+      "both_found_conventional": 41,
+      "canonical_conformers": 106,
+      "clash_free_conformers": 107,
+      "ensembles": 50,
+      "occupancy_conditioned_all_active_strict_physical": 36,
+      "recovery_and_occupancy": 41,
+      "site": "6H59_B_ARG144",
+      "strict_joint_success": 36,
+      "tmol_valid_conformers": 89
+    },
+    {
+      "active_conformers": 126,
+      "all_active_strict_physical": 2,
+      "assigned_pair_strict_joint_success": 5,
+      "both_found_conventional": 45,
+      "canonical_conformers": 126,
+      "clash_free_conformers": 126,
+      "ensembles": 50,
+      "occupancy_conditioned_all_active_strict_physical": 2,
+      "recovery_and_occupancy": 38,
+      "site": "7F72_A_MET103",
+      "strict_joint_success": 2,
+      "tmol_valid_conformers": 56
+    },
+    {
+      "active_conformers": 146,
+      "all_active_strict_physical": 12,
+      "assigned_pair_strict_joint_success": 25,
+      "both_found_conventional": 50,
+      "canonical_conformers": 146,
+      "clash_free_conformers": 146,
+      "ensembles": 50,
+      "occupancy_conditioned_all_active_strict_physical": 12,
+      "recovery_and_occupancy": 42,
+      "site": "8Q6Q_B_ASP81",
+      "strict_joint_success": 12,
+      "tmol_valid_conformers": 77
+    }
+  ],
+  "recovery_and_occupancy": 186,
+  "strict_joint_success": 96,
+  "tmol_valid_conformers": 380
+}

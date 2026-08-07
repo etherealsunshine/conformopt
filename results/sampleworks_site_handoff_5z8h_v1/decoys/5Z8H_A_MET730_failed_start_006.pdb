@@ -1,0 +1,17 @@
+REMARK 900 ACTUAL FROZEN-RUN FAILED ENDPOINT 5Z8H_A_MET730 START 6
+REMARK 901 FAILURE B-only recovery; B-assigned conformer fails the rotamer gate and matched-control tmol
+REMARK 902 SLOT ALTLOCS 1-4 ARE OPTIMIZER SLOT IDS, NOT DEPOSITED A/B LABELS
+ATOM      1    N MET A 730       9.638 -12.563  78.741  1.00 23.49           N
+ATOM      2   CA MET A 730      10.208 -13.157  77.533  1.00 24.89           C
+ATOM      3    C MET A 730      10.974 -14.441  77.836  1.00 28.21           C
+ATOM      4    O MET A 730      11.007 -15.358  77.005  1.00 28.80           O
+ATOM      5   CB1MET A 730      11.136 -12.157  76.847  0.16 26.15           C
+ATOM      6   CG1MET A 730      10.440 -11.123  75.986  0.16 25.87           C
+ATOM      7   SD1MET A 730       9.050 -10.332  76.817  0.16 31.80           S
+ATOM      8   CE1MET A 730       7.738 -11.492  76.438  0.16 32.99           C
+ATOM      9   CB3MET A 730      11.136 -12.157  76.847  0.84 26.15           C
+ATOM     10   CG3MET A 730      10.916 -11.996  75.357  0.84 25.87           C
+ATOM     11   SD3MET A 730       9.318 -11.266  74.954  0.84 31.80           S
+ATOM     12   CE3MET A 730       9.427 -11.203  73.167  0.84 32.99           C
+TER
+END

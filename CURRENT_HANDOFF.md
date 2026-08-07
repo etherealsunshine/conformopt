@@ -1,10 +1,214 @@
 # Current Project Handoff
 
-**Updated:** 2026-07-27
+**Updated:** 2026-07-29
 **Purpose:** This is the first document a new agent/chat should read after
 `AGENTS.md`. It records the current scientific state, the exact result trees,
 the commands used to operate the Astera pod, and the next experiments under
 discussion.
+
+## 0. Latest diagnostic: residual minor-conformer probe
+
+### 2026-07-29 containing-mask sweep complete
+
+The corrected containing-mask sweep is complete under frozen metric
+`qfit-synth20-merge050-one-to-one-tmol044-v3`.
+
+| Arm | Found | Strict | Raw minor / major misses |
+|---|---:|---:|---:|
+| Frozen control | 742 | 626 | 142 / 45 |
+| Containing, uniform | 741 | 622 | 139 / 63 |
+| Containing, variance weighted | 690 | 591 | 161 / 66 |
+
+Neither arm improved the intended minor-conformer endpoint. The uniform mask
+was aggregate-neutral but traded three fewer minor misses for eighteen more
+major misses. Variance weighting was harmful.
+
+The first compiled per-site comparison accidentally loaded the stale
+unprotected merge audit for its control rows. Arm totals were correct, but the
+nested control cascade, control audit-derived diagnostics, and all per-site
+deltas were not. Corrected output:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/
+heldout_twenty_synthetic_containing_mask_sweep_v1/
+analysis/frozen_v3_comparison_v2_corrected
+```
+
+Full result, weight-concentration table, and bug scope:
+
+```text
+results/containing_mask_sweep_v1_report.md
+```
+
+### 2026-07-29 corrected containing-mask experiment
+
+The production-mask read found exactly two deposited atoms outside the 4.0 A
+sphere: 3A1C ARG447 NH2 in A/minor at radius 5.0215 A and B/major at
+4.9397 A. Despite losing 33.61% and 31.45% of their native conformer density,
+3A1C recovers its minor state in 49/50 starts. Across the 19 ranked sites,
+minor outside-density fraction is not positively associated with minor
+failure (Pearson -0.0777; -0.1244 against major-only misses).
+
+The prior reachable-mask contradiction came from using only discrete
+canonical-center tuples. Twenty-five deposited atoms are more than 1 A from
+that union, but only 2/40 deposited conformers fail the production marginal
+rotamer gate. The atom sets and padding were identical; broad continuous
+gate windows, not mainly genuine off-rotamer geometry, explain the mismatch.
+
+Corrected Arms F/G use a 1 A-padded union of canonical-center positions and
+deposited A/B atoms. Both preflight at zero reachable and deposited atoms
+outside, with A+B best at 20/20 sites. Arm F contains 133--4,982 voxels/site
+and has median deposited major-collapse correlation loss 0.1168, versus
+0.0988 for production. Arm G's variance weights use canonical states only.
+
+The detached two-arm experiment is active:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/
+heldout_twenty_synthetic_containing_mask_sweep_v1
+```
+
+Controller PID `62240`; Arm F runs first, followed automatically by Arm G and
+their frozen-v3 geometry/tmol audits. The frozen control is reused.
+
+Full diagnostic and live-run provenance:
+
+```text
+results/production_mask_coverage_diagnostic_v1.md
+```
+
+### 2026-07-29 density-mask sweep preflight
+
+The requested normalization diagnostic did not justify replacing z-scored
+MSE before the mask sweep. Median relative major-collapse separation at
+deposited coordinates was 0.1976 under z-scored MSE, 0.2160 under native MSE,
+and 0.1529 after a fitted global scale. Across the 129 actual major-only
+endpoints the ordering reversed: 0.0731, 0.0605, and 0.0584. Native MSE is
+therefore not a consistently larger lever.
+
+The mask-containment preflight did stop the launch. The 3.0 A and 2.5 A
+spheres exclude 1,154 and 1,424 enumerated reachable atom positions,
+respectively, and exclude 20 and 38 deposited A/B atoms. The proposed 1.0 A
+reachable-volume mask contains every enumerated canonical position but misses
+25 deposited atoms. Even the production 4.0 A sphere excludes 599 enumerated
+reachable positions and two deposited atoms at 3A1C. All arms retained A+B as
+the best synthetic calibration at 20/20 sites, but any recovery delta would
+still be confounded by unscored conformer escape. No optimization arm was
+launched and the frozen metric was untouched.
+
+Full report:
+
+```text
+results/density_mask_sweep_preflight_v1.md
+```
+
+Pod preflight root:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/density_mask_sweep_preflight_v1
+```
+
+### 2026-07-29 density-mask and torsion read
+
+The production 4.0 A radial mask contains 2,176 voxels. In the frozen
+synthetic 20-site panel, `fixed_density` contains zero atoms at every site:
+it represents only shared/unlabeled atoms of the target residue's sidechain,
+not the neighboring protein. Thus `Var(fixed)=0`, the fixed/sidechain cross
+term is zero, and sidechain slots account for 100% of masked variance. The
+proposed unchangeable-fixed-density dilution mechanism is absent.
+
+The broad mask nevertheless compresses A/B discrimination. Replacing the
+correct deposited A/B ensemble with the deposited major conformer alone
+changes correlation by median 0.0988 over the full mask, versus 0.1829 over
+voxels where `|rho_A-rho_B| > 0.1 max` and 0.1787 within 1 A of the deposited
+A/B sidechain atoms. The 129 saved major-only endpoint ensembles have median
+full-mask correlation 0.9635 with the correct target.
+
+The per-chi read rejects a simple terminal-chi reachability explanation.
+3GMI's largest deposited A/B change is chi1 (129.0 degrees) despite 8/9 probe
+recovery; 7T7A changes both chi1/chi2 by 99.3/114.5 degrees and recovers 4/5.
+The low sites require multiple large rotations: 1ZV8 changes chi1/chi2 by
+170.2/173.0 degrees, and 7UO8 changes chi1/chi2/chi3 by
+118.3/142.3/56.2 degrees. Across eligible starts, terminal-largest sites
+recover 25/97 versus 13/32 for nonterminal-largest sites, but this is strongly
+site-confounded.
+
+No optimization or metric change was made. Full report:
+
+```text
+results/density_mask_chi_diagnostic_v1.md
+```
+
+The residual probe is complete for all 129 frozen-v3 starts that recovered
+only the occupancy-major state. Frozen endpoints were subtracted from the
+synthetic target and one fresh production-initialized slot was optimized
+against the residual.
+
+| Probe occupancy | Minor recovered | Rate |
+|---|---:|---:|
+| Fixed to deposited minor | 38 / 129 | 29.5% |
+| Free sigmoid | 16 / 129 | 12.4% |
+
+The production renderer z-score normalizes the full fixed-plus-weighted-slot
+density after summation. The probe instead optimized against normalized
+target minus normalized endpoint using a separately normalized slot
+footprint. That is not an additive missing-conformer target. Therefore the
+competition hypothesis is **neither supported nor refuted**, and 38/129 is a
+lower bound from a mismatched probe rather than an estimate.
+
+The actual slot occupancies are a softmax and always sum to one; only their
+ratios are represented. A common logit shift is an exact no-op, so absolute
+sidechain occupancy is not identifiable in this parameterization. The
+reported matched A+B deficit is mass held by unmatched/sub-mask slots.
+
+A replay of all 26 close-separation fixed-probe successes measured median
+initial-to-final slot travel of 1.696 Å (IQR 1.299–2.418): zero traveled under
+0.5 Å and only two under 1.0 Å. Close-site composition contributes to the
+separation anti-correlation, but the successes are not merely trivial
+threshold crossings. No production or metric change was made.
+
+Full report:
+
+```text
+results/residual_minor_probe_v1_report.md
+results/residual_probe_normalization_followup_v1.md
+```
+
+Authoritative combined pod root:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/
+heldout_remaining_residual_minor_probe_v1
+```
+
+## 0a. Previous model experiment: initialization sweep
+
+The 20-site synthetic initialization sweep is complete under the unchanged
+frozen metric `qfit-synth20-merge050-one-to-one-tmol044-v3`.
+
+| Initialization | Found | Strict | Minor / major misses |
+|---|---:|---:|---:|
+| Frozen control | 742 | 626 | 142 / 45 |
+| Canonical, deposited-A-free | 720 | 608 | 169 / 57 |
+| Canonical + deposited-A anchor | 719 | 615 | 183 / 42 |
+| Deposited-A cloud, 120 degrees | 739 | 632 | 149 / 54 |
+
+No arm improved the primary minor-conformer endpoint. Canonical
+stratification was harmful. The wider cloud gained six strict starts but lost
+three recoveries and worsened both minor and major misses; its gain was
+site-heterogeneous rather than evidence for the proposed mechanism.
+
+Full report:
+
+```text
+results/initialization_sweep_v1_report.md
+```
+
+Authoritative pod root:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/heldout_twenty_synthetic_initialization_sweep_v1
+```
 
 ## 1. Read this correctly
 
@@ -848,6 +1052,48 @@ the user's request. Its partial remote tree is marked `stopped_by_user`; the
 optimizer was restored to frozen source hash
 `367acfaba8f6d0da660fac45ace5c0c696f705bbdb05b60d2072b8724b87cbd6`.
 
+## 15. 2026-07-28 Stage-1 fixed-occupancy prefix sweep
+
+The first model experiment under frozen metric
+`qfit-synth20-merge050-one-to-one-tmol044-v3` is complete:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/
+heldout_twenty_synthetic_fixed_occupancy_sweep_v1
+```
+
+It swept `fixed_occupancy_steps=100/200/300` against the unchanged frozen
+control. Occupancy logits remained in a separate Adam group with learning
+rate zero during the prefix, so gradients and moments stayed warm. A required
+zero-step grouped-Adam check reproduced 3GMI exactly at 41/50 with identical
+endpoint rows.
+
+The total cascades were:
+
+```text
+fixed 0:   742 / 714 / 710 / 710 / 710 / 626
+fixed 100: 728 / 719 / 715 / 715 / 715 / 632
+fixed 200: 695 / 680 / 677 / 677 / 677 / 609
+fixed 300: 659 / 637 / 635 / 635 / 635 / 567
+```
+
+The primary raw-greedy minor/major missed-state counts were 142/45 control,
+173/35 at 100, 152/53 at 200, and 178/52 at 300. No arm improved absolute
+minor-state recovery. The 100-step strict gain of 6 accompanies 14 fewer
+recovered pairs and is site redistribution rather than the target capability.
+
+Release produced a visible first-step density-loss discontinuity in
+594/643/637 starts for the three arms. New-arm slots crossing below 0.05
+subsequently traveled median 0.724/0.974/1.215 A, so those trajectories do
+not show positional paralysis. The frozen control did not record trajectories,
+leaving the original control-specific mechanism claim untestable.
+
+Full tables and interpretation:
+
+```text
+results/fixed_occupancy_sweep_v1_report.md
+```
+
 ### Mode splitting versus mass dumping
 
 The saved-endpoint diagnostic favors mass dumping as the panel-wide
@@ -870,4 +1116,127 @@ Full report and raw-artifact paths:
 
 ```text
 results/mode_splitting_vs_mass_dumping_v1.md
+```
+
+## 16. 2026-07-29 unmatched-slot target-density prerequisite
+
+The frozen 187 single-recovery starts contain 259 unmatched active slots.
+Their atom positions have median native target density 65.9% of the within-site
+deposited A/B reference (IQR 49.7–90.6%); 189/259 retain at least half the
+reference and none is below 10%. The slots therefore occupy real tail density,
+not vacuum.
+
+Authoritative artifacts:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/
+heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/
+analysis/unmatched_target_density_prerequisite_v1
+```
+
+Local report:
+
+```text
+results/unmatched_target_density_prerequisite_v1.md
+```
+
+## 17. 2026-07-29 Stage-1 merge-and-respawn R1
+
+R1 is complete at:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/
+heldout_twenty_synthetic_respawn_R1_v1
+```
+
+It ran 20 sites × 50 starts with `seed=41+start`, cadence 100, active-pair
+merge RMSD below 0.5 A, and the unchanged frozen-v3 audit. The reused control
+guard passed exactly `742/714/710/710/710/626`.
+
+Primary raw missed-minor / missed-major counts were:
+
+```text
+control: 142 / 45
+R1:      142 / 46
+```
+
+The R1 cascade is `743/716/712/712/712/628`, but the +2 strict total is
+downstream site redistribution rather than primary placement progress. All
+five requested tail sites have zero cascade delta. R2/R3 were not launched
+because R1 did not improve the primary endpoint.
+
+R1 fired 143 respawns in 123/1000 starts. The merged-away slot was already
+within 1 A of a deposited state in 134/143 events; 132/143 replacements ended
+worse than the slot replaced; only 22/140 unique respawned slots survived
+above 0.10 occupancy. Among those 132 worse events, 120 peaks were near a
+deposited state, eight near the midpoint, and four unrelated. The dominant
+failure is therefore not overlap-peak placement, but underdetermined
+atom-peak-to-whole-conformer inversion and poor survival.
+
+Gram condition >=100 was neither meaningfully earlier nor more reliable than
+the 0.5 A RMSD trigger. Endpoint duplicate precision/recall were 35.9%/20.5%
+for Gram and 37.4%/20.1% for RMSD.
+
+Authoritative comparison:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/
+heldout_twenty_synthetic_respawn_R1_v1/
+analysis/frozen_v3_respawn_comparison_v4
+```
+
+Full report:
+
+```text
+results/respawn_R1_v1_report.md
+```
+
+Do not implement respawn in production. The tested naive residual-argmax
+insertion rule is rejected.
+
+## 18. 2026-07-29 raw-residual canonical-rotamer gate
+
+The read-only frozen-v3 diagnostic is complete at:
+
+```text
+/home/dev/qfit_unet_data/density_denoiser/
+heldout_twenty_synthetic_water_minstate_v2_single_rule_v1/
+analysis/frozen_v3_residual_rotamer_gate_v2
+```
+
+It reconstructed all four saved endpoint slots for the guarded historical
+142 missed-minor / 45 missed-major starts and evaluated the exact production
+Cartesian canonical-chi pool in native additive density before z-scoring.
+No optimizer was run and the metric was unchanged. Coordinate reconstruction
+agreed within `8.31e-6 A`; raw target reconstruction re-z-scored to the saved
+target at maximum relative L2 error `3.86e-6`.
+
+The deposited missed-conformer ceiling has median Pearson `0.340` and fitted
+occupancy `0.070`. The best canonical rotamer falls to median Pearson `0.119`
+and fitted occupancy `0.023`; only 49/187 are within 1 A of the missed state.
+Using the descriptive conjunction within 1 A, Pearson at least 0.2, and fitted
+occupancy at least 0.05, only 27/187 qualify.
+
+The decisive tail results are heterogeneous. 2VFP has deposited ceiling
+median `0.181`, best canonical median `-0.007`, and 0/44 actionable fits.
+5Z8H has only 5/28 actionable fits. 1ZV8 retains a strong deposited ceiling
+but its canonical pool does not cover the missed state. 7UO8 canonical
+densities correlate but remain outside 1 A. 4C16 is positive in 15/24 starts,
+mostly from the missed-major cohort.
+
+A low-occupancy active slot (`0.05 < q < 0.10`) is available without a
+degenerate pair in 81/187 starts. At the two sites with zero R1 merge events,
+this covers 23/44 2VFP missed-minor starts and 6/26 5Z8H missed-minor starts,
+but useful canonical fits occur in only 0/44 and 3/26, respectively.
+
+The gate therefore rejects a panel-wide run based on direct insertion from
+the current canonical table. It does not prove every conceivable
+whole-conformer proposal impossible, but a merge-independent trigger alone
+does not repair the missing insertion targets. Do not implement or launch
+whole-conformer respawn from this result.
+
+Full report:
+
+```text
+results/frozen_v3_residual_rotamer_gate_v2_report.md
 ```

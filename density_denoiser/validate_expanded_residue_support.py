@@ -10,7 +10,7 @@ from pathlib import Path
 import gemmi
 import torch
 
-from probe4_core import dihedral, torsion_to_coords, wrap_angles
+from experiments.probe4.core import dihedral, torsion_to_coords, wrap_angles
 
 from .five_site_optimizer import _alt_atom_map
 from .residue_geometry import CHI_SPECS, symmetry_aware_rmsd

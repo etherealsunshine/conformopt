@@ -1,0 +1,37 @@
+{
+  "status": "complete",
+  "source_closure_csv": "/home/dev/qfit_unet_data/qfit_audit/d1_flip_closure_7utc_full_v2/per_site.csv",
+  "source_wider_csv": "/home/dev/qfit_unet_data/qfit_audit/d1_wider_anchors19_v3_chain_scoped/per_site_per_k.csv",
+  "site": "7UTC_A_ARG52",
+  "backbone_displacement_by_offset_A": {
+    "-3": 0.0,
+    "-2": 0.0,
+    "-1": 0.46699999999999875,
+    "0": 2.3039999999999994,
+    "1": 1.1409999999999982,
+    "2": 1.4929999999999986,
+    "3": 1.5730000000000004
+  },
+  "max_anchor_displacement_by_k_A": {
+    "3": 1.5730000000000004,
+    "4": 1.3039999999999985,
+    "5": 1.1580000000000004,
+    "6": 1.6410000000000018
+  },
+  "unavailable_k": [
+    8,
+    10
+  ],
+  "sites_ever_below_0p1_A": {
+    "6P2N_A_GLY161": 5,
+    "7ZTL_A_ILE257": 3,
+    "1RWR_A_ASN294": 3
+  },
+  "count_sites_ever_below_0p1_A": 3,
+  "outputs": [
+    "/home/dev/qfit_unet_data/qfit_audit/d1_7utc_anchor_profile_figures_v3/7utc_arg52_backbone_displacement_profile.png",
+    "/home/dev/qfit_unet_data/qfit_audit/d1_7utc_anchor_profile_figures_v3/7utc_arg52_backbone_displacement_profile.pdf",
+    "/home/dev/qfit_unet_data/qfit_audit/d1_7utc_anchor_profile_figures_v3/7utc_arg52_widening_anchor_displacement.png",
+    "/home/dev/qfit_unet_data/qfit_audit/d1_7utc_anchor_profile_figures_v3/7utc_arg52_widening_anchor_displacement.pdf"
+  ]
+}

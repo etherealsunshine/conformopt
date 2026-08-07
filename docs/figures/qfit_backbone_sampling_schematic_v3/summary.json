@@ -1,0 +1,14 @@
+{
+  "status": "complete",
+  "output_png": "/home/dev/qfit_unet_data/qfit_audit/qfit_backbone_sampling_schematic_v3/qfit_backbone_sampling_schematic.png",
+  "output_pdf": "/home/dev/qfit_unet_data/qfit_audit/qfit_backbone_sampling_schematic_v3/qfit_backbone_sampling_schematic.pdf",
+  "script": "/home/dev/workspace/scripts/plot_qfit_backbone_sampling_schematic.py",
+  "target_spacing_pixels": 15,
+  "target_distances_pixels": [
+    15,
+    30,
+    45
+  ],
+  "target_count": 18,
+  "total_candidates": 19
+}

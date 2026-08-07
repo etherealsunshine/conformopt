@@ -1,0 +1,33 @@
+REMARK 900 ACTUAL FROZEN-RUN FAILED ENDPOINT 2VFP_A_TYR417 START 26
+REMARK 901 FAILURE both found but occupancy and assigned-pair physical gates failed
+REMARK 902 SLOT ALTLOCS 1-4 ARE OPTIMIZER SLOT IDS, NOT DEPOSITED A/B LABELS
+ATOM      1    N TYR A 417      22.565  -6.441   0.743  1.00 10.25           N
+ATOM      2   CA TYR A 417      23.854  -5.795   0.982  1.00  8.19           C
+ATOM      3    C TYR A 417      23.803  -5.119   2.342  1.00  6.85           C
+ATOM      4    O TYR A 417      23.034  -4.154   2.532  1.00  8.02           O
+ATOM      5   CB1TYR A 417      24.196  -4.767  -0.106  0.05  6.22           C
+ATOM      6   CG1TYR A 417      24.674  -3.439   0.424  0.05  8.13           C
+ATOM      7  CD11TYR A 417      25.759  -3.363   1.290  0.05  9.18           C
+ATOM      8  CD21TYR A 417      24.046  -2.257   0.058  0.05 15.01           C
+ATOM      9  CE11TYR A 417      26.201  -2.142   1.768  0.05  5.58           C
+ATOM     10  CE21TYR A 417      24.478  -1.044   0.528  0.05  9.39           C
+ATOM     11   CZ1TYR A 417      25.554  -0.989   1.384  0.05  9.67           C
+ATOM     12   OH1TYR A 417      25.982   0.228   1.857  0.05 11.69           O
+ATOM     13   CB3TYR A 417      24.196  -4.767  -0.106  0.82  6.22           C
+ATOM     14   CG3TYR A 417      24.376  -5.357  -1.481  0.82  8.13           C
+ATOM     15  CD13TYR A 417      25.454  -6.185  -1.769  0.82  9.18           C
+ATOM     16  CD23TYR A 417      23.465  -5.093  -2.496  0.82 15.01           C
+ATOM     17  CE13TYR A 417      25.611  -6.732  -3.031  0.82  5.58           C
+ATOM     18  CE23TYR A 417      23.615  -5.632  -3.747  0.82  9.39           C
+ATOM     19   CZ3TYR A 417      24.690  -6.449  -4.013  0.82  9.67           C
+ATOM     20   OH3TYR A 417      24.840  -6.983  -5.270  0.82 11.69           O
+ATOM     21   CB4TYR A 417      24.196  -4.767  -0.106  0.10  6.22           C
+ATOM     22   CG4TYR A 417      24.192  -5.323  -1.507  0.10  8.13           C
+ATOM     23  CD14TYR A 417      25.347  -5.855  -2.069  0.10  9.18           C
+ATOM     24  CD24TYR A 417      23.033  -5.324  -2.271  0.10 15.01           C
+ATOM     25  CE14TYR A 417      25.337  -6.373  -3.353  0.10  5.58           C
+ATOM     26  CE24TYR A 417      23.017  -5.835  -3.543  0.10  9.39           C
+ATOM     27   CZ4TYR A 417      24.171  -6.356  -4.082  0.10  9.67           C
+ATOM     28   OH4TYR A 417      24.152  -6.864  -5.359  0.10 11.69           O
+TER
+END

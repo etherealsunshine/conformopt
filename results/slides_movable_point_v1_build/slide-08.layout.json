@@ -1,0 +1,842 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/f1x09r",
+    "id": "f1x09r",
+    "slide": 8,
+    "layoutId": "29f99694-1165-4fa8-b7a7-dc6e227fa3a4",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "d6ea0af7-d600-4d0a-8542-e0b37c7f0c9a",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "29f99694-1165-4fa8-b7a7-dc6e227fa3a4",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "d6ea0af7-d600-4d0a-8542-e0b37c7f0c9a",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "d6ea0af7-d600-4d0a-8542-e0b37c7f0c9a",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8r2xk3a1",
+      "id": "1",
+      "name": "kicker",
+      "bbox": [
+        72,
+        42,
+        520,
+        28
+      ],
+      "geometry": "rect",
+      "text": "SYNTHETIC 20-SITE AUDIT",
+      "textPreview": "SYNTHETIC 20-SITE AUDIT",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SYNTHETIC 20-SITE AUDIT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SYNTHETIC 20-SITE AUDIT",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#59616D",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "SYNTHETIC 20-SITE AUDIT",
+              "fontSize": 14,
+              "color": "#59616D",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7qtgry9g",
+      "id": "2",
+      "name": "title",
+      "bbox": [
+        72,
+        78,
+        950,
+        92
+      ],
+      "geometry": "rect",
+      "text": "The decision is whether to test escape cleanly",
+      "textPreview": "The decision is whether to test escape cleanly",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The decision is whether to test escape cleanly"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The decision is whether to test escape cleanly",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "The decision is whether to test escape cleanly",
+              "fontSize": 38,
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mpkfitsv",
+      "id": "3",
+      "name": "rule",
+      "bbox": [
+        72,
+        170,
+        1136,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#B8BCC4",
+      "lineColor": "#B8BCC4",
+      "lineWidth": 1
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hwvyhsri",
+      "id": "4",
+      "name": "metric-30 degrees/step",
+      "bbox": [
+        110,
+        230,
+        240,
+        62
+      ],
+      "geometry": "rect",
+      "text": "S2",
+      "textPreview": "S2",
+      "resolvedFontSize": 48,
+      "resolvedTextStyle": {
+        "fontSize": 48,
+        "typeface": "+mn-lt",
+        "color": "#C9473A",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "S2"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "S2",
+          "resolvedTextStyle": {
+            "fontSize": 48,
+            "color": "#C9473A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "S2",
+              "fontSize": 48,
+              "color": "#C9473A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wvmxonqx",
+      "id": "5",
+      "name": "metric-label-30 degrees/step",
+      "bbox": [
+        110,
+        292,
+        265,
+        54
+      ],
+      "geometry": "rect",
+      "text": "30 degrees/step",
+      "textPreview": "30 degrees/step",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "30 degrees/step"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "30 degrees/step",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#59616D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "30 degrees/step",
+              "fontSize": 18,
+              "color": "#59616D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vutgvi9s",
+      "id": "6",
+      "name": "metric-both-found recovery collapsed",
+      "bbox": [
+        400,
+        230,
+        240,
+        62
+      ],
+      "geometry": "rect",
+      "text": "742 -> 575",
+      "textPreview": "742 -> 575",
+      "resolvedFontSize": 48,
+      "resolvedTextStyle": {
+        "fontSize": 48,
+        "typeface": "+mn-lt",
+        "color": "#C9473A",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "742 ->"
+          },
+          {
+            "index": 2,
+            "text": "575"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "742 -> 575",
+          "resolvedTextStyle": {
+            "fontSize": 48,
+            "color": "#C9473A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "742 -> 575",
+              "fontSize": 48,
+              "color": "#C9473A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/utkfmd87",
+      "id": "7",
+      "name": "metric-label-both-found recovery collapsed",
+      "bbox": [
+        400,
+        292,
+        265,
+        54
+      ],
+      "geometry": "rect",
+      "text": "both-found recovery collapsed",
+      "textPreview": "both-found recovery collapsed",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "both-found recovery"
+          },
+          {
+            "index": 2,
+            "text": "collapsed"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "both-found recovery collapsed",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#59616D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "both-found recovery collapsed",
+              "fontSize": 18,
+              "color": "#59616D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5kvylsru",
+      "id": "8",
+      "name": "metric-10 degrees/step remains untested",
+      "bbox": [
+        760,
+        230,
+        240,
+        62
+      ],
+      "geometry": "rect",
+      "text": "S1",
+      "textPreview": "S1",
+      "resolvedFontSize": 48,
+      "resolvedTextStyle": {
+        "fontSize": 48,
+        "typeface": "+mn-lt",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "S1"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "S1",
+          "resolvedTextStyle": {
+            "fontSize": 48,
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "S1",
+              "fontSize": 48,
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4jmxsnq9",
+      "id": "9",
+      "name": "metric-label-10 degrees/step remains untested",
+      "bbox": [
+        760,
+        292,
+        265,
+        54
+      ],
+      "geometry": "rect",
+      "text": "10 degrees/step remains untested",
+      "textPreview": "10 degrees/step remains untested",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "10 degrees/step remains"
+          },
+          {
+            "index": 2,
+            "text": "untested"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "10 degrees/step remains untested",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#59616D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "10 degrees/step remains untested",
+              "fontSize": 18,
+              "color": "#59616D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y143q5kb",
+      "id": "10",
+      "name": "bullet-0",
+      "bbox": [
+        130,
+        445,
+        930,
+        44
+      ],
+      "geometry": "rect",
+      "text": "- S2 looks like non-convergence, not a clean failed-escape result",
+      "textPreview": "- S2 looks like non-convergence, not a clean failed-escape result",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "- S2 looks like non-convergence, not a clean failed-escape result"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "- S2 looks like non-convergence, not a clean failed-escape result",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#000000",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "- S2 looks like non-convergence, not a clean failed-escape result",
+              "fontSize": 24,
+              "color": "#000000",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z2dkja1g",
+      "id": "11",
+      "name": "bullet-1",
+      "bbox": [
+        130,
+        493,
+        930,
+        44
+      ],
+      "geometry": "rect",
+      "text": "- The honest test is smaller perturbation around local minima",
+      "textPreview": "- The honest test is smaller perturbation around local minima",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "- The honest test is smaller perturbation around local minima"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "- The honest test is smaller perturbation around local minima",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#000000",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "- The honest test is smaller perturbation around local minima",
+              "fontSize": 24,
+              "color": "#000000",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0nmlsfi1",
+      "id": "12",
+      "name": "bullet-2",
+      "bbox": [
+        130,
+        541,
+        930,
+        44
+      ],
+      "geometry": "rect",
+      "text": "- Decision: spend another quarter on S1 or move to experimental density",
+      "textPreview": "- Decision: spend another quarter on S1 or move to experimental density",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "- Decision: spend another quarter on S1 or move to experimental density"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "- Decision: spend another quarter on S1 or move to experimental density",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#000000",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "- Decision: spend another quarter on S1 or move to experimental density",
+              "fontSize": 24,
+              "color": "#000000",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lov2lkjm",
+      "id": "13",
+      "name": "footer",
+      "bbox": [
+        1176,
+        664,
+        32,
+        24
+      ],
+      "geometry": "rect",
+      "text": "8",
+      "textPreview": "8",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "fontSize": 13,
+        "typeface": "+mn-lt",
+        "color": "#59616D",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "8"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "8",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "color": "#59616D",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "8",
+              "fontSize": 13,
+              "color": "#59616D",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

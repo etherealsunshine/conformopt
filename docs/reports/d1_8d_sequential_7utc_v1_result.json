@@ -1,0 +1,42 @@
+{
+  "deposited_A_B_qp_occupancies": [0.08945125435514492, 0.08099325755643379],
+  "deposited_A_B_qp_rss": 12.720227623366881,
+  "deposited_occupancies_A_B": [0.24, 0.33],
+  "final_joint_qp_occupancies_slot1_slot2": [0.1360529480481843, 0.04931822957117491],
+  "final_joint_qp_rss": 11.381689400481534,
+  "map": {
+    "mask_voxels": 1539,
+    "n_reflections": 118380,
+    "qfit_map_scaler_factor": 0.1832027791834423,
+    "qfit_map_scaler_offset": 0.3253053715651852,
+    "qfit_neighbour_subtraction": true,
+    "resolution_A": 1.8470050141544532,
+    "source": "deposited_FWT_PHWT"
+  },
+  "parameterization": {
+    "closure_null_dimension": 8,
+    "occupancy_solver": "bounded NNLS every objective evaluation; qFit CVXPY QP final joint solve",
+    "phi_psi_parameters_per_slot": 14,
+    "ramachandran": "mmtbx RamachandranEval negative-log probability barrier from first step",
+    "ramachandran_weight": 0.05,
+    "sequential": "slot 1 fit then frozen geometry/occupancy; slot 2 fits residual",
+    "slots": 2
+  },
+  "site": "7UTC_A_ARG52",
+  "slot1": {
+    "backbone_rmsd_to_A_A": 0.5025773528821957,
+    "backbone_rmsd_to_B_A": 0.8814832122589502,
+    "frozen_occupancy": 0.16722409620919057,
+    "rss": 11.80237445559637,
+    "steps": 60
+  },
+  "slot2": {
+    "backbone_rmsd_to_A_A": 1.049892710576424,
+    "backbone_rmsd_to_B_A": 0.9626944316528956,
+    "reaches_deposited_B_under_1A": true,
+    "residual_occupancy": 0.018546162445643635,
+    "steps": 60
+  },
+  "status": "complete",
+  "trajectory_rows": 120
+}

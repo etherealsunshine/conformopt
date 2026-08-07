@@ -1,0 +1,150 @@
+{"kind":"deck","id":"pr/bga4q2","name":"Deck"}
+{"kind":"layout","layoutId":"d6ea0af7-d600-4d0a-8542-e0b37c7f0c9a","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"29f99694-1165-4fa8-b7a7-dc6e227fa3a4","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/mk0lco","slide":1,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":10}
+{"kind":"shape","id":"sh/o7ip4vix","slide":1,"name":"left-band","bbox":[0,0,38,720]}
+{"kind":"textbox","id":"sh/3698bqhc","slide":1,"name":"small-kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,72,520,30]}
+{"kind":"textbox","id":"sh/25072l0r","slide":1,"name":"cover-title","text":"Misplaced, not missing","textPreview":"Misplaced, not missing","textChars":22,"textLines":1,"bbox":[72,170,940,110]}
+{"kind":"textbox","id":"sh/14rq9gz6","slide":1,"name":"subtitle","text":"Why the synthetic tail is no longer an insertion problem, and why escape remains the live question.","textPreview":"Why the synthetic tail is no longer an insertion problem, and why escape remains the live question.","textChars":99,"textLines":1,"bbox":[72,315,870,92]}
+{"kind":"textbox","id":"sh/g3ip0bil","slide":1,"name":"metric-both conformers found","text":"742","textPreview":"742","textChars":3,"textLines":1,"bbox":[72,500,240,62]}
+{"kind":"textbox","id":"sh/f29876h0","slide":1,"name":"metric-label-both conformers found","text":"both conformers found","textPreview":"both conformers found","textChars":21,"textLines":1,"bbox":[72,562,265,54]}
+{"kind":"textbox","id":"sh/e107yl0v","slide":1,"name":"metric-strict successes","text":"626","textPreview":"626","textChars":3,"textLines":1,"bbox":[357,500,240,62]}
+{"kind":"textbox","id":"sh/l0vqlkzq","slide":1,"name":"metric-label-strict successes","text":"strict successes","textPreview":"strict successes","textChars":16,"textLines":1,"bbox":[357,562,265,54]}
+{"kind":"textbox","id":"sh/0zm9cfi5","slide":1,"name":"metric-escape test still open","text":"S1","textPreview":"S1","textChars":2,"textLines":1,"bbox":[642,500,240,62]}
+{"kind":"textbox","id":"sh/mtgji9kz","slide":1,"name":"metric-label-escape test still open","text":"escape test still open","textPreview":"escape test still open","textChars":22,"textLines":1,"bbox":[642,562,265,54]}
+{"kind":"textbox","id":"sh/7up0be1k","slide":1,"name":"footer","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"notes","id":"nt/mk0lco","slide":1,"text":"Open with the distinction. We used to phrase the problem as 'we do not find the minor conformer.' The newer evidence says the minor density is often already in the model, but in the wrong configuration. That changes the mechanism we should test.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}
+{"kind":"slide","id":"sl/mfkqg1","slide":2,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":5}
+{"kind":"textbox","id":"sh/nq18r2tw","slide":2,"name":"kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,42,520,28]}
+{"kind":"textbox","id":"sh/oru907uh","slide":2,"name":"title","text":"The frozen metric is strong, but the tail is real","textPreview":"The frozen metric is strong, but the tail is real","textChars":49,"textLines":1,"bbox":[72,78,950,92]}
+{"kind":"shape","id":"sh/ps3qtsb2","slide":2,"name":"rule","bbox":[72,170,1136,1]}
+{"kind":"textbox","id":"sh/bul8v2ts","slide":2,"name":"cascade-callout","text":"Rotamer, clash, and symmetry remove only 4 starts after occupancy; tmol is the dominant remaining filter.","textPreview":"Rotamer, clash, and symmetry remove only 4 starts after occupancy; tmol is the dominant remaining filter.","textChars":105,"textLines":1,"bbox":[880,252,300,205]}
+{"kind":"textbox","id":"sh/cvu947ad","slide":2,"name":"cascade-sub","text":"Frozen metric: qfit-synth20-merge050-one-to-one-tmol044-v3","textPreview":"Frozen metric: qfit-synth20-merge050-one-to-one-tmol044-v3","textChars":58,"textLines":1,"bbox":[880,470,300,70]}
+{"kind":"textbox","id":"sh/xw3qxcby","slide":2,"name":"footer","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"chart","id":"ch/md8fupwb","slide":2,"name":"","chartType":"bar","bbox":[110,230,720,330]}
+{"kind":"notes","id":"nt/mfkqg1","slide":2,"text":"Counts are per start across 20 sites x 50 starts. The middle of the cascade matters: only four starts drop at the rotamer/direct/symmetry gates after occupancy. The large downstream drop is tmol, not a geometric mismatch between soft objective and hard audit.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}
+{"kind":"slide","id":"sl/pqurwb","slide":3,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":10}
+{"kind":"textbox","id":"sh/pg3qpoja","slide":3,"name":"kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,42,520,28]}
+{"kind":"textbox","id":"sh/2dc7e9kz","slide":3,"name":"title","text":"Single-recovery failures mostly lose the minor state","textPreview":"Single-recovery failures mostly lose the minor state","textChars":52,"textLines":1,"bbox":[72,78,950,92]}
+{"kind":"shape","id":"sh/3el8ne14","slide":3,"name":"rule","bbox":[72,170,1136,1]}
+{"kind":"textbox","id":"sh/cjepkj21","slide":3,"name":"metric-single-recovery starts","text":"187","textPreview":"187","textChars":3,"textLines":1,"bbox":[112,235,240,62]}
+{"kind":"textbox","id":"sh/dknqtojm","slide":3,"name":"metric-label-single-recovery starts","text":"single-recovery starts","textPreview":"single-recovery starts","textChars":22,"textLines":1,"bbox":[112,297,265,54]}
+{"kind":"textbox","id":"sh/qhc7itkv","slide":3,"name":"metric-missed the minor conformer","text":"142","textPreview":"142","textChars":3,"textLines":1,"bbox":[395,235,240,62]}
+{"kind":"textbox","id":"sh/bi58re1g","slide":3,"name":"metric-label-missed the minor conformer","text":"missed the minor conformer","textPreview":"missed the minor conformer","textChars":26,"textLines":1,"bbox":[395,297,265,54]}
+{"kind":"textbox","id":"sh/07epo3ix","slide":3,"name":"metric-missed the major conformer","text":"45","textPreview":"45","textChars":2,"textLines":1,"bbox":[705,235,240,62]}
+{"kind":"textbox","id":"sh/l8nqx8ji","slide":3,"name":"metric-label-missed the major conformer","text":"missed the major conformer","textPreview":"missed the major conformer","textChars":26,"textLines":1,"bbox":[705,297,265,54]}
+{"kind":"textbox","id":"sh/0n6xg3q5","slide":3,"name":"minor-note","text":"The asymmetry is occupancy-rank based, not an A/B label artifact.","textPreview":"The asymmetry is occupancy-rank based, not an A/B label artifact.","textChars":65,"textLines":1,"bbox":[890,345,285,120]}
+{"kind":"textbox","id":"sh/f2xw7ipk","slide":3,"name":"footer","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"chart","id":"ch/dgvm50ze","slide":3,"name":"","chartType":"bar","bbox":[140,440,700,150]}
+{"kind":"notes","id":"nt/pqurwb","slide":3,"text":"This is conditional on exactly one conformer being recovered. The classification is by occupancy rank rather than A/B label, because the A/B label is not consistently the major/minor state across the panel.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}
+{"kind":"slide","id":"sl/sc7ayl","slide":4,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":9}
+{"kind":"textbox","id":"sh/zel8fu1g","slide":4,"name":"kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,42,520,28]}
+{"kind":"textbox","id":"sh/kfe98z21","slide":4,"name":"title","text":"The nulls point away from search coverage","textPreview":"The nulls point away from search coverage","textChars":41,"textLines":1,"bbox":[72,78,950,92]}
+{"kind":"shape","id":"sh/lgnqh4jm","slide":4,"name":"rule","bbox":[72,170,1136,1]}
+{"kind":"textbox","id":"sh/apcripkz","slide":4,"name":"bullet-0","text":"- Occupancy freeze timing did not rescue starved slots","textPreview":"- Occupancy freeze timing did not rescue starved slots","textChars":54,"textLines":1,"bbox":[110,230,780,54]}
+{"kind":"textbox","id":"sh/bql8bu1k","slide":4,"name":"bullet-1","text":"- Initialization stratification did not keep minor-seeded slots there","textPreview":"- Initialization stratification did not keep minor-seeded slots there","textChars":69,"textLines":1,"bbox":[110,288,780,54]}
+{"kind":"textbox","id":"sh/cru9kz25","slide":4,"name":"bullet-2","text":"- Separation, torsion reachability, and mask geometry did not explain the tail","textPreview":"- Separation, torsion reachability, and mask geometry did not explain the tail","textChars":78,"textLines":1,"bbox":[110,346,780,54]}
+{"kind":"textbox","id":"sh/xc3qd4jq","slide":4,"name":"bullet-3","text":"- Signal weighting changed the score and hurt recovery","textPreview":"- Signal weighting changed the score and hurt recovery","textChars":54,"textLines":1,"bbox":[110,404,780,54]}
+{"kind":"shape","id":"sh/ulwretk3","slide":4,"name":"nulls-panel","bbox":[930,228,245,258]}
+{"kind":"textbox","id":"sh/vmpsne1o","slide":4,"name":"nulls-panel-title","text":"Pattern","textPreview":"Pattern","textChars":7,"textLines":1,"bbox":[955,255,195,36]}
+{"kind":"textbox","id":"sh/7e9czq90","slide":4,"name":"nulls-panel-copy","text":"The failed arms mostly changed scoring or local search. None cleanly tested escape from a rewarded partial fit.","textPreview":"The failed arms mostly changed scoring or local search. None cleanly tested escape from a rewarded partial fit.","textChars":111,"textLines":1,"bbox":[955,312,190,132]}
+{"kind":"textbox","id":"sh/6t0vqlsv","slide":4,"name":"footer","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"notes","id":"nt/sc7ayl","slide":4,"text":"Do not narrate this as a graveyard of attempts. The pattern is the argument. Initialization is the sharpest null: even slots initialized on the minor moved away, so the issue was not simply lack of initial coverage.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}
+{"kind":"slide","id":"sl/0gb354","slide":5,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":12}
+{"kind":"textbox","id":"sh/7id4n2pw","slide":5,"name":"kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,42,520,28]}
+{"kind":"textbox","id":"sh/8jm5w76h","slide":5,"name":"title","text":"The residual does not contain a conformer-shaped hole","textPreview":"The residual does not contain a conformer-shaped hole","textChars":53,"textLines":1,"bbox":[72,78,950,92]}
+{"kind":"shape","id":"sh/tkvmpc72","slide":5,"name":"rule","bbox":[72,170,1136,1]}
+{"kind":"textbox","id":"sh/ydknqdof","slide":5,"name":"metric-deposited missed-conformer ceiling","text":"r = 0.340","textPreview":"r = 0.340","textChars":9,"textLines":1,"bbox":[110,230,240,62]}
+{"kind":"textbox","id":"sh/jet4jip0","slide":5,"name":"metric-label-deposited missed-conformer ceiling","text":"deposited missed-conformer ceiling","textPreview":"deposited missed-conformer ceiling","textChars":34,"textLines":1,"bbox":[110,292,265,54]}
+{"kind":"textbox","id":"sh/kf25sn6l","slide":5,"name":"metric-least-squares fitted occupancy","text":"0.070","textPreview":"0.070","textChars":5,"textLines":1,"bbox":[515,230,240,62]}
+{"kind":"textbox","id":"sh/lgbmls7q","slide":5,"name":"metric-label-least-squares fitted occupancy","text":"least-squares fitted occupancy","textPreview":"least-squares fitted occupancy","textChars":30,"textLines":1,"bbox":[515,292,265,54]}
+{"kind":"textbox","id":"sh/i94n2hoj","slide":5,"name":"metric-median density support at misplaced slots","text":"66%","textPreview":"66%","textChars":3,"textLines":1,"bbox":[900,230,240,62]}
+{"kind":"textbox","id":"sh/3ax4vmp4","slide":5,"name":"metric-label-median density support at misplaced slots","text":"median density support at misplaced slots","textPreview":"median density support at misplaced slots","textChars":41,"textLines":1,"bbox":[900,292,265,54]}
+{"kind":"textbox","id":"sh/fqp4fi1k","slide":5,"name":"bullet-0","text":"- If the conformer were absent, the residual should call for its deposited occupancy","textPreview":"- If the conformer were absent, the residual should call for its deposited occupancy","textChars":84,"textLines":1,"bbox":[130,445,930,44]}
+{"kind":"textbox","id":"sh/upw36dkz","slide":5,"name":"bullet-1","text":"- Instead, the residual asks for only a small leftover component","textPreview":"- Instead, the residual asks for only a small leftover component","textChars":64,"textLines":1,"bbox":[130,493,930,44]}
+{"kind":"textbox","id":"sh/hs7mhsja","slide":5,"name":"bullet-2","text":"- Conclusion: insertion is closed; the mass is already partly absorbed","textPreview":"- Conclusion: insertion is closed; the mass is already partly absorbed","textChars":70,"textLines":1,"bbox":[130,541,930,44]}
+{"kind":"textbox","id":"sh/gry58n2p","slide":5,"name":"footer","text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"notes","id":"nt/0gb354","slide":5,"text":"This is the ceiling slide. If deposited ground truth only fits the residual at r=0.340 and fitted occupancy 0.070, no insertion rule can do much better. That result closes insertion, not escape.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}
+{"kind":"slide","id":"sl/a02okn","slide":6,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":5}
+{"kind":"textbox","id":"sh/bqlcvmds","slide":6,"name":"kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,42,520,28]}
+{"kind":"textbox","id":"sh/crud4rud","slide":6,"name":"title","text":"Some of the tail is information-limited","textPreview":"Some of the tail is information-limited","textChars":39,"textLines":1,"bbox":[72,78,950,92]}
+{"kind":"shape","id":"sh/xs3uxwvy","slide":6,"name":"rule","bbox":[72,170,1136,1]}
+{"kind":"textbox","id":"sh/zu5cz6d4","slide":6,"name":"limits-callout","text":"5Z8H + 2VFP account for 70 of 142 missed-minor failures, where two-state support is barely resolvable.","textPreview":"5Z8H + 2VFP account for 70 of 142 missed-minor failures, where two-state support is barely resolvable.","textChars":102,"textLines":1,"bbox":[815,260,330,170]}
+{"kind":"textbox","id":"sh/kved8bup","slide":6,"name":"limits-sub","text":"That caps the upside of any optimizer-only fix.","textPreview":"That caps the upside of any optimizer-only fix.","textChars":47,"textLines":1,"bbox":[815,455,330,60]}
+{"kind":"textbox","id":"sh/lwne1wva","slide":6,"name":"footer","text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"chart","id":"ch/a1snup47","slide":6,"name":"","chartType":"bar","bbox":[105,235,640,300]}
+{"kind":"notes","id":"nt/a02okn","slide":6,"text":"This caps upside. 5Z8H and 2VFP together account for 70 of the 142 missed-minor failures. The right interpretation is not that the optimizer is innocent everywhere, but that a large chunk of the tail is near or beyond the support-resolution limit.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}
+{"kind":"slide","id":"sl/qckwpz","slide":7,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":8}
+{"kind":"textbox","id":"sh/2xo7yxwn","slide":7,"name":"kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,42,520,28]}
+{"kind":"textbox","id":"sh/p0fqtsvy","slide":7,"name":"title","text":"Misplaced should be movable, but only by crossing a barrier","textPreview":"Misplaced should be movable, but only by crossing a barrier","textChars":59,"textLines":1,"bbox":[72,78,950,92]}
+{"kind":"shape","id":"sh/oz6p07ut","slide":7,"name":"rule","bbox":[72,170,1136,1]}
+{"kind":"shape","id":"sh/fadonidw","slide":7,"name":"energy-axis","bbox":[140,560,880,2]}
+{"kind":"shape","id":"sh/u947udwb","slide":7,"name":"local-well","bbox":[225,407,230,110]}
+{"kind":"shape","id":"sh/1wfqpsv2","slide":7,"name":"barrier","bbox":[520,260,185,255]}
+{"kind":"shape","id":"sh/gb6pwneh","slide":7,"name":"true-well","bbox":[765,365,230,150]}
+{"kind":"textbox","id":"sh/76dojid0","slide":7,"name":"local","text":"rewarded partial fit\n66% density support","textPreview":"rewarded partial fit | 66% density support","textChars":40,"textLines":2,"bbox":[238,430,205,70]}
+{"kind":"textbox","id":"sh/6547qdwf","slide":7,"name":"bar","text":"barrier","textPreview":"barrier","textChars":7,"textLines":1,"bbox":[548,345,130,40]}
+{"kind":"textbox","id":"sh/o36tonyx","slide":7,"name":"true","text":"correct conformer\nbetter global fit","textPreview":"correct conformer | better global fit","textChars":35,"textLines":2,"bbox":[782,412,195,70]}
+{"kind":"textbox","id":"sh/p4fux8fi","slide":7,"name":"gd","text":"Gradient descent will not break a fit it is currently rewarded for making.","textPreview":"Gradient descent will not break a fit it is currently rewarded for making.","textChars":74,"textLines":1,"bbox":[130,222,475,80]}
+{"kind":"textbox","id":"sh/21obmdg7","slide":7,"name":"sde","text":"Noise or restart can test escape; insertion cannot.","textPreview":"Noise or restart can test escape; insertion cannot.","textChars":51,"textLines":1,"bbox":[710,242,390,68]}
+{"kind":"textbox","id":"sh/n2xcvixs","slide":7,"name":"footer","text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"notes","id":"nt/qckwpz","slide":7,"text":"This is the movable-point argument. The wrong configuration explains real density at about 66 percent efficiency, so the objective rewards it locally. Gradient descent will not first break that partial fit in order to find a better one.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}
+{"kind":"slide","id":"sl/f1x09r","slide":8,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":12}
+{"kind":"textbox","id":"sh/8r2xk3a1","slide":8,"name":"kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,42,520,28]}
+{"kind":"textbox","id":"sh/7qtgry9g","slide":8,"name":"title","text":"The decision is whether to test escape cleanly","textPreview":"The decision is whether to test escape cleanly","textChars":46,"textLines":1,"bbox":[72,78,950,92]}
+{"kind":"shape","id":"sh/mpkfitsv","slide":8,"name":"rule","bbox":[72,170,1136,1]}
+{"kind":"textbox","id":"sh/hwvyhsri","slide":8,"name":"metric-30 degrees/step","text":"S2","textPreview":"S2","textChars":2,"textLines":1,"bbox":[110,230,240,62]}
+{"kind":"textbox","id":"sh/wvmxonqx","slide":8,"name":"metric-label-30 degrees/step","text":"30 degrees/step","textPreview":"30 degrees/step","textChars":15,"textLines":1,"bbox":[110,292,265,54]}
+{"kind":"textbox","id":"sh/vutgvi9s","slide":8,"name":"metric-both-found recovery collapsed","text":"742 -> 575","textPreview":"742 -> 575","textChars":10,"textLines":1,"bbox":[400,230,240,62]}
+{"kind":"textbox","id":"sh/utkfmd87","slide":8,"name":"metric-label-both-found recovery collapsed","text":"both-found recovery collapsed","textPreview":"both-found recovery collapsed","textChars":29,"textLines":1,"bbox":[400,292,265,54]}
+{"kind":"textbox","id":"sh/5kvylsru","slide":8,"name":"metric-10 degrees/step remains untested","text":"S1","textPreview":"S1","textChars":2,"textLines":1,"bbox":[760,230,240,62]}
+{"kind":"textbox","id":"sh/4jmxsnq9","slide":8,"name":"metric-label-10 degrees/step remains untested","text":"10 degrees/step remains untested","textPreview":"10 degrees/step remains untested","textChars":32,"textLines":1,"bbox":[760,292,265,54]}
+{"kind":"textbox","id":"sh/y143q5kb","slide":8,"name":"bullet-0","text":"- S2 looks like non-convergence, not a clean failed-escape result","textPreview":"- S2 looks like non-convergence, not a clean failed-escape result","textChars":65,"textLines":1,"bbox":[130,445,930,44]}
+{"kind":"textbox","id":"sh/z2dkja1g","slide":8,"name":"bullet-1","text":"- The honest test is smaller perturbation around local minima","textPreview":"- The honest test is smaller perturbation around local minima","textChars":61,"textLines":1,"bbox":[130,493,930,44]}
+{"kind":"textbox","id":"sh/0nmlsfi1","slide":8,"name":"bullet-2","text":"- Decision: spend another quarter on S1 or move to experimental density","textPreview":"- Decision: spend another quarter on S1 or move to experimental density","textChars":71,"textLines":1,"bbox":[130,541,930,44]}
+{"kind":"textbox","id":"sh/lov2lkjm","slide":8,"name":"footer","text":"8","textPreview":"8","textChars":1,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"notes","id":"nt/f1x09r","slide":8,"text":"Frame this as the question for Fraser. S2 at 30 degrees per step was too much: it damaged convergence and worsened both missed-minor and missed-major categories. That does not refute escape. S1 at 10 degrees is the clean version of the question.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}
+{"kind":"slide","id":"sl/xpsqo2","slide":9,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":7}
+{"kind":"textbox","id":"sh/hw3610zq","slide":9,"name":"kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,42,520,28]}
+{"kind":"textbox","id":"sh/utcn65gf","slide":9,"name":"title","text":"Backup: frozen-v3 metric definition","textPreview":"Backup: frozen-v3 metric definition","textChars":35,"textLines":1,"bbox":[72,78,950,92]}
+{"kind":"shape","id":"sh/vulozah0","slide":9,"name":"rule","bbox":[72,170,1136,1]}
+{"kind":"textbox","id":"sh/4je5cfyh","slide":9,"name":"bullet-0","text":"- v1 undercounted recovery through independent greedy labels","textPreview":"- v1 undercounted recovery through independent greedy labels","textChars":60,"textLines":1,"bbox":[110,230,920,54]}
+{"kind":"textbox","id":"sh/5kn65kz2","slide":9,"name":"bullet-1","text":"- v2 fixed one-to-one assignment but omitted genuine near-duplicate occupancy","textPreview":"- v2 fixed one-to-one assignment but omitted genuine near-duplicate occupancy","textChars":77,"textLines":1,"bbox":[110,288,920,54]}
+{"kind":"textbox","id":"sh/ihcna5gb","slide":9,"name":"bullet-2","text":"- v3 uses 0.5 A protected merge, one-to-one assignment, and tmol <= +0.44","textPreview":"- v3 uses 0.5 A protected merge, one-to-one assignment, and tmol <= +0.44","textChars":73,"textLines":1,"bbox":[110,346,920,54]}
+{"kind":"textbox","id":"sh/ji5o3ahw","slide":9,"name":"bullet-3","text":"- Frozen control cascade: 742 -> 714 -> 710 -> 710 -> 710 -> 626","textPreview":"- Frozen control cascade: 742 -> 714 -> 710 -> 710 -> 710 -> 626","textChars":64,"textLines":1,"bbox":[110,404,920,54]}
+{"kind":"textbox","id":"sh/snepgfyt","slide":9,"name":"footer","text":"9","textPreview":"9","textChars":1,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"notes","id":"nt/xpsqo2","slide":9,"text":"Use only if someone asks about what changed between metric versions. The important answer is that v3 fixed assignment accounting and is frozen for model experiments.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}
+{"kind":"slide","id":"sl/j6p7eb","slide":10,"title":"SYNTHETIC 20-SITE AUDIT","textShapes":21}
+{"kind":"textbox","id":"sh/o72p8rqd","slide":10,"name":"kicker","text":"SYNTHETIC 20-SITE AUDIT","textPreview":"SYNTHETIC 20-SITE AUDIT","textChars":23,"textLines":1,"bbox":[72,42,520,28]}
+{"kind":"textbox","id":"sh/36t8zmps","slide":10,"name":"title","text":"Backup: the tail is concentrated by site","textPreview":"Backup: the tail is concentrated by site","textChars":40,"textLines":1,"bbox":[72,78,950,92]}
+{"kind":"shape","id":"sh/25k76h87","slide":10,"name":"rule","bbox":[72,170,1136,1]}
+{"kind":"textbox","id":"sh/dcvq5w7u","slide":10,"name":"label-130-230","text":"Site","textPreview":"Site","textChars":4,"textLines":1,"bbox":[130,230,240,26]}
+{"kind":"textbox","id":"sh/cbmpcrq9","slide":10,"name":"label-390-230","text":"Missed minor","textPreview":"Missed minor","textChars":12,"textLines":1,"bbox":[390,230,240,26]}
+{"kind":"textbox","id":"sh/bad83mpo","slide":10,"name":"label-670-230","text":"Missed major","textPreview":"Missed major","textChars":12,"textLines":1,"bbox":[670,230,240,26]}
+{"kind":"textbox","id":"sh/q947ah83","slide":10,"name":"site-0","text":"1ZV8","textPreview":"1ZV8","textChars":4,"textLines":1,"bbox":[130,275,160,38]}
+{"kind":"shape","id":"sh/tgbqts7a","slide":10,"name":"minorbar-0","bbox":[390,279,140,28]}
+{"kind":"textbox","id":"sh/sfip07q5","slide":10,"name":"minorval-0","text":"20","textPreview":"20","textChars":2,"textLines":1,"bbox":[710,275,60,32]}
+{"kind":"shape","id":"sh/21ovy1s7","slide":10,"name":"majorbar-0","bbox":[810,279,10,28]}
+{"kind":"textbox","id":"sh/32xwr6ts","slide":10,"name":"majorval-0","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[1055,275,60,32]}
+{"kind":"textbox","id":"sh/o36d0bax","slide":10,"name":"site-1","text":"2VFP","textPreview":"2VFP","textChars":4,"textLines":1,"bbox":[130,339,160,38]}
+{"kind":"shape","id":"sh/p4fetgbi","slide":10,"name":"minorbar-1","bbox":[390,343,308,28]}
+{"kind":"textbox","id":"sh/q58f21s3","slide":10,"name":"minorval-1","text":"44","textPreview":"44","textChars":2,"textLines":1,"bbox":[710,339,60,32]}
+{"kind":"shape","id":"sh/bqhwv6to","slide":10,"name":"majorbar-1","bbox":[810,343,0,28]}
+{"kind":"textbox","id":"sh/crqx4ba9","slide":10,"name":"majorval-1","text":"0","textPreview":"0","textChars":1,"textLines":1,"bbox":[1055,339,60,32]}
+{"kind":"textbox","id":"sh/xszexgbu","slide":10,"name":"site-2","text":"5Z8H","textPreview":"5Z8H","textChars":4,"textLines":1,"bbox":[130,403,160,38]}
+{"kind":"shape","id":"sh/yt8f6lsf","slide":10,"name":"minorbar-2","bbox":[390,407,182,28]}
+{"kind":"textbox","id":"sh/zuhwzqtk","slide":10,"name":"minorval-2","text":"26","textPreview":"26","textChars":2,"textLines":1,"bbox":[710,403,60,32]}
+{"kind":"shape","id":"sh/vy1wnqps","slide":10,"name":"majorbar-2","bbox":[810,407,20,28]}
+{"kind":"textbox","id":"sh/uxsvul87","slide":10,"name":"majorval-2","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[1055,403,60,32]}
+{"kind":"textbox","id":"sh/h0jep07y","slide":10,"name":"site-3","text":"7UO8","textPreview":"7UO8","textChars":4,"textLines":1,"bbox":[130,467,160,38]}
+{"kind":"shape","id":"sh/wzadwvqd","slide":10,"name":"minorbar-3","bbox":[390,471,105,28]}
+{"kind":"textbox","id":"sh/7uhcjqpw","slide":10,"name":"minorval-3","text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[710,467,60,32]}
+{"kind":"shape","id":"sh/mt8vql8b","slide":10,"name":"majorbar-3","bbox":[810,471,60,28]}
+{"kind":"textbox","id":"sh/9wjulg72","slide":10,"name":"majorval-3","text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[1055,467,60,32]}
+{"kind":"textbox","id":"sh/8vqdsbqh","slide":10,"name":"site-4","text":"4C16","textPreview":"4C16","textChars":4,"textLines":1,"bbox":[130,531,160,38]}
+{"kind":"shape","id":"sh/z6hcf6pk","slide":10,"name":"minorbar-4","bbox":[390,535,49,28]}
+{"kind":"textbox","id":"sh/y58vm18z","slide":10,"name":"minorval-4","text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[710,531,60,32]}
+{"kind":"shape","id":"sh/4zm1032l","slide":10,"name":"majorbar-4","bbox":[810,535,170,28]}
+{"kind":"textbox","id":"sh/p0v298j6","slide":10,"name":"majorval-4","text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[1055,531,60,32]}
+{"kind":"textbox","id":"sh/2xkjydkv","slide":10,"name":"footer","text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1176,664,32,24]}
+{"kind":"notes","id":"nt/j6p7eb","slide":10,"text":"Use this if someone wants to know whether the missed-minor result is panel-wide. It is not uniform; 2VFP, 5Z8H, 1ZV8, 7UO8, and 4C16 carry much of the tail.\n[Sources]\n- User-provided slide brief: /Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt\n- Frozen metric data copied locally: /Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5"}

@@ -1,0 +1,57 @@
+{
+  "active_conformers": 220,
+  "all_active_strict_physical": 32,
+  "assigned_pair_strict_joint_success": 26,
+  "audit_rule_version": "2026-07-24-altloc-minstate-rotwidth-hisunion-aromatic45-matched-tmol-v2",
+  "both_found_conventional": 32,
+  "canonical_conformers": 186,
+  "clash_free_conformers": 188,
+  "conformer_matching_version": "optimal_one_to_one_AB_rmsd_v1",
+  "criteria": {
+    "assigned_pair_selection": "optimal one-to-one A/B RMSD assignment among conformers with occupancy > 0.1; one conformer per state",
+    "both_found": true,
+    "conventional_rmsd_A": 1.0,
+    "direct_and_symmetry_clash_A": 2.0,
+    "occupancy_tolerance": 0.2,
+    "rotamer_gate": "shared residue/chi centers and per-chi widths",
+    "tmol_delta_vs_matched_deposited_AB": 0.44,
+    "tmol_environment_rules": [
+      "frozen_matched_deposited_minstate_v1"
+    ]
+  },
+  "ensembles": 100,
+  "occupancy_conditioned_all_active_strict_physical": 22,
+  "per_site": [
+    {
+      "active_conformers": 101,
+      "all_active_strict_physical": 17,
+      "assigned_pair_strict_joint_success": 8,
+      "both_found_conventional": 14,
+      "canonical_conformers": 72,
+      "clash_free_conformers": 69,
+      "ensembles": 50,
+      "occupancy_conditioned_all_active_strict_physical": 7,
+      "recovery_and_occupancy": 8,
+      "site": "2VFP_A_TYR417",
+      "strict_joint_success": 7,
+      "tmol_valid_conformers": 53
+    },
+    {
+      "active_conformers": 119,
+      "all_active_strict_physical": 15,
+      "assigned_pair_strict_joint_success": 18,
+      "both_found_conventional": 18,
+      "canonical_conformers": 114,
+      "clash_free_conformers": 119,
+      "ensembles": 50,
+      "occupancy_conditioned_all_active_strict_physical": 15,
+      "recovery_and_occupancy": 18,
+      "site": "7UO8_A_GLN53",
+      "strict_joint_success": 15,
+      "tmol_valid_conformers": 57
+    }
+  ],
+  "recovery_and_occupancy": 26,
+  "strict_joint_success": 22,
+  "tmol_valid_conformers": 110
+}

@@ -1,0 +1,21 @@
+{
+  "completed_sites": [
+    "1ZV8_E_ASN1",
+    "2VFP_A_TYR417",
+    "4C16_A_MET258",
+    "5Z8H_A_MET730",
+    "7UO8_A_GLN53",
+    "2V05_A_HIS168",
+    "3A1C_B_ARG447",
+    "3GMI_A_GLU5",
+    "3NY7_B_LYS19",
+    "5DBA_A_TRP325",
+    "5KWB_A_PHE591",
+    "7F72_A_MET103",
+    "7T7A_A_LEU396",
+    "8FBE_B_ILE92"
+  ],
+  "rotamer_rows_complete": 3171,
+  "starts_complete": 187,
+  "status": "complete"
+}

@@ -22,3 +22,7 @@ nohup.out
 .idea/
 .vscode/
 *~
+
+# Local/pod artifact and vendored runtime trees are not source or curated reports.
+artifacts/
+external/

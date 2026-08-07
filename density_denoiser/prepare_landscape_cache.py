@@ -13,7 +13,7 @@ import gemmi
 import numpy as np
 import torch
 
-from probe4_core import dihedral, torsion_to_coords, wrap_angles
+from experiments.probe4.core import dihedral, torsion_to_coords, wrap_angles
 
 from .data_pipeline import _sidechain_atoms
 from .dataset import manifest_path, read_manifest
@@ -78,7 +78,12 @@ def _find_residue(structure: gemmi.Structure, record: dict) -> gemmi.Residue | N
     return None
 
 
-def _build_site(record: dict, structure: gemmi.Structure, seed: int) -> dict | None:
+def _build_site(
+    record: dict,
+    structure: gemmi.Structure,
+    seed: int,
+    max_atom_slots: int = MAX_ATOM_SLOTS,
+) -> dict | None:
     if record["residue_name"] not in CHI_SPECS:
         return None
     residue = _find_residue(structure, record)
@@ -193,16 +198,16 @@ def _build_site(record: dict, structure: gemmi.Structure, seed: int) -> dict | N
     )
 
     center = torch.tensor(record["center"], dtype=torch.float32)
-    positions = torch.zeros((len(CANDIDATE_LABELS), MAX_ATOM_SLOTS, 3), dtype=torch.float32)
-    sigma2 = torch.ones((len(CANDIDATE_LABELS), MAX_ATOM_SLOTS), dtype=torch.float32)
-    weights = torch.zeros((len(CANDIDATE_LABELS), MAX_ATOM_SLOTS), dtype=torch.float32)
-    atom_mask = torch.zeros((len(CANDIDATE_LABELS), MAX_ATOM_SLOTS), dtype=torch.bool)
+    positions = torch.zeros((len(CANDIDATE_LABELS), max_atom_slots, 3), dtype=torch.float32)
+    sigma2 = torch.ones((len(CANDIDATE_LABELS), max_atom_slots), dtype=torch.float32)
+    weights = torch.zeros((len(CANDIDATE_LABELS), max_atom_slots), dtype=torch.float32)
+    atom_mask = torch.zeros((len(CANDIDATE_LABELS), max_atom_slots), dtype=torch.bool)
     name_to_index = {name: index for index, name in enumerate(sidechain_names)}
 
     shared_names = [atom.name.strip() for atom in shared_atoms]
     explicit_names = [name for name in moving_names if name not in set(shared_names)]
     required_slots = len(shared_atoms) + 2 * len(explicit_names)
-    if required_slots > MAX_ATOM_SLOTS:
+    if required_slots > max_atom_slots:
         return None
 
     for candidate_index, (coords_a, coords_b) in enumerate(conformer_pairs):

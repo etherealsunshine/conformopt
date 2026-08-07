@@ -1,0 +1,5 @@
+Sources used:
+/Users/utkarsh/.codex/attachments/07c7ce2a-9d78-4b26-a742-bc4b9973ba5e/pasted-text.txt
+/Users/utkarsh/qfitonsteroids/results/frozen_v3_metric_data_0p5
+
+No external sources used. Claims and figures come from the user brief and local frozen-v3 artifacts.

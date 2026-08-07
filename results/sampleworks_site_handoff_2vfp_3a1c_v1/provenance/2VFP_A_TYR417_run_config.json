@@ -1,0 +1,62 @@
+{
+  "K": 4,
+  "calibration_only": false,
+  "checkpoint": "/home/dev/qfit_unet_data/density_denoiser/model/denoiser_best.pt",
+  "clash_threshold": 2.5,
+  "fixed_occupancy_steps": 0,
+  "force": false,
+  "four_chi_stage_steps": 100,
+  "frame": "crystal",
+  "grid_radius": 4.0,
+  "initialization_tests": false,
+  "interpretation": "untouched test proteins; held-out denoiser and optimizer generalization",
+  "lambda_clash": 5.0,
+  "lambda_rot": 0.5,
+  "lambda_vdw": 1.0,
+  "lr": 1.0,
+  "mtz": "/home/dev/workspace/data/2O1K.mtz",
+  "n_starts": 50,
+  "n_steps": 500,
+  "nontrivial_occupancy": 0.05,
+  "occupancy_tolerance": 0.2,
+  "optimizer_physics_environment_rule": "2026-07-24-altloc-minstate-water-minstate-v2",
+  "output": "/home/dev/qfit_unet_data/density_denoiser/heldout_7uo8_2vfp_water_minstate_v1/shards/2VFP_A_TYR417",
+  "patch_size": 32,
+  "pdb": "/home/dev/workspace/data/2O1K.pdb",
+  "per_residue_class_schedule": true,
+  "physics_calibration_max_gap": 5.0,
+  "physics_refinement_lr_scale": 0.1,
+  "physics_refinement_steps": 200,
+  "resolved_density_schedules": {
+    "2VFP_A_TYR417": [
+      {
+        "blur_fwhm_angstrom": 0.0,
+        "learning_rate": 1.0,
+        "steps": 500
+      }
+    ]
+  },
+  "seed": 41,
+  "seed_deposited_a": false,
+  "selection": "/home/dev/qfit_unet_data/density_denoiser/heldout_7uo8_2vfp_water_minstate_v1/selection.json",
+  "sequential_two_stage": false,
+  "site": [
+    "2VFP_A_TYR417"
+  ],
+  "sites": [
+    "2VFP_A_TYR417"
+  ],
+  "soft_physics": false,
+  "spacing": 0.5,
+  "symmetry_barrier_buffer": 0.25,
+  "symmetry_barrier_scale": 0.0,
+  "symmetry_hard_threshold": 2.0,
+  "target": [
+    "synthetic"
+  ],
+  "targets": [
+    "synthetic"
+  ],
+  "transfer_endpoint_root": "/home/dev/workspace/five_site_coarse_to_fine_decay_reset/coarse_to_fine_4A_2A_full_decay",
+  "vdw_threshold": 3.0
+}

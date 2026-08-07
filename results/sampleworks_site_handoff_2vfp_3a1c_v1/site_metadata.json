@@ -1,0 +1,108 @@
+{
+  "sites": [
+    {
+      "chain": "A",
+      "deposited_A_B_separation_A": 0.5667760372161865,
+      "deposited_altloc_A": "A",
+      "deposited_altloc_B": "B",
+      "deposited_occupancy_raw": {
+        "A": 0.41999998688697815,
+        "B": 0.5799999833106995,
+        "sum": 0.9999999701976776
+      },
+      "first_voxel_center_A": [
+        16.819562500000004,
+        -13.617,
+        -10.4683125
+      ],
+      "grid_frame": "crystal Cartesian axes",
+      "grid_shape": [
+        32,
+        32,
+        32
+      ],
+      "grid_spacing_A": 0.5,
+      "historical_selection_separation_A": 0.5667760372161865,
+      "insertion_code": " ",
+      "last_voxel_center_A": [
+        32.3195625,
+        1.8829999999999991,
+        5.0316875
+      ],
+      "map_type": "omit_mfo_dfc",
+      "optimizer_target_occupancy_normalized": {
+        "A": 0.41999999940395355,
+        "B": 0.5800000005960465
+      },
+      "patch_center_A": [
+        24.569562500000004,
+        -5.867000000000001,
+        -2.7183124999999997
+      ],
+      "pdb_id": "2VFP",
+      "residue_name": "TYR",
+      "residue_number": 417,
+      "resolution_high_A": 1.5533256023387816,
+      "separation_definition": "sqrt(mean_atoms(sum_xyz(delta^2))), minimized over valid equivalent terminal-atom permutations",
+      "separation_source": "frozen v3 audit tmol_inputs.json deposited A/B arrays + density_denoiser.residue_geometry.symmetry_aware_rmsd",
+      "site": "2VFP_A_TYR417",
+      "synthetic_B_rule": "per-atom deposited B_iso; sigma^2=max(B_iso/(8*pi^2),0.04) A^2",
+      "synthetic_target_scope": "sidechain heavy atoms",
+      "synthetic_weight_rule": "occupancy * atomic_number * normalized 3D Gaussian; optimizer divides moving-atom weights by deposited B median before applying learned ensemble occupancy",
+      "voxel_cell_extent_A": 16.0,
+      "voxel_center_span_A": 15.5
+    },
+    {
+      "chain": "B",
+      "deposited_A_B_separation_A": 5.796252250671387,
+      "deposited_altloc_A": "A",
+      "deposited_altloc_B": "B",
+      "deposited_occupancy_raw": {
+        "A": 0.4399999976158142,
+        "B": 0.5600000023841858,
+        "sum": 1.0
+      },
+      "first_voxel_center_A": [
+        103.81607142857142,
+        32.36257142857143,
+        37.68214285714286
+      ],
+      "grid_frame": "crystal Cartesian axes",
+      "grid_shape": [
+        32,
+        32,
+        32
+      ],
+      "grid_spacing_A": 0.5,
+      "historical_selection_separation_A": 3.3547513484954834,
+      "insertion_code": " ",
+      "last_voxel_center_A": [
+        119.31607142857142,
+        47.86257142857143,
+        53.18214285714286
+      ],
+      "map_type": "omit_mfo_dfc",
+      "optimizer_target_occupancy_normalized": {
+        "A": 0.4399999976158142,
+        "B": 0.5600000023841858
+      },
+      "patch_center_A": [
+        111.56607142857142,
+        40.11257142857143,
+        45.43214285714286
+      ],
+      "pdb_id": "3A1C",
+      "residue_name": "ARG",
+      "residue_number": 447,
+      "resolution_high_A": 1.8500183413152225,
+      "separation_definition": "sqrt(mean_atoms(sum_xyz(delta^2))), minimized over valid equivalent terminal-atom permutations",
+      "separation_source": "frozen v3 audit tmol_inputs.json deposited A/B arrays + density_denoiser.residue_geometry.symmetry_aware_rmsd",
+      "site": "3A1C_B_ARG447",
+      "synthetic_B_rule": "per-atom deposited B_iso; sigma^2=max(B_iso/(8*pi^2),0.04) A^2",
+      "synthetic_target_scope": "sidechain heavy atoms",
+      "synthetic_weight_rule": "occupancy * atomic_number * normalized 3D Gaussian; optimizer divides moving-atom weights by deposited B median before applying learned ensemble occupancy",
+      "voxel_cell_extent_A": 16.0,
+      "voxel_center_span_A": 15.5
+    }
+  ]
+}

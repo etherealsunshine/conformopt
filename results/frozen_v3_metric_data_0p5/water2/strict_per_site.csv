@@ -1,0 +1,3 @@
+site,ensembles,active_conformers,both_found_conventional,recovery_and_occupancy,all_active_strict_physical,occupancy_conditioned_all_active_strict_physical,assigned_pair_strict_joint_success,strict_joint_success,tmol_valid_conformers,canonical_conformers,clash_free_conformers
+2VFP_A_TYR417,50,101,14,8,17,7,8,7,53,72,69
+7UO8_A_GLN53,50,119,18,18,15,15,18,15,57,114,119
