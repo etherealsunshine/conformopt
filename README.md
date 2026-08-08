@@ -1,99 +1,117 @@
 # qFit on Steroids
 
-Research code for learning and optimizing crystallographic side-chain
-ensembles from experimental electron density. The active pipeline combines
-omit-map patches, a residual 3D U-Net, differentiable torsion optimization,
-and downstream geometry/physics audits.
+Research software for fitting multi-conformer protein models to crystallographic
+electron density. The project combines local density preprocessing, a residual
+3D U-Net, differentiable backbone kinematics, occupancy optimization, and
+geometry/physics audits.
 
-## Current status
+This is an experimental research repository, not yet a packaged end-user
+application.
 
-The current branch is `testing`. Step 1 of the A′ occupancy work is complete:
+## What is different here?
 
-- Geometry optimization still uses the inner continuous QP; occupancies remain
-  outside geometry gradients.
-- Final fixed-geometry selection now uses the decoupled MIQP variant with
-  `K=4` and `t_min=0.02` by default.
-- The 6P2N A:GLY161 test retains the 11% state under decoupled selection.
-- qFit’s coupled threshold behavior and fixed-site BIC cap diagnostics are
-  recorded in [`results/d1_aprime_miqp_selection_v1.md`](results/d1_aprime_miqp_selection_v1.md).
-- The broader deposited-PDB occupancy-pileup test is being rebuilt with
-  paper-defined qFit sets; no comparison result is claimed yet.
+The project compares two related approaches:
 
-The optimizer, derivatives, and timing work were not changed for this step.
+| | qFit | A′ (A-prime) |
+|---|---|---|
+| Geometry search | Samples candidate conformers | Optimizes torsions continuously |
+| Density backend | CCTBX/qFit renderer | Differentiable Torch renderer |
+| Occupancies during geometry search | qFit QP/MIQP flow | Continuous QP kept outside the geometry gradient |
+| Final selection | Coupled `t_dmin` threshold | Decoupled MIQP: `sum(z) <= K`, `t_min z_i <= w_i <= z_i` |
+| Meaning of the threshold | Limits conformers and floors each occupancy | Cardinality `K` and occupancy floor `t_min` are independent |
 
-## Pipeline
+The upstream density model is optional. The downstream optimizer can be tested
+against synthetic, experimental, or denoised targets.
 
-```text
-PDB + structure factors
-        │
-        ▼
-experimental omit patch ──► residual 3D U-Net ──► denoised patch
-                                                        │
-                                                        ▼
-                                      torsion/occupancy optimization
-                                                        │
-                                                        ▼
-                              geometry, occupancy, clash, rotamer, tmol audits
+## Quick start: renderer tests
+
+The differentiable renderer is the smallest self-contained entry point:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install torch numpy pytest
+python -m pytest -q tests/test_differentiable_renderer.py
 ```
 
-The frozen held-out configuration uses 50 starts per site, a 500-step density
-stage, an Adam reset, and a 200-step soft-physics stage. The strict audit
-requires both deposited conformers, acceptable occupancies, no direct or
-symmetry clash below 2 Å, allowed rotamers, and acceptable tmol energy.
+This runs the Torch NeRF-style kinematics and batched density-renderer tests.
 
-## Repository map
+## Full pipeline
 
-| Path | Purpose |
+The full crystallographic pipeline needs CCTBX/qFit/mmtbx, structure-factor
+tools, SciPy, CVXPY, PyTorch, and access to the relevant PDB/MTZ data. Those
+dependencies are not currently pinned in a public lockfile, and the full
+pipeline is therefore not a one-command installation yet.
+
+The main package entry points are:
+
+```bash
+python -m density_denoiser.data_pipeline --help
+python -m density_denoiser.train --help
+python -m density_denoiser.evaluate --help
+python -m density_denoiser.five_site_optimizer --help
+```
+
+Once the full dependencies and source PDB/reflection data are available, the
+minimal data-to-model workflow is:
+
+```bash
+DATA_ROOT=/path/to/qfit_data
+
+python -m density_denoiser.data_pipeline acquire \
+  --data-root "$DATA_ROOT" --split both --workers 8
+python -m density_denoiser.data_pipeline prepare \
+  --data-root "$DATA_ROOT" --split both \
+  --map-type omit_mfo_dfc --workers 8
+python -m density_denoiser.train \
+  --data-root "$DATA_ROOT" --epochs 100 --batch-size 8 --resume
+python -m density_denoiser.evaluate \
+  --data-root "$DATA_ROOT"
+```
+
+Optimizer runs additionally require a trained checkpoint, a selected site set,
+and the corresponding prepared cache; inspect the optimizer help before
+launching a run. Long runs should write to a new output directory and retain
+their configuration, checkpoints, and audit tables together.
+
+The data pipeline acquires structure factors, prepares omit-map patches, and
+writes resumable caches. It preserves the protein-level train/test split and
+does not modify source PDB files. See
+[`density_denoiser/README.md`](density_denoiser/README.md) for the detailed
+data and training workflow.
+
+The A′/qFit audit scripts are under [`scripts/`](scripts/). The timing harness
+is:
+
+```bash
+PYTHONPATH=scripts python scripts/benchmark_step3_timing.py --help
+```
+
+It requires a prepared site cache and the combined qFit/CCTBX environment.
+
+## Repository layout
+
+| Path | Contents |
 |---|---|
-| `density_denoiser/` | Active data, U-Net, optimizer, validation, and audit package. |
-| `scripts/` | Reproducible analysis, audit, launch, and visualization scripts. |
-| `tests/` | Project test suite. |
-| `docs/` | Report index, figures, and long-form research context. |
-| `experiments/` | Historical Probe and control experiments. |
-| `results/` | Curated reports and compact evidence; full run trees remain on the pod. |
-| `data/` | Small checked-in 2O1K reference inputs. |
-| `AGENTS.md` | Operating rules, source catalog, pod layout, and run procedures. |
-| `CURRENT_HANDOFF.md` | Latest results, interpretations, and active research backlog. |
+| [`density_denoiser/`](density_denoiser/) | Data preparation, U-Net, renderer, optimizer, and audits |
+| [`scripts/`](scripts/) | A′/qFit experiments and diagnostics |
+| [`tests/`](tests/) | Focused deterministic tests |
+| [`data/`](data/) | Small checked-in 2O1K reference inputs |
+| [`results/`](results/) | Curated reports and compact tables |
+| [`docs/`](docs/) | Report index and research documentation |
+| [`experiments/`](experiments/) | Historical probes and controls |
 
-Large runtime trees such as `artifacts/` and `external/` are local-only and
-ignored by Git.
+Large datasets, checkpoints, and run trees are intentionally kept outside the
+source repository. `artifacts/` and `external/` are local-only directories and
+are ignored by Git.
 
-## Local source and pod runtime
+## Public-release notes
 
-Source is edited locally. Tests, preprocessing, optimization, and tmol run on
-the Astera `qfit-unet` pod:
+Before treating this repository as a general public package, add a license,
+pin the full CCTBX/qFit environment, document how the required reflection data
+are obtained, and provide a small end-to-end fixture that does not depend on
+private storage or cluster tooling.
 
-```text
-local: /Users/utkarsh/qfitonsteroids
-pod:   /home/dev/workspace
-data:  /home/dev/qfit_unet_data
-```
-
-From the repository:
-
-```bash
-actl pod status qfit-unet
-actl pod sync qfit-unet
-actl pod exec qfit-unet
-```
-
-Run the test suite remotely:
-
-```bash
-actl pod exec qfit-unet --no-forwarding -- bash -lc \
-  'cd /home/dev/workspace && /home/dev/qfit_unet_data/.venv/bin/python -m pytest -q'
-```
-
-The primary pod environment is `/home/dev/qfit_unet_data/.venv`; the separate
-tmol environment is `/home/dev/qfit_unet_data/.venv-tmol`.
-
-## Further reading
-
-- [`AGENTS.md`](AGENTS.md) — mandatory operating rules and exact commands.
-- [`CURRENT_HANDOFF.md`](CURRENT_HANDOFF.md) — latest scientific state and run roots.
-- [`density_denoiser/README.md`](density_denoiser/README.md) — density-pair conventions.
-- [`docs/reports/README.md`](docs/reports/README.md) — report index.
-- [`results/README.md`](results/README.md) — curated result-artifact guide.
-
-This is research software. Every reported number is tied to its run
-configuration, data version, and audit definition.
+For internal research operations and the complete run protocol, see
+[`AGENTS.md`](AGENTS.md) and [`CURRENT_HANDOFF.md`](CURRENT_HANDOFF.md).
