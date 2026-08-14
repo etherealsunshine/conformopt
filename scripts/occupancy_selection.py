@@ -50,6 +50,94 @@ def _validate_inputs(
     return target, models
 
 
+def solve_affine_qp(
+    target: np.ndarray,
+    models: np.ndarray,
+    *,
+    lower_bounds: np.ndarray | None = None,
+    upper_bounds: np.ndarray | None = None,
+    max_total: float = 1.0,
+) -> tuple[np.ndarray, float, float]:
+    """Fit occupancies and a free map intercept at fixed geometry.
+
+    This is the adopted A-prime continuous occupancy solve.  The intercept is
+    fitted from the data and is deliberately not included in the geometry
+    gradient; callers profile it alongside the occupancies at each objective
+    evaluation.  A positive bulk-solvent floor is not applied here.
+    """
+    target, models = _validate_inputs(target, models, 1, 0.02)
+    n_models = models.shape[0]
+    lower = np.zeros(n_models) if lower_bounds is None else np.asarray(lower_bounds, dtype=float)
+    upper = np.full(n_models, np.inf) if upper_bounds is None else np.asarray(upper_bounds, dtype=float)
+    if lower.shape != (n_models,) or upper.shape != (n_models,):
+        raise ValueError("occupancy bounds must have one entry per model")
+    if np.any(~np.isfinite(lower)) or np.any(lower < 0.0):
+        raise ValueError("lower occupancy bounds must be finite and non-negative")
+    if np.any(np.isnan(upper)) or np.any(upper < lower):
+        raise ValueError("upper occupancy bounds must be at least the lower bounds")
+    if max_total < 0.0 or lower.sum() > max_total + 1e-12:
+        raise ValueError("occupancy lower bounds exceed the total occupancy budget")
+
+    try:
+        # Keep CVXPY lazy: selection bookkeeping can run without qFit's
+        # crystallography stack.  Prefer it when the runtime provides it.
+        import cvxpy as cp
+
+        weights = cp.Variable(n_models)
+        intercept = cp.Variable()
+        residual = target - models.T @ weights - intercept
+        constraints = [weights >= lower, cp.sum(weights) <= max_total]
+        if np.any(np.isfinite(upper)):
+            constraints.append(weights <= upper)
+        problem = cp.Problem(cp.Minimize(cp.sum_squares(residual)), constraints)
+        problem.solve(solver=cp.OSQP, warm_start=True, polish=True)
+        if (weights.value is not None and intercept.value is not None and
+                problem.status in {cp.OPTIMAL, cp.OPTIMAL_INACCURATE}):
+            answer = np.asarray(weights.value, dtype=float)
+            c = float(intercept.value)
+            rss = float(np.square(target - models.T @ answer - c).sum())
+            return answer, c, rss
+    except (ImportError, ModuleNotFoundError):
+        pass
+
+    # The pod's current qFit environment does not ship CVXPY.  This convex
+    # fallback keeps the adopted continuous solve usable there; MIQP selection
+    # remains a separate qFit/CVXPY-dependent final-selection step.
+    from scipy.optimize import minimize
+
+    def objective(value):
+        return float(np.square(target - models.T @ value[:-1] - value[-1]).sum())
+
+    def gradient(value):
+        residual = models.T @ value[:-1] + value[-1] - target
+        return 2.0 * np.concatenate((models @ residual, [residual.sum()]))
+
+    finite_upper = np.where(np.isfinite(upper), upper, None)
+    bounds = [(float(lo), finite_upper[i]) for i, lo in enumerate(lower)] + [(None, None)]
+    initial_weights = lower.copy()
+    remaining = max_total - initial_weights.sum()
+    for index in range(n_models):
+        room = (upper[index] - initial_weights[index]
+                if np.isfinite(upper[index]) else remaining)
+        addition = min(remaining, max(0.0, room))
+        initial_weights[index] += addition
+        remaining -= addition
+        if remaining <= 1e-12:
+            break
+    initial = np.concatenate((initial_weights, [float(np.mean(target - models.T @ initial_weights))]))
+    result = minimize(
+        objective, initial, jac=gradient, method="SLSQP", bounds=bounds,
+        constraints={"type": "ineq", "fun": lambda value: max_total - value[:-1].sum(),
+                     "jac": lambda value: np.r_[-np.ones(n_models), 0.0]},
+        options={"ftol": 1e-12, "maxiter": 1000},
+    )
+    if not result.success:
+        raise RuntimeError(f"affine occupancy QP failed without CVXPY: {result.message}")
+    answer = np.asarray(result.x[:-1], dtype=float)
+    c = float(result.x[-1])
+    return answer, c, objective(result.x)
+
+
 def qfit_bic(
     rss: float,
     n_voxels: int,
@@ -96,6 +184,37 @@ def _solve_qfit_miqp(
     if weights.shape != (models.shape[0],) or not np.all(np.isfinite(weights)):
         raise RuntimeError(f"MIQP returned invalid weights with shape {weights.shape}")
     return weights, float(solver.objective_value)
+
+
+def _solve_decoupled_affine_miqp(
+    target: np.ndarray, models: np.ndarray, *, cardinality: int, threshold: float
+) -> tuple[np.ndarray, float, float]:
+    """Solve the adopted decoupled MIQP with the same free intercept."""
+    import cvxpy as cp
+
+    n_models = models.shape[0]
+    weights = cp.Variable(n_models)
+    selected = cp.Variable(n_models, boolean=True)
+    intercept = cp.Variable()
+    constraints = [
+        weights >= 0.0,
+        weights <= selected,
+        weights >= threshold * selected,
+        cp.sum(selected) <= cardinality,
+        cp.sum(weights) <= 1.0,
+    ]
+    problem = cp.Problem(
+        cp.Minimize(cp.sum_squares(target - models.T @ weights - intercept)),
+        constraints,
+    )
+    problem.solve(solver="SCIP")
+    if (weights.value is None or intercept.value is None or
+            problem.status not in {cp.OPTIMAL, cp.OPTIMAL_INACCURATE}):
+        raise RuntimeError(f"decoupled affine MIQP failed: {problem.status}")
+    answer = np.asarray(weights.value, dtype=float)
+    c = float(intercept.value)
+    rss = float(np.square(target - models.T @ answer - c).sum())
+    return answer, c, rss
 
 
 def _candidate_record(
@@ -176,6 +295,79 @@ def select_decoupled_miqp(
         "bic_k": selected["bic_k"],
         "bic_candidates": [selected],
     }
+
+
+def select_decoupled_affine_miqp(
+    target: np.ndarray,
+    models: np.ndarray,
+    *,
+    cardinality_cap: int = DEFAULT_CARDINALITY_CAP,
+    t_min: float = DEFAULT_MIN_OCCUPANCY,
+    n_atoms: int,
+) -> dict[str, Any]:
+    """Final A-prime MIQP selection with a fitted intercept.
+
+    This is the production counterpart of :func:`select_decoupled_miqp` after
+    adopting the floor-off affine occupancy convention.  The qFit-native
+    threshold-only rows remain available separately as a comparison.
+    """
+    target, models = _validate_inputs(target, models, cardinality_cap, t_min)
+    effective_cap = min(cardinality_cap, models.shape[0])
+    weights, intercept, rss = _solve_decoupled_affine_miqp(
+        target, models, cardinality=effective_cap, threshold=t_min
+    )
+    selected = _candidate_record(
+        weights, rss, n_voxels=target.size, n_atoms=n_atoms,
+        cap=effective_cap, threshold=t_min,
+    )
+    return {
+        "method": "A-prime decoupled affine MIQP (independent cap, floor, and intercept)",
+        "constraints": [
+            "sum(z_i) <= K",
+            "t_min * z_i <= w_i <= z_i",
+            "sum(w_i) <= 1",
+            "target ~= sum_i(w_i * rho_i) + c",
+        ],
+        "cardinality_cap": int(cardinality_cap),
+        "t_min": float(t_min),
+        "effective_cardinality_cap": int(effective_cap),
+        "weights": selected["weights"],
+        "intercept": intercept,
+        "rss": selected["rss"],
+        "selected_slots": selected["selected_slots"],
+        "n_selected_conformers": selected["n_selected_conformers"],
+        "bic": selected["bic"],
+        "bic_k": selected["bic_k"],
+        "bic_candidates": [selected],
+    }
+
+
+def diagnose_affine_cardinality_caps(
+    target: np.ndarray,
+    models: np.ndarray,
+    *,
+    cardinality_caps: tuple[int, ...] = (1, 2, 3, 4),
+    t_min: float = DEFAULT_MIN_OCCUPANCY,
+    n_atoms: int,
+) -> list[dict[str, Any]]:
+    """Report qFit-style BIC for K under the adopted affine objective."""
+    target, models = _validate_inputs(target, models, 1, t_min)
+    rows = []
+    for cap in cardinality_caps:
+        if cap < 1:
+            raise ValueError("cardinality caps must be positive")
+        effective_cap = min(int(cap), models.shape[0])
+        weights, intercept, rss = _solve_decoupled_affine_miqp(
+            target, models, cardinality=effective_cap, threshold=t_min
+        )
+        row = _candidate_record(
+            weights, rss, n_voxels=target.size, n_atoms=n_atoms,
+            cap=int(cap), threshold=t_min,
+        )
+        row["intercept"] = intercept
+        row["effective_cardinality_cap"] = effective_cap
+        rows.append(row)
+    return rows
 
 
 def diagnose_cardinality_caps(

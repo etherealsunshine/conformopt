@@ -55,10 +55,38 @@ def make_map(mtz_path: Path):
         map_source = "deposited_FWT_PHWT"
     else:
         try:
-            fp = arrays["FP,SIGFP"]
+            fp = arrays.get("FP,SIGFP")
+            if fp is None:
+                # Some deposited MTZs provide merged intensities rather than
+                # amplitudes.  Convert them before combining with the model
+                # phases; absence of both is a data-property failure, not a
+                # harness exception.
+                fp = arrays["IMEAN,SIGIMEAN"].f_sq_as_f()
             fc = arrays["FC,PHIC"]
         except KeyError as exc:
-            raise KeyError(f"{mtz_path} has reflection labels {sorted(arrays)}") from exc
+            # A deposited experimental map may instead be represented by
+            # Fobs plus FOM/Hendrickson--Lattman phase probabilities.  The
+            # HL phase integral is m*exp(i*phi), so Fobs*phase_integral is
+            # the standard FOM-weighted map coefficient.
+            hl_label = next((label for label in arrays if label.startswith("HLA,HLB,HLC,HLD")), None)
+            if fp is None or "FOM" not in arrays or hl_label is None:
+                raise KeyError(f"{mtz_path} has reflection labels {sorted(arrays)}") from exc
+            fp, fom, hl = fp.common_sets(arrays["FOM"])[0], arrays["FOM"], arrays[hl_label]
+            fp, hl = fp.common_sets(hl)
+            coefficients = flex.complex_double([
+                complex(float(f), 0.0) * complex(z)
+                for f, z in zip(fp.data(), hl.phase_integrals().data())
+            ])
+            map_coeffs = miller.array(miller_set=fp.set(), data=coefficients)
+            map_source = "FOM_weighted_FP_HL_phase_integrals"
+            grid = fft_map_coefficients(map_coeffs, nyquist=2.0, transformer="cctbx")
+            unit_cell = UnitCell.from_cctbx(map_coeffs.unit_cell())
+            unit_cell.space_group = SpaceGroup.from_cctbx(map_coeffs.space_group_info())
+            spacing = unit_cell.abc / np.asarray(grid.shape[::-1], dtype=float)
+            xmap = XMap(grid, GridParameters(spacing), unit_cell=unit_cell,
+                        resolution=Resolution(high=map_coeffs.d_min()),
+                        hkl=np.asarray(list(map_coeffs.indices()), dtype=np.int32))
+            return xmap, float(map_coeffs.d_min()), int(map_coeffs.data().size()), map_source
         fp, fc = fp.common_sets(fc)
         fobs = np.asarray(fp.data(), dtype=float)
         fcalc = np.asarray(fc.data(), dtype=np.complex128)

@@ -14,10 +14,9 @@ from pathlib import Path
 
 import numpy as np
 
-from qfit.solvers import get_qp_solver_class
-
 from run_d1_8d_sequential_poc import atomic_csv, atomic_json, rmsd
 from run_d1_aprime_sequential import APrimeSequential
+from occupancy_selection import solve_affine_qp
 
 
 SEED = 20260805
@@ -48,17 +47,14 @@ def blocked_splits(base):
 
 def fair_density(base, coordinates, b_factors):
     """Render one alternate with its deposited atom-wise B factors."""
-    central = base.central_coordinates(coordinates)
-    density = next(base.qfit._transformer.get_conformers_densities(
-        [central], [b_factors],
-    ))[base.mask].astype(float, copy=False)
+    density = base.model_density_with_b(coordinates, b_factors)
     return np.maximum(density, base.qfit.options.bulk_solvent_level)
 
 
-def fit_weights(target, models):
-    solver = get_qp_solver_class("CVXPYSolver")(target, models)
-    solver.solve_qp()
-    return np.asarray(solver.weights, dtype=float), float(solver.objective_value)
+def fit_affine(target, models):
+    """Fit the shared affine occupancy objective, including its intercept."""
+    weights, intercept, rss = solve_affine_qp(target, models)
+    return np.asarray(weights, dtype=float), float(intercept), float(rss)
 
 
 def rmsds(base, coordinates):
@@ -72,14 +68,18 @@ def rmsds(base, coordinates):
 def run_fold(args):
     args.output.mkdir(parents=True, exist_ok=False)
     probe = APrimeSequential(args.output, args.inner_nfev, args.outer_updates,
-                             args.pdb_id, args.chain, args.resnum)
+                             args.pdb_id, args.chain, args.resnum,
+                             mask_scope=args.mask_scope, device=args.device)
+    probe.rama_floor = args.rama_floor
     train, test, direction = blocked_splits(probe.base)[args.fold]
     # Recreate the runner with the exact same site but a train-only density
     # vector.  No coordinate objective or finite-difference Jacobian can read
     # the test indices through this wrapper.
     runner = APrimeSequential(args.output, args.inner_nfev, args.outer_updates,
                               args.pdb_id, args.chain, args.resnum,
-                              training_indices=train)
+                              training_indices=train, mask_scope=args.mask_scope,
+                              device=args.device)
+    runner.rama_floor = args.rama_floor
     base = runner.base
     config = {
         "status": "running",
@@ -91,6 +91,9 @@ def run_fold(args):
         "train_voxels": int(len(train)),
         "heldout_voxels": int(len(test)),
         "full_mask_voxels": int(base.mask.sum()),
+        "mask_scope": args.mask_scope,
+        "torch_device": str(base.torch_device) if base.torch_device is not None else None,
+        "rama_floor": args.rama_floor,
         "joint_slot2_qp": True,
         "slot2_temporary_occupancy_floor": args.slot2_occupancy_floor,
         "fair_bfactor_rendering": "slot 1 and deposited A use A B factors; slot 2 and deposited B use B B factors",
@@ -99,11 +102,8 @@ def run_fold(args):
     result = runner.run(joint_slot2_qp=True,
                         slot2_occupancy_floor=args.slot2_occupancy_floor)
 
-    a_b = np.asarray(base.a_residue.b, dtype=float)
-    b_by_name = dict(zip(base.b_residue.name.tolist(), base.b_residue.b))
-    if any(name not in b_by_name for name in base.central.name.tolist()):
-        raise RuntimeError("deposited B is missing a central atom required for fair B-factor rendering")
-    b_b = np.asarray([b_by_name[name] for name in base.central.name.tolist()], dtype=float)
+    a_b = np.asarray(base.b_factors_a, dtype=float)
+    b_b = np.asarray(base.b_factors_b, dtype=float)
     final = np.load(args.output / "final_slots.npz")
     slot1, slot2 = final["slot1_window"], final["slot2_window"]
     recovered_models = np.vstack((fair_density(base, slot1, a_b),
@@ -111,13 +111,21 @@ def run_fold(args):
     deposited_models = np.vstack((fair_density(base, base.initial_window, a_b),
                                   fair_density(base, base.window_for_deposited_b(), b_b)))
     y = base.target
-    recovered_weights, recovered_train_rss = fit_weights(y[train], recovered_models[:, train])
-    deposited_weights, deposited_train_rss = fit_weights(y[train], deposited_models[:, train])
-    recovered_heldout_rss = float(np.square(y[test] - recovered_weights @ recovered_models[:, test]).sum())
-    deposited_heldout_rss = float(np.square(y[test] - deposited_weights @ deposited_models[:, test]).sum())
+    recovered_weights, recovered_intercept, recovered_train_rss = fit_affine(
+        y[train], recovered_models[:, train]
+    )
+    deposited_weights, deposited_intercept, deposited_train_rss = fit_affine(
+        y[train], deposited_models[:, train]
+    )
+    recovered_heldout_rss = float(np.square(
+        y[test] - (recovered_weights @ recovered_models[:, test] + recovered_intercept)
+    ).sum())
+    deposited_heldout_rss = float(np.square(
+        y[test] - (deposited_weights @ deposited_models[:, test] + deposited_intercept)
+    ).sum())
     heldout = {
         "status": "complete",
-        "site": "7UTC_A_ARG52",
+            "site": f"{args.pdb_id}_{args.chain}_{base.a_residue.resn[0]}{args.resnum}",
         "fold": args.fold,
         "split_direction": direction.tolist(),
         "train_voxels": int(len(train)),
@@ -126,6 +134,7 @@ def run_fold(args):
             "heldout_rss": recovered_heldout_rss,
             "training_rss": recovered_train_rss,
             "occupancies_refit_on_training": recovered_weights.tolist(),
+            "intercept_refit_on_training": recovered_intercept,
             "slot1": rmsds(base, slot1),
             "slot2": rmsds(base, slot2),
         },
@@ -133,6 +142,7 @@ def run_fold(args):
             "heldout_rss": deposited_heldout_rss,
             "training_rss": deposited_train_rss,
             "occupancies_refit_on_training": deposited_weights.tolist(),
+            "intercept_refit_on_training": deposited_intercept,
         },
         "deposited_minus_split_trained_heldout_rss": deposited_heldout_rss - recovered_heldout_rss,
         "optimization": {
@@ -146,7 +156,7 @@ def run_fold(args):
     print(json.dumps(heldout, indent=2, sort_keys=True))
 
 
-def aggregate(output):
+def aggregate(output, pdb_id="7UTC", chain="A", resnum=52):
     rows = []
     for fold in range(SPLITS):
         path = output / f"split_{fold}" / "heldout_result.json"
@@ -170,7 +180,7 @@ def aggregate(output):
     deltas = np.asarray([row["deposited_minus_split_trained_heldout_rss"] for row in rows], float)
     summary = {
         "status": "complete",
-        "site": "7UTC_A_ARG52",
+        "site": f"{pdb_id}_{chain}_{resnum}",
         "comparison": "deposited A+B heldout RSS minus independently split-trained A' pair heldout RSS",
         "fair_bfactor_rendering": "A slot uses A B factors and B slot uses B B factors; all weights refit on each training split",
         "folds": SPLITS,
@@ -197,11 +207,14 @@ def main():
     parser.add_argument("--pdb-id", default="7UTC")
     parser.add_argument("--chain", default="A")
     parser.add_argument("--resnum", type=int, default=52)
+    parser.add_argument("--mask-scope", choices=("central", "window"), default="central")
+    parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
+    parser.add_argument("--rama-floor", type=float, default=0.05)
     args = parser.parse_args()
     if args.aggregate:
         if args.fold is not None:
             parser.error("--aggregate cannot be combined with --fold")
-        aggregate(args.output)
+        aggregate(args.output, args.pdb_id, args.chain, args.resnum)
     elif args.fold is None:
         parser.error("provide exactly one --fold, or use --aggregate")
     else:

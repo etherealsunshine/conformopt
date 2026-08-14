@@ -9,6 +9,7 @@ from scripts.occupancy_selection import (
     legacy_cull,
     qfit_bic,
     select_decoupled_miqp,
+    solve_affine_qp,
 )
 
 
@@ -80,6 +81,15 @@ def test_invalid_selection_floor_is_rejected():
             n_atoms=1,
             solve_miqp=lambda *args, **kwargs: (np.ones(2), 0.0),
         )
+
+
+def test_affine_qp_recovers_occupancy_and_intercept_without_a_floor():
+    model = np.array([[1.0, 0.0, 0.5]])
+    target = 0.35 + 0.7 * model[0]
+    weights, intercept, rss = solve_affine_qp(target, model)
+    np.testing.assert_allclose(weights, [0.7], atol=1e-5)
+    assert math.isclose(intercept, 0.35, abs_tol=1e-5)
+    assert rss < 1e-10
 
 
 def test_cap_diagnostic_keeps_requested_caps_and_reports_effective_cap():

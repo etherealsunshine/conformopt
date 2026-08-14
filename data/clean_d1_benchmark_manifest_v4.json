@@ -1,0 +1,26 @@
+[
+  {
+    "pdb_id": "8R7O",
+    "chain": "C",
+    "resname": "THR",
+    "resnum": 1681,
+    "insertion_code": "",
+    "motion_bin": "large"
+  },
+  {
+    "pdb_id": "6I3B",
+    "chain": "B",
+    "resname": "ALA",
+    "resnum": 209,
+    "insertion_code": "",
+    "motion_bin": "small"
+  },
+  {
+    "pdb_id": "6ZWK",
+    "chain": "B",
+    "resname": "PHE",
+    "resnum": 47,
+    "insertion_code": "",
+    "motion_bin": "small"
+  }
+]
