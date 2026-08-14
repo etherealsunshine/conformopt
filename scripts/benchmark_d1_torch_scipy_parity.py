@@ -92,7 +92,7 @@ def main() -> None:
         return joint_residual_torch(
             runner, value, fixed_state, normalizer, lambdas, parameterization,
             fixed_b_offset=0.0, amplitude_prior_lambda=0.008836284282618265,
-            amplitude_prior_reference=prior,
+            amplitude_prior_reference=prior, fixed_intercept=state["intercept"],
         )
 
     scipy_trace = []

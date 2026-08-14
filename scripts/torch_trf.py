@@ -56,7 +56,9 @@ def _trust_step(g: torch.Tensor, hessian: torch.Tensor,
     # blocks and keeps all matrix work on the Torch device.
     lo = torch.zeros((), dtype=g.dtype, device=g.device)
     hi = torch.ones((), dtype=g.dtype, device=g.device)
-    while torch.linalg.vector_norm(torch.linalg.solve(hessian + hi * identity, -g)) > radius:
+    while torch.linalg.vector_norm(
+        torch.linalg.solve(scaled_hessian + hi * identity, -scaled_gradient)
+    ) > radius:
         hi = hi * 2.0
     for _ in range(32):
         mid = (lo + hi) / 2.0
@@ -142,8 +144,9 @@ def least_squares(
                       0.5 * torch.dot(effective_step, hessian @ effective_step))
         ratio = actual / torch.clamp(predicted, min=torch.finfo(dtype).tiny)
         step_norm = torch.linalg.vector_norm(effective_step / scale)
+        radius_before = radius
         trace.append({
-            "radius_before": float(radius.item()),
+            "radius_before": float(radius_before.item()),
             "step_norm": float(step_norm.item()),
             "actual_reduction": float(actual.item()),
             "predicted_reduction": float(predicted.item()),
@@ -166,6 +169,7 @@ def least_squares(
                 break
         else:
             radius = radius * 0.25
+        trace[-1]["radius_after"] = float(radius.item())
         if radius <= torch.finfo(dtype).eps:
             status, message = 4, "trust radius underflow"
             break

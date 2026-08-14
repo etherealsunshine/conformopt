@@ -137,6 +137,8 @@ def main() -> None:
                     help="run only the prospective fixed-dB=0 treatment")
     ap.add_argument("--per-slot-trust-radii", action="store_true",
                     help="use independent, ratio-adapted TRF solves for the two slot blocks")
+    ap.add_argument("--torch-native-trf", action="store_true",
+                    help="run the per-slot trust-region solves with the Torch-native kernel")
     ap.add_argument("--site", choices=SITES, default=None,
                     help="run only one site")
     ap.add_argument("--fold", type=int, choices=range(5), default=None,
@@ -175,6 +177,7 @@ def main() -> None:
                 lambda_norm_cap=args.lambda_norm_cap,
                 amplitude_prior_lambda=args.amplitude_prior_lambda,
                 per_slot_trust_radii=args.per_slot_trust_radii,
+                torch_native_trf=args.torch_native_trf,
             )
             templates.append(next(item for item in built if item["label"] == "D_null_axis2_30deg"))
         treatment_summaries = {}
@@ -225,6 +228,7 @@ def main() -> None:
         "amplitude_prior_lambda": args.amplitude_prior_lambda,
         "dB_zero_only": args.dB_zero_only,
         "per_slot_trust_radii": args.per_slot_trust_radii,
+        "torch_native_trf": args.torch_native_trf,
         "sites": list(sites),
         "rama_floor": 0.02, "results": final,
     }

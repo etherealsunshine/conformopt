@@ -25,6 +25,7 @@ from scipy.optimize._lsq import trf as scipy_trf
 from qfit.backbone import compute_jacobian
 from run_d1_aprime_sequential import APrimeSequential, rmsd, seam_vector
 from run_d1_reachability import BACKBONE_NAMES, dihedrals, wrapped_delta
+from torch_trf import least_squares as torch_least_squares
 from occupancy_selection import (
     DEFAULT_CARDINALITY_CAP,
     DEFAULT_MIN_OCCUPANCY,
@@ -487,7 +488,9 @@ def joint_residual_torch(runner: APrimeSequential, parameters: torch.Tensor,
                          parameterization: SharedJointParameterization,
                          fixed_b_offset: float | None = None,
                          amplitude_prior_lambda: float = 0.0,
-                         amplitude_prior_reference: np.ndarray | None = None) -> torch.Tensor:
+                         amplitude_prior_reference: np.ndarray | None = None,
+                         fixed_intercept: float | None = None,
+                         return_aux: bool = False) -> torch.Tensor | tuple[torch.Tensor, dict[str, torch.Tensor]]:
     """Evaluate the A′ residual without a device-to-host round trip.
 
     The returned tensor is suitable for Torch autodiff and is the canonical
@@ -500,7 +503,8 @@ def joint_residual_torch(runner: APrimeSequential, parameters: torch.Tensor,
     device = parameters.device
     target = torch.as_tensor(runner.target, dtype=torch.float64, device=device)
     weights = torch.as_tensor(state["weights"], dtype=torch.float64, device=device)
-    intercept = torch.as_tensor(state["intercept"], dtype=torch.float64, device=device)
+    intercept = (torch.as_tensor(fixed_intercept, dtype=torch.float64, device=device)
+                 if fixed_intercept is not None else None)
     initial_bb = runner._torch_initial[runner.bb_indices]
     torsions = parameters if fixed_b_offset is not None else parameters[:-1]
     b_offset = (torch.as_tensor(fixed_b_offset, dtype=torch.float64, device=device)
@@ -515,6 +519,8 @@ def joint_residual_torch(runner: APrimeSequential, parameters: torch.Tensor,
     )
     if runner.training_indices is not None:
         models = models[:, runner.training_indices]
+    if intercept is None:
+        intercept = torch.mean(target - (weights[:, None] * models).sum(0))
     density = (target - (weights[:, None] * models).sum(0) - intercept) / np.sqrt(normalizer)
     backbone = coordinates[:, runner.bb_indices]
     seam = np.sqrt(runner.rho / 2.0) * (
@@ -540,7 +546,14 @@ def joint_residual_torch(runner: APrimeSequential, parameters: torch.Tensor,
         rows.append(np.sqrt(amplitude_prior_lambda) * (
             parameterization.expand_torch(torsions) - reference
         ).reshape(-1))
-    return torch.cat(rows)
+    residual = torch.cat(rows)
+    if return_aux:
+        return residual, {
+            "coordinates": coordinates,
+            "models": models,
+            "intercept": intercept,
+        }
+    return residual
 
 
 def projected_gradient_norm(gradient: np.ndarray, value: np.ndarray,
@@ -555,6 +568,133 @@ def projected_gradient_norm(gradient: np.ndarray, value: np.ndarray,
     at_upper = np.isfinite(upper_bounds) & (value >= upper_bounds - tolerance) & (gradient < 0.0)
     gradient[at_lower | at_upper] = 0.0
     return float(np.linalg.norm(gradient))
+
+
+def torch_native_trust_region_inner_solve(
+    runner: APrimeSequential,
+    parameters: np.ndarray,
+    normalizer: float,
+    lambdas: np.ndarray,
+    parameterization: FullJointParameterization,
+    fixed_b_offset: float,
+    active_slot2_floor: float,
+    occupancy_weights: np.ndarray | None,
+    amplitude_prior_lambda: float,
+    amplitude_prior_reference: np.ndarray | None,
+    inner_nfev: int,
+    label: str,
+    outer: int,
+    trajectory: list[dict[str, object]],
+    deflation_mode: str,
+) -> tuple[np.ndarray, list[dict[str, object]], int]:
+    """Run the two independent slot solves entirely through Torch TRF.
+
+    The benchmark's fixed-dB/per-slot mode has no finite torsion bounds, so
+    the Torch kernel's projected-bound handling is inactive here.  Occupancy
+    weights are held fixed during the inner solve, while the affine intercept
+    is profiled analytically in the Torch residual just as in ``joint_evaluate``.
+    """
+    if not isinstance(parameterization, FullJointParameterization):
+        raise ValueError("Torch per-slot TRF requires the full 40-parameter chart")
+    if fixed_b_offset is None:
+        raise ValueError("Torch per-slot TRF requires fixed dB")
+    if occupancy_weights is None:
+        raise ValueError("Torch per-slot TRF currently requires mirror occupancies")
+
+    device = runner.base.torch_device
+    current = np.asarray(parameters, dtype=float).copy()
+    slot_diagnostics: list[dict[str, object]] = []
+    total_nfev = 0
+    for slot in range(2):
+        indices = np.arange(slot * runner.rotator.ndofs, (slot + 1) * runner.rotator.ndofs)
+        indices_t = torch.as_tensor(indices, dtype=torch.long, device=device)
+        fixed = current.copy()
+        fixed_t = torch.as_tensor(fixed, dtype=torch.float64, device=device)
+        local_evaluations = 0
+        local_trace: list[dict[str, object]] = []
+        fixed_state = {
+            "weights": np.asarray(occupancy_weights, dtype=float),
+            "intercept": 0.0,
+        }
+
+        def full_torch(value: torch.Tensor) -> torch.Tensor:
+            return fixed_t.index_copy(0, indices_t, value)
+
+        def residual_core(value: torch.Tensor) -> torch.Tensor:
+            return joint_residual_torch(
+                runner, full_torch(value), fixed_state, normalizer, lambdas,
+                parameterization, fixed_b_offset,
+                amplitude_prior_lambda, amplitude_prior_reference,
+                fixed_intercept=None,
+            )
+
+        def log_evaluation(value: torch.Tensor, residual: torch.Tensor,
+                           aux: dict[str, torch.Tensor]) -> None:
+            nonlocal local_evaluations
+            coordinates = aux["coordinates"].detach().cpu().numpy()
+            target_size = len(runner.target)
+            density_residual = residual[:target_size] * np.sqrt(normalizer)
+            rss = float(torch.dot(density_residual, density_residual).item())
+            local_evaluations += 1
+            trajectory.append({
+                "stage": label, "outer_update": outer, "slot": slot + 1,
+                "evaluation": local_evaluations,
+                "occupancies": np.asarray(occupancy_weights, dtype=float).tolist(),
+                "intercept": float(aux["intercept"].item()), "b_offset_A2": float(fixed_b_offset),
+                "slot2_occupancy_floor": active_slot2_floor,
+                "rss": rss, "slot_pair_rmsd": slot_pair_rmsd(runner, coordinates),
+                **slot2_geometry_metrics(runner, coordinates),
+            })
+
+        def residual_function(value: torch.Tensor) -> torch.Tensor:
+            # Torch's Jacobian evaluation calls this callback with a tracked
+            # input.  Count/log only actual residual evaluations, not those
+            # internal autodiff probes.
+            if value.requires_grad:
+                return residual_core(value)
+            residual, aux = joint_residual_torch(
+                runner, full_torch(value), fixed_state, normalizer, lambdas,
+                parameterization, fixed_b_offset,
+                amplitude_prior_lambda, amplitude_prior_reference,
+                fixed_intercept=None, return_aux=True,
+            )
+            log_evaluation(value, residual, aux)
+            return residual
+
+        def gradient_at(value: torch.Tensor) -> torch.Tensor:
+            value = value.detach().requires_grad_(True)
+            residual = residual_core(value)
+            jacobian = torch.autograd.functional.jacobian(
+                residual_core, value, create_graph=False, vectorize=True,
+            )
+            return jacobian.T @ residual
+
+        x0 = torch.as_tensor(current[indices], dtype=torch.float64, device=device)
+        start_gradient = gradient_at(x0)
+        result = torch_least_squares(
+            residual_function, x0, max_nfev=inner_nfev,
+            initial_radius=1.0, x_scale=10.0,
+            ftol=1e-10, xtol=1e-10, gtol=1e-10,
+        )
+        current[indices] = result.x.detach().cpu().numpy()
+        end_gradient = gradient_at(result.x)
+        total_nfev += int(result.nfev)
+        slot_diagnostics.append({
+            "slot": slot + 1,
+            "gradient_norm_start": float(torch.linalg.vector_norm(start_gradient).item()),
+            "gradient_norm_end": float(result.optimality),
+            "projected_gradient_norm_start": float(torch.linalg.vector_norm(start_gradient).item()),
+            "projected_gradient_norm_end": float(result.projected_optimality),
+            "termination_status": int(result.status),
+            "termination_message": result.message,
+            "nfev": int(result.nfev), "njev": int(result.njev),
+            "evaluation_cap": int(inner_nfev),
+            "hit_evaluation_cap": bool(result.status == 0 and result.nfev >= inner_nfev),
+            "trust_radius_trajectory": result.trust_radius_trace,
+            "trust_radius_updates": len(result.trust_radius_trace),
+            "solver": "torch_trf",
+        })
+    return current, slot_diagnostics, total_nfev
 
 
 def per_slot_trust_region_inner_solve(
@@ -573,18 +713,26 @@ def per_slot_trust_region_inner_solve(
     outer: int,
     trajectory: list[dict[str, object]],
     deflation_mode: str,
+    torch_native_trf: bool = False,
 ) -> tuple[np.ndarray, list[dict[str, object]], int]:
     """Do two block-coordinate TRF solves with independent trust radii.
 
-    Each slot is optimized with the other slot held fixed.  SciPy's TRF
-    radius is therefore created, predicted/actual-tested, and adapted
-    independently for each slot.  The global dB is fixed in this mode, which
-    is the prospective benchmark configuration requested for this audit.
+    Each slot is optimized with the other slot held fixed.  The global dB is
+    fixed in this mode, which is the prospective benchmark configuration
+    requested for this audit.  ``torch_native_trf`` selects the CUDA-resident
+    solver; the default remains the legacy SciPy path for reproducibility.
     """
     if not isinstance(parameterization, FullJointParameterization):
         raise ValueError("per-slot trust radii require the full 40-parameter chart")
     if fixed_b_offset is None:
         raise ValueError("per-slot trust radii require fixed dB")
+    if torch_native_trf:
+        return torch_native_trust_region_inner_solve(
+            runner, parameters, normalizer, lambdas, parameterization,
+            fixed_b_offset, active_slot2_floor, occupancy_weights,
+            amplitude_prior_lambda, amplitude_prior_reference, inner_nfev,
+            label, outer, trajectory, deflation_mode,
+        )
 
     current = np.asarray(parameters, dtype=float).copy()
     slot_diagnostics: list[dict[str, object]] = []
@@ -693,7 +841,8 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
               lambda_damping_alpha: float = 1.0,
               lambda_norm_cap: float | None = None,
               deflation_mode: str = "none",
-              per_slot_trust_radii: bool = False) -> dict[str, object]:
+              per_slot_trust_radii: bool = False,
+              torch_native_trf: bool = False) -> dict[str, object]:
     if slot2_occupancy_floor < 0.0 or slot2_occupancy_floor >= 1.0:
         raise ValueError("slot2_occupancy_floor must be in [0, 1)")
     if inner_nfev < 1 or outer_updates < 1:
@@ -824,7 +973,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                 runner, parameters, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, occupancy_weights,
                 amplitude_prior_lambda, amplitude_prior_reference, inner_nfev,
-                label, outer, trajectory, deflation_mode,
+                label, outer, trajectory, deflation_mode, torch_native_trf,
             )
             result_nfev = total_nfev
             result_njev = sum(int(item["njev"]) for item in slot_inner_diagnostics)
@@ -899,6 +1048,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             ),
             "active_mask": result_active_mask.tolist(),
             "per_slot_trust_radii": bool(per_slot_trust_radii),
+            "torch_native_trf": bool(torch_native_trf),
             "slot_inner_diagnostics": slot_inner_diagnostics,
             "seam_norm_before_lambda_update": float(np.linalg.norm(state["seam_vectors"])),
             "lambda_norm_before": float(np.linalg.norm(lambda_before)),
@@ -1028,9 +1178,15 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             "amplitude_prior_energy_in_final": float(final["amplitude_prior_energy"]),
             "deflation_mode": deflation_mode,
             "per_slot_trust_radii": bool(per_slot_trust_radii),
+            "torch_native_trf": bool(torch_native_trf),
             "trust_radius_definition": (
-                "independent SciPy TRF solve per slot; radius and actual/predicted reduction "
-                "ratio are adapted separately"
+                (
+                    "independent Torch TRF solve per slot; radius and actual/predicted "
+                    "reduction ratio are adapted separately"
+                    if torch_native_trf else
+                    "independent SciPy TRF solve per slot; radius and actual/predicted "
+                    "reduction ratio are adapted separately"
+                )
                 if per_slot_trust_radii else "single joint SciPy TRF solve"
             ),
         },
@@ -1125,6 +1281,7 @@ def worker(spec: dict[str, object]) -> dict[str, object]:
                          else float(spec["lambda_norm_cap"])),
         deflation_mode=str(spec.get("deflation_mode", "none")),
         per_slot_trust_radii=bool(spec.get("per_slot_trust_radii", False)),
+        torch_native_trf=bool(spec.get("torch_native_trf", False)),
     )
 
 
@@ -1146,7 +1303,8 @@ def build_specs(output_root: Path, flip_root: Path,
               lambda_norm_cap: float | None = None,
               inner_nfev: int = INNER_NFEV,
                 outer_updates: int = OUTER_UPDATES,
-                per_slot_trust_radii: bool = False) -> list[dict[str, object]]:
+                per_slot_trust_radii: bool = False,
+                torch_native_trf: bool = False) -> list[dict[str, object]]:
     if abs(float(rama_floor) - 0.02) > 1e-12:
         raise ValueError("benchmark Rama floor is fixed at 0.02")
     seed_runner = APrimeSequential(output_root / "seed", INNER_NFEV, OUTER_UPDATES, *site,
@@ -1214,6 +1372,7 @@ def build_specs(output_root: Path, flip_root: Path,
         spec["inner_nfev"] = int(inner_nfev)
         spec["outer_updates"] = int(outer_updates)
         spec["per_slot_trust_radii"] = bool(per_slot_trust_radii)
+        spec["torch_native_trf"] = bool(torch_native_trf)
     return specs
 
 

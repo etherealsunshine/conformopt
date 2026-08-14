@@ -18,6 +18,7 @@ def test_torch_trf_converges_and_adapts_radius():
     assert result.projected_optimality < 1e-7
     assert result.nfev <= 81
     assert len(result.trust_radius_trace) > 0
+    assert all("radius_after" in row for row in result.trust_radius_trace)
 
 
 def test_torch_trf_stays_on_requested_device():
