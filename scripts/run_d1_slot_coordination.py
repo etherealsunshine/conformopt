@@ -9,20 +9,26 @@ qFit 2015 peptide-flip centroids are supplied through --flip-root.
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 import multiprocessing as mp
 import os
+import textwrap
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
+# CCTBX must be loaded before NumPy/SciPy/Torch native libraries in the mixed
+# qFit+CUDA environment; importing it later can segfault in boost_python.
+from qfit.backbone import compute_jacobian
+
 import numpy as np
-import torch
 from scipy.linalg import null_space
 from scipy.optimize import least_squares
 from scipy.optimize._lsq import common as scipy_lsq_common
 from scipy.optimize._lsq import trf as scipy_trf
 
-from qfit.backbone import compute_jacobian
+import torch
 from run_d1_aprime_sequential import APrimeSequential, rmsd, seam_vector
 from run_d1_reachability import BACKBONE_NAMES, dihedrals, wrapped_delta
 from torch_trf import least_squares as torch_least_squares
@@ -32,6 +38,7 @@ from occupancy_selection import (
     select_decoupled_affine_miqp,
 )
 from fit_provenance import fit_voxel_provenance
+from d1_population_calibrated_weights import D1_RAMA_FLOOR
 
 
 SITE = ("5OHJ", "A", 540)
@@ -379,7 +386,47 @@ def slot_pair_rmsd(runner: APrimeSequential, coordinates: np.ndarray) -> float:
     return float(rmsd(central[0], central[1]))
 
 
-def _least_squares_with_trust_trace(*args, trace: list[dict[str, object]], **kwargs):
+def _scipy_default_initial_trust_radius(x0: np.ndarray, x_scale: float | np.ndarray) -> float:
+    """Return SciPy TRF's initial scaled radius for the unbounded path."""
+    if isinstance(x_scale, str):
+        raise ValueError("trust-radius diagnostics require a numeric x_scale")
+    scale_inv = 1.0 / np.asarray(x_scale, dtype=float)
+    radius = float(np.linalg.norm(np.asarray(x0, dtype=float) * scale_inv))
+    return 1.0 if radius == 0.0 else radius
+
+
+def _patched_scipy_trf_function(function, initial_radius: float, update):
+    """Clone one SciPy TRF entry point with only its initial Delta replaced.
+
+    ``scipy.optimize.least_squares`` has no public initial-trust-radius option.
+    The current benchmark deliberately stays on SciPy's TRF implementation,
+    so the narrowest compatible hook is to re-execute the installed private
+    entry point with its initial-Delta line changed.  All other solver code is
+    the installed SciPy implementation, and ``update`` remains the existing
+    trace hook.
+    """
+    source = textwrap.dedent(inspect.getsource(function))
+    if function.__name__ == "trf_no_bounds":
+        old = "Delta = norm(x0 * scale_inv)\n    if Delta == 0:\n        Delta = 1.0"
+    elif function.__name__ == "trf_bounds":
+        old = "Delta = norm(x0 * scale_inv / v**0.5)\n    if Delta == 0:\n        Delta = 1.0"
+    else:  # pragma: no cover - guarded by the two private SciPy entry points.
+        raise ValueError(f"unsupported SciPy TRF function: {function.__name__}")
+    new = "Delta = float(_carried_initial_radius)"
+    if old not in source:
+        raise RuntimeError(
+            f"SciPy {function.__name__} source changed; refusing to patch initial trust radius"
+        )
+    namespace = dict(vars(scipy_trf))
+    namespace["_carried_initial_radius"] = float(initial_radius)
+    namespace["update_tr_radius"] = update
+    exec(compile(source.replace(old, new), f"<{function.__name__}_carried>", "exec"), namespace)
+    return namespace[function.__name__]
+
+
+def _least_squares_with_trust_trace(
+    *args, trace: list[dict[str, object]], initial_radius: float | None = None, **kwargs,
+):
     """Run SciPy TRF while recording its exact trust-radius updates.
 
     SciPy keeps ``Delta`` inside its TRF implementation and does not expose it
@@ -389,6 +436,8 @@ def _least_squares_with_trust_trace(*args, trace: list[dict[str, object]], **kwa
     """
     original_common = scipy_lsq_common.update_tr_radius
     original_trf = scipy_trf.update_tr_radius
+    original_no_bounds = scipy_trf.trf_no_bounds
+    original_bounds = scipy_trf.trf_bounds
 
     def update(delta, actual_reduction, predicted_reduction, step_norm, bound_hit):
         new_delta, ratio = original_common(
@@ -403,6 +452,7 @@ def _least_squares_with_trust_trace(*args, trace: list[dict[str, object]], **kwa
             "actual_reduction": float(actual_reduction),
             "predicted_reduction": float(predicted_reduction),
             "actual_over_predicted": float(ratio),
+            "accepted": bool(actual_reduction > 0.0),
             "step_norm_scaled": float(step_norm),
             "step_norm_degrees_at_x_scale_10": float(step_norm * 10.0),
             "bound_hit": bool(bound_hit),
@@ -411,11 +461,22 @@ def _least_squares_with_trust_trace(*args, trace: list[dict[str, object]], **kwa
 
     scipy_lsq_common.update_tr_radius = update
     scipy_trf.update_tr_radius = update
+    if initial_radius is not None:
+        if initial_radius <= 0.0 or not np.isfinite(initial_radius):
+            raise ValueError(f"initial trust radius must be finite and positive, got {initial_radius}")
+        scipy_trf.trf_no_bounds = _patched_scipy_trf_function(
+            original_no_bounds, initial_radius, update
+        )
+        scipy_trf.trf_bounds = _patched_scipy_trf_function(
+            original_bounds, initial_radius, update
+        )
     try:
         return least_squares(*args, **kwargs)
     finally:
         scipy_lsq_common.update_tr_radius = original_common
         scipy_trf.update_tr_radius = original_trf
+        scipy_trf.trf_no_bounds = original_no_bounds
+        scipy_trf.trf_bounds = original_bounds
 
 
 def mirror_descent_occupancy_update(target: np.ndarray, models: np.ndarray,
@@ -446,6 +507,39 @@ def mirror_descent_occupancy_update(target: np.ndarray, models: np.ndarray,
     return updated
 
 
+def _forward_mode_jacobian_chunked(function, value: torch.Tensor, chunk_size: int) -> torch.Tensor:
+    """Build a forward-mode Jacobian in bounded tangent batches.
+
+    ``torch.autograd.functional.jacobian(..., strategy="forward-mode")``
+    requires ``vectorize=True``.  A non-vectorized forward-mode call is not a
+    lower-memory fallback; it is unsupported by PyTorch.  Chunking the input
+    tangent basis keeps the renderer's intermediate tensors proportional to
+    ``chunk_size`` while still taking exactly one forward tangent per
+    parameter overall.
+    """
+    if value.ndim != 1 or not value.is_floating_point():
+        raise ValueError("chunked forward-mode Jacobian requires a floating-point vector")
+    if chunk_size < 1:
+        raise ValueError("Jacobian chunk_size must be positive")
+    base = value.detach()
+    parameter_count = int(base.numel())
+    blocks = []
+    for start in range(0, parameter_count, chunk_size):
+        stop = min(start + chunk_size, parameter_count)
+        indices = torch.arange(start, stop, dtype=torch.long, device=base.device)
+        tangent_block = base[start:stop].clone().requires_grad_(True)
+
+        def block_function(block: torch.Tensor) -> torch.Tensor:
+            current = base.index_copy(0, indices, block)
+            return function(current)
+
+        blocks.append(torch.autograd.functional.jacobian(
+            block_function, tangent_block, create_graph=False,
+            vectorize=True, strategy="forward-mode",
+        ))
+    return torch.cat(blocks, dim=-1)
+
+
 def joint_jacobian(runner: APrimeSequential, parameters: np.ndarray,
                    state: dict[str, object], normalizer: float,
                    lambdas: np.ndarray,
@@ -454,17 +548,31 @@ def joint_jacobian(runner: APrimeSequential, parameters: np.ndarray,
                    slot2_occupancy_floor: float = 0.0,
                    amplitude_prior_lambda: float = 0.0,
                    amplitude_prior_reference: np.ndarray | None = None,
-                   deflation_mode: str = "none") -> np.ndarray:
+                   deflation_mode: str = "none",
+                   profile: dict[str, float] | None = None) -> np.ndarray:
     """Return the CPU copy of the Torch-resident objective Jacobian."""
+    total_started = time.perf_counter()
     device = runner.base.torch_device
     value = torch.tensor(parameters, dtype=torch.float64, device=device, requires_grad=True)
-    jacobian = torch.autograd.functional.jacobian(
+    # H100 measurement on the frozen 4,655-voxel mask: 40 tangents peak at
+    # 5.113 GiB allocated / 5.654 GiB reserved, so the full parameter basis
+    # is the production default.  Smaller cards can override this env var.
+    chunk_size = int(os.environ.get("D1_JACOBIAN_CHUNK_SIZE", "40"))
+    if profile is not None and device.type == "cuda":
+        torch.cuda.synchronize(device)
+    forward_started = time.perf_counter()
+    jacobian_torch = _forward_mode_jacobian_chunked(
         lambda current: joint_residual_torch(
             runner, current, state, normalizer, lambdas, parameterization,
             fixed_b_offset, amplitude_prior_lambda, amplitude_prior_reference,
-        ),
-        value, create_graph=False, vectorize=True, strategy="forward-mode"
-    ).detach().cpu().numpy()
+        ), value, chunk_size,
+    )
+    if profile is not None and device.type == "cuda":
+        torch.cuda.synchronize(device)
+    forward_elapsed = time.perf_counter() - forward_started
+    transfer_started = time.perf_counter()
+    jacobian = jacobian_torch.detach().cpu().numpy()
+    transfer_elapsed = time.perf_counter() - transfer_started
     if deflation_mode == "slot2_gradient":
         if not isinstance(parameterization, FullJointParameterization):
             raise ValueError("slot2 gradient deflation requires the full 40-parameter chart")
@@ -479,6 +587,13 @@ def joint_jacobian(runner: APrimeSequential, parameters: np.ndarray,
             )
     elif deflation_mode != "none":
         raise ValueError(f"unknown deflation mode: {deflation_mode}")
+    if profile is not None:
+        profile["jacobian_calls"] = profile.get("jacobian_calls", 0.0) + 1.0
+        profile["jacobian_total_s"] = profile.get("jacobian_total_s", 0.0) + (
+            time.perf_counter() - total_started
+        )
+        profile["jacobian_forward_s"] = profile.get("jacobian_forward_s", 0.0) + forward_elapsed
+        profile["jacobian_host_device_s"] = profile.get("jacobian_host_device_s", 0.0) + transfer_elapsed
     return jacobian
 
 
@@ -527,16 +642,13 @@ def joint_residual_torch(runner: APrimeSequential, parameters: torch.Tensor,
         runner._torch_seam(initial_bb, backbone) +
         torch.as_tensor(lambdas[:12], dtype=torch.float64, device=device).reshape(2, 6) / runner.rho
     )
-    omega = runner._torch_omega(coordinates)
-    planar = np.sqrt(runner.planar_weight) * (
-        omega - torch.as_tensor(
-            np.tile(runner.a_omega, 2).reshape(2, 6), dtype=torch.float64, device=device
-        )
-    ) / runner.omega_scale_deg
     _, omega_delta, _, rama_barriers = runner.torch_omega_and_rama(coordinates)
     rows = [
         density, seam.reshape(-1),
         (np.sqrt(runner.rama_weight) * rama_barriers).reshape(-1),
+        # The omega_delta block is the sole omega/planarity residual.  It is
+        # the Torch equivalent of planar_rows in joint_evaluate; do not add a
+        # second raw-omega block here.
         (np.sqrt(runner.planar_weight) * omega_delta / runner.omega_scale_deg).reshape(-1),
     ]
     if amplitude_prior_lambda > 0.0:
@@ -664,8 +776,16 @@ def torch_native_trust_region_inner_solve(
         def gradient_at(value: torch.Tensor) -> torch.Tensor:
             value = value.detach().requires_grad_(True)
             residual = residual_core(value)
+            # Vectorized reverse-mode Jacobians are fast for the small
+            # backbone-only mask, but retain the all-atom residual graph and
+            # can exceed H100 memory.  The non-vectorized path computes the
+            # same autodiff Jacobian with bounded peak memory.
+            jacobian_vectorize = os.environ.get(
+                "QFIT_JACOBIAN_VECTORIZE", "1"
+            ).lower() not in {"0", "false", "no"}
             jacobian = torch.autograd.functional.jacobian(
-                residual_core, value, create_graph=False, vectorize=True,
+                residual_core, value, create_graph=False,
+                vectorize=jacobian_vectorize,
             )
             return jacobian.T @ residual
 
@@ -714,7 +834,10 @@ def per_slot_trust_region_inner_solve(
     trajectory: list[dict[str, object]],
     deflation_mode: str,
     torch_native_trf: bool = False,
-) -> tuple[np.ndarray, list[dict[str, object]], int]:
+    profile: dict[str, float] | None = None,
+    initial_radii: tuple[float | None, float | None] | None = None,
+    carry_trust_radii: bool = False,
+) -> tuple[np.ndarray, list[dict[str, object]], int, list[float]]:
     """Do two block-coordinate TRF solves with independent trust radii.
 
     Each slot is optimized with the other slot held fixed.  The global dB is
@@ -727,15 +850,18 @@ def per_slot_trust_region_inner_solve(
     if fixed_b_offset is None:
         raise ValueError("per-slot trust radii require fixed dB")
     if torch_native_trf:
+        if carry_trust_radii:
+            raise ValueError("trust-radius carry-over is currently implemented for SciPy TRF only")
         return torch_native_trust_region_inner_solve(
             runner, parameters, normalizer, lambdas, parameterization,
             fixed_b_offset, active_slot2_floor, occupancy_weights,
             amplitude_prior_lambda, amplitude_prior_reference, inner_nfev,
             label, outer, trajectory, deflation_mode,
-        )
+        ) + ([1.0, 1.0],)
 
     current = np.asarray(parameters, dtype=float).copy()
     slot_diagnostics: list[dict[str, object]] = []
+    ending_radii: list[float] = []
     total_nfev = 0
     for slot in range(2):
         indices = np.arange(slot * runner.rotator.ndofs, (slot + 1) * runner.rotator.ndofs)
@@ -743,6 +869,13 @@ def per_slot_trust_region_inner_solve(
         local_evaluations = 0
         local_jacobians = 0
         local_trace: list[dict[str, object]] = []
+        carried_radius = (
+            None if initial_radii is None else initial_radii[slot]
+        )
+        start_radius = (
+            _scipy_default_initial_trust_radius(fixed[indices], 10.0)
+            if carried_radius is None else float(carried_radius)
+        )
 
         def full_value(value: np.ndarray) -> np.ndarray:
             result = fixed.copy()
@@ -752,6 +885,7 @@ def per_slot_trust_region_inner_solve(
         def residual_function(value: np.ndarray) -> np.ndarray:
             nonlocal local_evaluations
             full = full_value(value)
+            started = time.perf_counter()
             state = joint_evaluate(
                 runner, full, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, occupancy_weights,
@@ -767,20 +901,32 @@ def per_slot_trust_region_inner_solve(
                 "rss": state["rss"], "slot_pair_rmsd": slot_pair_rmsd(runner, state["coordinates"]),
                 **slot2_geometry_metrics(runner, state["coordinates"]),
             })
+            if profile is not None:
+                profile["residual_calls"] = profile.get("residual_calls", 0.0) + 1.0
+                profile["residual_eval_s"] = profile.get("residual_eval_s", 0.0) + (
+                    time.perf_counter() - started
+                )
             return state["residual"]
 
         def jacobian_function(value: np.ndarray) -> np.ndarray:
             nonlocal local_jacobians
             full = full_value(value)
+            state_started = time.perf_counter()
             state = joint_evaluate(
                 runner, full, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, occupancy_weights,
                 amplitude_prior_lambda, amplitude_prior_reference,
             )
+            if profile is not None:
+                profile["state_eval_calls"] = profile.get("state_eval_calls", 0.0) + 1.0
+                profile["state_eval_s"] = profile.get("state_eval_s", 0.0) + (
+                    time.perf_counter() - state_started
+                )
             full_jacobian = joint_jacobian(
                 runner, full, state, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, amplitude_prior_lambda,
                 amplitude_prior_reference, deflation_mode,
+                profile=profile,
             )
             local_jacobians += 1
             return full_jacobian[:, indices]
@@ -796,6 +942,7 @@ def per_slot_trust_region_inner_solve(
             residual_function, fixed[indices], method="trf", jac=jacobian_function,
             x_scale=10.0, max_nfev=inner_nfev,
             ftol=1e-10, xtol=1e-10, gtol=1e-10, trace=local_trace,
+            initial_radius=carried_radius,
         )
         current[indices] = result.x
         end_full = current.copy()
@@ -806,6 +953,13 @@ def per_slot_trust_region_inner_solve(
         )
         end_jacobian = jacobian_function(result.x)
         end_gradient = end_jacobian.T @ end_state["residual"]
+        end_radius = (
+            float(local_trace[-1]["radius_after_scaled"])
+            if local_trace else start_radius
+        )
+        ending_radii.append(end_radius)
+        accepted_steps = sum(bool(item["accepted"]) for item in local_trace)
+        rejected_steps = len(local_trace) - accepted_steps
         total_nfev += int(result.nfev)
         slot_diagnostics.append({
             "slot": slot + 1,
@@ -818,10 +972,18 @@ def per_slot_trust_region_inner_solve(
             "nfev": int(result.nfev), "njev": int(result.njev or 0),
             "evaluation_cap": int(inner_nfev),
             "hit_evaluation_cap": bool(result.nfev >= inner_nfev and result.status == 0),
+            "trust_radius_carry_enabled": bool(carry_trust_radii),
+            "trust_radius_start_scaled": start_radius,
+            "trust_radius_end_scaled": end_radius,
+            "trust_radius_start_degrees_at_x_scale_10": start_radius * 10.0,
+            "trust_radius_end_degrees_at_x_scale_10": end_radius * 10.0,
             "trust_radius_trajectory": local_trace,
             "trust_radius_updates": len(local_trace),
+            "accepted_steps": accepted_steps,
+            "rejected_steps": rejected_steps,
+            "acceptance_ratio": accepted_steps / max(len(local_trace), 1),
         })
-    return current, slot_diagnostics, total_nfev
+    return current, slot_diagnostics, total_nfev, ending_radii
 
 
 def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
@@ -842,7 +1004,8 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
               lambda_norm_cap: float | None = None,
               deflation_mode: str = "none",
               per_slot_trust_radii: bool = False,
-              torch_native_trf: bool = False) -> dict[str, object]:
+              torch_native_trf: bool = False,
+              carry_trust_radii: bool = False) -> dict[str, object]:
     if slot2_occupancy_floor < 0.0 or slot2_occupancy_floor >= 1.0:
         raise ValueError("slot2_occupancy_floor must be in [0, 1)")
     if inner_nfev < 1 or outer_updates < 1:
@@ -890,9 +1053,22 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
     lambdas = np.zeros(12)
     occupancy_weights = (None if occupancy_scheme == "qp"
                          else np.asarray((0.5, 0.5), dtype=float))
+    carried_trust_radii: list[float | None] = [None, None]
     trajectory = []
     inner_diagnostics = []
     for outer in range(1, outer_updates + 1):
+        outer_started = time.perf_counter()
+        profile = {
+            "outer_update": float(outer),
+            "jacobian_calls": 0.0,
+            "jacobian_total_s": 0.0,
+            "jacobian_forward_s": 0.0,
+            "jacobian_host_device_s": 0.0,
+            "residual_calls": 0.0,
+            "residual_eval_s": 0.0,
+            "state_eval_calls": 0.0,
+            "state_eval_s": 0.0,
+        }
         evaluations = 0
         active_slot2_floor = (
             float(slot2_occupancy_floor)
@@ -966,15 +1142,22 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             pre_jacobian = joint_jacobian(
                 runner, parameters, pre_state, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, amplitude_prior_lambda,
-                amplitude_prior_reference, deflation_mode,
+                amplitude_prior_reference, deflation_mode, profile=profile,
             )
             start_gradient = pre_jacobian.T @ pre_state["residual"]
-            parameters, slot_inner_diagnostics, total_nfev = per_slot_trust_region_inner_solve(
+            trust_started = time.perf_counter()
+            parameters, slot_inner_diagnostics, total_nfev, ending_radii = per_slot_trust_region_inner_solve(
                 runner, parameters, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, occupancy_weights,
                 amplitude_prior_lambda, amplitude_prior_reference, inner_nfev,
                 label, outer, trajectory, deflation_mode, torch_native_trf,
+                profile=profile,
+                initial_radii=(tuple(carried_trust_radii) if carry_trust_radii else None),
+                carry_trust_radii=carry_trust_radii,
             )
+            if carry_trust_radii:
+                carried_trust_radii = [float(value) for value in ending_radii]
+            profile["scipy_trust_region_s"] = time.perf_counter() - trust_started
             result_nfev = total_nfev
             result_njev = sum(int(item["njev"]) for item in slot_inner_diagnostics)
             result_status = max(int(item["termination_status"]) for item in slot_inner_diagnostics)
@@ -1019,7 +1202,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             end_jacobian = joint_jacobian(
                 runner, parameters, state, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, amplitude_prior_lambda,
-                amplitude_prior_reference, deflation_mode,
+                amplitude_prior_reference, deflation_mode, profile=profile,
             )
             end_gradient = end_jacobian.T @ state["residual"]
         else:
@@ -1049,6 +1232,8 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             "active_mask": result_active_mask.tolist(),
             "per_slot_trust_radii": bool(per_slot_trust_radii),
             "torch_native_trf": bool(torch_native_trf),
+            "carry_trust_radii": bool(carry_trust_radii),
+            "timing": profile,
             "slot_inner_diagnostics": slot_inner_diagnostics,
             "seam_norm_before_lambda_update": float(np.linalg.norm(state["seam_vectors"])),
             "lambda_norm_before": float(np.linalg.norm(lambda_before)),
@@ -1074,6 +1259,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                            "slot_pair_rmsd": slot_pair_rmsd(runner, state["coordinates"]),
                            "slot_inner_diagnostics": slot_inner_diagnostics})
         if occupancy_scheme != "qp":
+            occupancy_started = time.perf_counter()
             occupancy_weights = mirror_descent_occupancy_update(
                 runner.target, state["models"], occupancy_weights,
                 state["intercept"], mirror_eta,
@@ -1090,8 +1276,69 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                                "slot2_occupancy_floor": 0.0, "rss": state["rss"],
                                **slot2_geometry_metrics(runner, state["coordinates"]),
                                "mirror_eta": float(mirror_eta), "mirror_tau": float(mirror_tau)})
+            profile["occupancy_update_s"] = time.perf_counter() - occupancy_started
+        else:
+            profile["occupancy_update_s"] = 0.0
+        profile["outer_wall_s"] = time.perf_counter() - outer_started
+        profile["python_orchestration_s"] = max(
+            0.0,
+            profile["outer_wall_s"] - profile.get("scipy_trust_region_s", 0.0)
+            - profile.get("occupancy_update_s", 0.0),
+        )
+        profile["jacobian_python_s"] = max(
+            0.0,
+            profile.get("jacobian_total_s", 0.0)
+            - profile.get("jacobian_forward_s", 0.0)
+            - profile.get("jacobian_host_device_s", 0.0),
+        )
+        accepted_steps = sum(int(item.get("accepted_steps", 0)) for item in slot_inner_diagnostics)
+        rejected_steps = sum(int(item.get("rejected_steps", 0)) for item in slot_inner_diagnostics)
+        trust_checkpoint = {
+            "status": "running",
+            "outer_update": outer,
+            "profile": profile,
+            "accept_reject": {
+                "accepted_steps": accepted_steps,
+                "rejected_steps": rejected_steps,
+                "total_steps": accepted_steps + rejected_steps,
+                "acceptance_ratio": accepted_steps / max(accepted_steps + rejected_steps, 1),
+            },
+            "trust_radius": {
+                "carry_enabled": bool(carry_trust_radii),
+                "slots": [
+                    {
+                        "slot": int(item["slot"]),
+                        "start_scaled": float(item["trust_radius_start_scaled"]),
+                        "end_scaled": float(item["trust_radius_end_scaled"]),
+                        "start_degrees_at_x_scale_10": float(item["trust_radius_start_degrees_at_x_scale_10"]),
+                        "end_degrees_at_x_scale_10": float(item["trust_radius_end_degrees_at_x_scale_10"]),
+                        "trace": item["trust_radius_trajectory"],
+                    }
+                    for item in slot_inner_diagnostics
+                ],
+            },
+            "inner_solve": inner_diagnostics[-1],
+            "lambda": {
+                "norm_before": float(inner_diagnostics[-1]["lambda_norm_before"]),
+                "norm_after": float(inner_diagnostics[-1]["lambda_norm_after"]),
+                "delta_norm": float(inner_diagnostics[-1]["lambda_delta_norm"]),
+            },
+        }
+        timing_path = output / f"timing_outer_{outer:03d}.json"
+        timing_temporary = timing_path.with_suffix(".json.tmp")
+        timing_temporary.write_text(json.dumps(profile, indent=2, sort_keys=True))
+        timing_temporary.replace(timing_path)
+        checkpoint_path = output / f"checkpoint_outer_{outer:03d}.json"
+        checkpoint_temporary = checkpoint_path.with_suffix(".json.tmp")
+        checkpoint_temporary.write_text(json.dumps(trust_checkpoint, indent=2, sort_keys=True))
+        checkpoint_temporary.replace(checkpoint_path)
         with (output / "progress.json").open("w") as handle:
-            json.dump({"status": "running", "outer_update": outer, "trajectory_rows": len(trajectory)}, handle)
+            json.dump({
+                "status": "running", "outer_update": outer, "trajectory_rows": len(trajectory),
+                "checkpoint": checkpoint_path.name,
+                "accept_reject": trust_checkpoint["accept_reject"],
+                "trust_radius": trust_checkpoint["trust_radius"],
+            }, handle)
         if (lambda_relative_tolerance is not None and outer >= 2
                 and inner_diagnostics[-1]["lambda_delta_norm"] <=
                 lambda_relative_tolerance * max(inner_diagnostics[-1]["lambda_norm_after"], 1e-12)):
@@ -1178,6 +1425,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             "amplitude_prior_energy_in_final": float(final["amplitude_prior_energy"]),
             "deflation_mode": deflation_mode,
             "per_slot_trust_radii": bool(per_slot_trust_radii),
+            "carry_trust_radii": bool(carry_trust_radii),
             "torch_native_trf": bool(torch_native_trf),
             "trust_radius_definition": (
                 (
@@ -1191,7 +1439,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             ),
         },
         "fixed_benchmark_contract": {
-            "rama_floor": 0.02,
+            "rama_floor": D1_RAMA_FLOOR,
             "nullspace_label": label if label == "D_null_axis2_30deg" else None,
             "b_factor_mode": runner.base.b_factor_mode,
             "per_slot_b_factor_refinement": False,
@@ -1205,7 +1453,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
 
 
 def sequential_run(output: Path, site: tuple[str, str, int] = SITE,
-                   mask_scope: str = "central", rama_floor: float = 0.02,
+                   mask_scope: str = "central", rama_floor: float = D1_RAMA_FLOOR,
                    training_indices=None, start_pdb=None, b_factor_mode=None,
                    device: str = "auto") -> dict[str, object]:
     runner = APrimeSequential(output, INNER_NFEV, OUTER_UPDATES, *site,
@@ -1213,7 +1461,7 @@ def sequential_run(output: Path, site: tuple[str, str, int] = SITE,
                               map_scaler_structure="full", mask_scope=mask_scope,
                               training_indices=training_indices, device=device,
                               start_pdb=start_pdb, b_factor_mode=b_factor_mode)
-    runner.rama_floor = 0.02
+    runner.rama_floor = D1_RAMA_FLOOR
     result = runner.run()
     values = np.asarray([row["occupancy"] for row in runner.trajectory if "occupancy" in row], dtype=float)
     final_slots = np.load(output / "final_slots.npz")
@@ -1236,7 +1484,7 @@ def worker(spec: dict[str, object]) -> dict[str, object]:
     output = Path(spec["output"])
     if spec["kind"] == "A":
         return sequential_run(output, tuple(spec.get("site", SITE)),
-                              spec.get("mask_scope", "central"), spec.get("rama_floor", 0.02),
+                              spec.get("mask_scope", "central"), spec.get("rama_floor", D1_RAMA_FLOOR),
                               spec.get("training_indices"), spec.get("start_pdb"),
                               spec.get("b_factor_mode"), spec.get("device", "auto"))
     site = tuple(spec.get("site", SITE))
@@ -1248,8 +1496,9 @@ def worker(spec: dict[str, object]) -> dict[str, object]:
                               map_scaler_structure="full", mask_scope=mask_scope,
                               training_indices=spec.get("training_indices"), device=spec.get("device", "auto"),
                               start_pdb=spec.get("start_pdb"),
-                              b_factor_mode=spec.get("b_factor_mode"))
-    runner.rama_floor = 0.02
+                              b_factor_mode=spec.get("b_factor_mode"),
+                              density_atom_scope=str(spec.get("density_atom_scope", "backbone")))
+    runner.rama_floor = D1_RAMA_FLOOR
     p1 = np.zeros(runner.rotator.ndofs)
     p2 = np.asarray(spec["p2"], dtype=float)
     per_slot_value = spec.get("per_slot_offsets")
@@ -1282,15 +1531,17 @@ def worker(spec: dict[str, object]) -> dict[str, object]:
         deflation_mode=str(spec.get("deflation_mode", "none")),
         per_slot_trust_radii=bool(spec.get("per_slot_trust_radii", False)),
         torch_native_trf=bool(spec.get("torch_native_trf", False)),
+        carry_trust_radii=bool(spec.get("carry_trust_radii", False)),
     )
 
 
 def build_specs(output_root: Path, flip_root: Path,
                 per_slot_offsets: tuple[int, ...] | None = None,
                 site: tuple[str, str, int] = SITE,
-                mask_scope: str = "central", rama_floor: float = 0.02,
+                mask_scope: str = "central", rama_floor: float = D1_RAMA_FLOOR,
                 start_pdb: str | Path | None = None,
                 b_factor_mode: str | None = None,
+                density_atom_scope: str = "backbone",
                 device: str = "auto",
                 slot2_occupancy_floor: float = 0.0,
                 slot2_floor_outer_updates: int = 0,
@@ -1304,15 +1555,19 @@ def build_specs(output_root: Path, flip_root: Path,
               inner_nfev: int = INNER_NFEV,
                 outer_updates: int = OUTER_UPDATES,
                 per_slot_trust_radii: bool = False,
-                torch_native_trf: bool = False) -> list[dict[str, object]]:
-    if abs(float(rama_floor) - 0.02) > 1e-12:
-        raise ValueError("benchmark Rama floor is fixed at 0.02")
+                torch_native_trf: bool = False,
+                carry_trust_radii: bool = False) -> list[dict[str, object]]:
+    if abs(float(rama_floor) - D1_RAMA_FLOOR) > 1e-12:
+        raise ValueError(
+            f"benchmark Rama floor is fixed at calibrated value {D1_RAMA_FLOOR}"
+        )
     seed_runner = APrimeSequential(output_root / "seed", INNER_NFEV, OUTER_UPDATES, *site,
                                    renderer_backend="torch", residual_scale_mode="none",
                                    map_scaler_structure="full", mask_scope=mask_scope,
                                    start_pdb=start_pdb, b_factor_mode=b_factor_mode,
+                                   density_atom_scope=density_atom_scope,
                                    device=device)
-    seed_runner.rama_floor = 0.02
+    seed_runner.rama_floor = D1_RAMA_FLOOR
     b_window = seed_runner.base.window_for_deposited_b()
     specs = [{"kind": "A", "label": "A_sequential", "output": str(output_root / "A_sequential"),
               "p2": np.zeros(seed_runner.rotator.ndofs).tolist()}]
@@ -1359,6 +1614,7 @@ def build_specs(output_root: Path, flip_root: Path,
         spec["rama_floor"] = float(rama_floor)
         spec["start_pdb"] = None if start_pdb is None else str(start_pdb)
         spec["b_factor_mode"] = b_factor_mode
+        spec["density_atom_scope"] = density_atom_scope
         spec["device"] = device
         spec["slot2_occupancy_floor"] = float(slot2_occupancy_floor)
         spec["slot2_floor_outer_updates"] = int(slot2_floor_outer_updates)
@@ -1373,6 +1629,7 @@ def build_specs(output_root: Path, flip_root: Path,
         spec["outer_updates"] = int(outer_updates)
         spec["per_slot_trust_radii"] = bool(per_slot_trust_radii)
         spec["torch_native_trf"] = bool(torch_native_trf)
+        spec["carry_trust_radii"] = bool(carry_trust_radii)
     return specs
 
 

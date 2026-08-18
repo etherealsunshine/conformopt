@@ -28,6 +28,7 @@ from run_d1_reachability import (
 )
 from qfit.structure.math import dihedral_angle
 from run_d1_tier_a_flips import atom_local_index
+from d1_population_calibrated_weights import D1_OMEGA_SCALE_DEG, D1_RAMA_FLOOR
 from occupancy_selection import (
     DEFAULT_CARDINALITY_CAP,
     DEFAULT_MIN_OCCUPANCY,
@@ -110,7 +111,8 @@ class APrimeSequential:
                  residual_scale_mode: str = "none", map_scaler_structure: str = "a_only",
                  mask_scope: str = "central", device: str = "auto",
                  start_pdb: str | Path | None = None,
-                 b_factor_mode: str | None = None):
+                 b_factor_mode: str | None = None,
+                 density_atom_scope: str = "backbone"):
         self.output = output
         self.inner_nfev, self.outer_updates = inner_nfev, outer_updates
         self.base = SequentialBackbonePOC(
@@ -121,6 +123,7 @@ class APrimeSequential:
             device=device,
             start_pdb=start_pdb,
             b_factor_mode=b_factor_mode,
+            density_atom_scope=density_atom_scope,
         )
         self.window, self.initial = self.base.window, self.base.initial_window.copy()
         self.rotator = PhiPsiOmegaRotator(self.window)
@@ -166,14 +169,14 @@ class APrimeSequential:
         # E_density is normalized to one at a slot's start.  At the measured
         # B-like seam, rho/2*||g||² is therefore also one.
         self.rho = 2.0 / self.rho_reference_seam_A ** 2
-        self.rama_floor, self.rama_weight = 0.02, 0.10
+        self.rama_floor, self.rama_weight = D1_RAMA_FLOOR, 0.10
         self.torch_rama = TorchRamaEvaluator(self.base.torch_device)
         # A' retains an explicit soft omega restraint, but the 20 degree
         # historical scale is too weak for a released-seam seven-residue
         # window.  Five degrees still permits a peptide-flip transition while
         # pricing large departures.  The panel runner records this setting in
         # every checkpointed candidate.
-        self.omega_scale_deg, self.planar_weight = 5.0, 0.05
+        self.omega_scale_deg, self.planar_weight = D1_OMEGA_SCALE_DEG, 0.05
         self.training_indices = (None if training_indices is None
                                  else np.asarray(training_indices, dtype=int))
         # Coordinate optimization must only see these voxels.  Keep the base
@@ -1027,8 +1030,10 @@ class APrimeSequential:
         selection_k=DEFAULT_CARDINALITY_CAP,
         selection_t_min=DEFAULT_MIN_OCCUPANCY,
     ):
-        if abs(float(self.rama_floor) - 0.02) > 1e-12:
-            raise RuntimeError("benchmark Rama floor is fixed at 0.02")
+        if abs(float(self.rama_floor) - D1_RAMA_FLOOR) > 1e-12:
+            raise RuntimeError(
+                f"benchmark Rama floor is fixed at calibrated value {D1_RAMA_FLOOR}"
+            )
         slot1, state1, convergence1 = self.fit_slot("slot1_fit", self.target, 1.0)
         if joint_slot2_qp:
             slot2, state2, convergence2 = self.fit_slot2_with_joint_qp(
