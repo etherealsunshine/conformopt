@@ -75,6 +75,7 @@ from run_d1_aprime_sequential import APrimeSequential, internal_geometry, rmsd
 from run_d1_reachability import BACKBONE_NAMES, dihedrals
 from run_d1_slot_coordination import (
     build_specs,
+    inverse_seed,
     joint_evaluate,
     joint_run,
 )
@@ -86,37 +87,47 @@ from d1_population_calibrated_weights import (
 
 
 SITES = (
-    ("7SC4", "B", 2317),
+    ("6ZWK", "B", 47),
     ("8R7O", "C", 1681),
+    ("7SC4", "B", 2317),
     ("5OHJ", "A", 540),
+    ("6I3B", "B", 209),
 )
-NEUTRAL_ROOT = Path("/home/dev/qfit_unet_data/qfit_audit/d1_flip_survivor_neutral_starts_v2/sites")
-LEGACY_8R7O_NEUTRAL_ROOT = Path("/home/dev/qfit_unet_data/qfit_audit/clean_d1_neutral_starts_v4/sites")
 FLIP_ROOT = Path(WORKSPACE) / "data/qfit_2015_s004"
+NEUTRAL_ROOT = Path("/home/dev/qfit_unet_data/qfit_audit/d1_neutral_starts_nerf_rebuilt_v4/sites")
 NEUTRAL_NAMES = {
-    ("7SC4", "B", 2317): "7SC4_B_PRO2317",
-    ("8R7O", "C", 1681): "8R7O_C_THR1681",
-    ("5OHJ", "A", 540): "5OHJ_A_SER540",
+    ("6ZWK", "B", 47): "6ZWK_B_47",
+    ("8R7O", "C", 1681): "8R7O_C_1681",
+    ("7SC4", "B", 2317): "7SC4_B_2317",
+    ("5OHJ", "A", 540): "5OHJ_A_540",
+    ("6I3B", "B", 209): "6I3B_B_209",
 }
-NEUTRAL_PATHS = {
-    ("7SC4", "B", 2317): NEUTRAL_ROOT,
-    # The frozen production 8R7O control is the v4 neutral artifact; it is
-    # the artifact that read back as the specified 5,205-voxel mask.
-    ("8R7O", "C", 1681): LEGACY_8R7O_NEUTRAL_ROOT,
-    ("5OHJ", "A", 540): NEUTRAL_ROOT,
-}
+NEUTRAL_PATHS = {site: NEUTRAL_ROOT for site in SITES}
 FROZEN_GRID_METADATA = {
-    "7SC4": {
-        "mask_voxels": 2942,
-        "grid_spacing_A_xyz": np.asarray((0.4187333333333333, 0.4584027777777778, 0.44930625)),
+    "6ZWK": {
+        "mask_voxels": 4680,
+        "grid_spacing_A_xyz": np.asarray((0.38849777777777783, 0.38849777777777783, 0.36600347222222224)),
+        "u_base_A2": 0.03042841785238881,
     },
     "8R7O": {
-        "mask_voxels": 5205,
-        "grid_spacing_A_xyz": np.asarray((0.3277, 0.3277, 0.3221)),
+        "mask_voxels": 5329,
+        "grid_spacing_A_xyz": np.asarray((0.3276822916666666, 0.3276822916666666, 0.3221458333333333)),
+        "u_base_A2": 0.023468333067598823,
+    },
+    "7SC4": {
+        "mask_voxels": 2880,
+        "grid_spacing_A_xyz": np.asarray((0.4187333333333333, 0.4584027777777778, 0.44930625)),
+        "u_base_A2": 0.04327628366074445,
     },
     "5OHJ": {
-        "mask_voxels": 5153,
+        "mask_voxels": 5213,
         "grid_spacing_A_xyz": np.asarray((0.38381944444444444, 0.3870138888888889, 0.3915972222222222)),
+        "u_base_A2": 0.03242230106617484,
+    },
+    "6I3B": {
+        "mask_voxels": 13045,
+        "grid_spacing_A_xyz": np.asarray((0.24505729166666668, 0.24459027777777775, 0.24226666666666666)),
+        "u_base_A2": 0.012665176468793858,
     },
 }
 
@@ -127,6 +138,68 @@ def site_name(site: tuple[str, str, int]) -> str:
 
 def _sha256_array(value: np.ndarray) -> str:
     return hashlib.sha256(np.ascontiguousarray(value).view(np.uint8)).hexdigest()
+
+
+def _deposited_window_with_fallback(base, state: str) -> tuple[np.ndarray, list[str]]:
+    """Return a deposited state window, filling absent altloc atoms by occupancy mean.
+
+    Some deposited windows have a terminal/non-central sidechain atom only in
+    altloc B/C, so the extracted A conformer has no coordinate for that atom.
+    The all-atom ladder still needs a fixed topology matching the refined
+    neutral model.  In that narrow case use the occupancy-weighted coordinate
+    over the raw deposited conformers and record the exact fallback keys in
+    the run metadata; never silently fabricate a zero or drop a model atom.
+    """
+    state_structure = base.truth_a_structure if state == "A" else base.b_structure
+    state_chain = state_structure[base.chain].conformers[0]
+    state_by_key = {}
+    for segment in state_chain.segments:
+        for residue in segment.residues:
+            for atom, coordinate in zip(residue.name.tolist(), residue.coor):
+                state_by_key[(residue.id, atom)] = np.asarray(coordinate, dtype=float)
+
+    raw_chain = __import__("qfit.structure", fromlist=["Structure"]).Structure.fromfile(
+        str(base.truth_path)
+    )[base.chain]
+    needed_keys = {
+        (residue.id, atom)
+        for residue in base.window.residues
+        for atom in residue.name.tolist()
+    }
+    weighted = {}
+    for conformer in raw_chain.conformers:
+        for segment in conformer.segments:
+            for residue in segment.residues:
+                if not any((residue.id, atom) in needed_keys for atom in residue.name.tolist()):
+                    continue
+                for atom, coordinate, occupancy in zip(
+                    residue.name.tolist(), residue.coor, residue.q
+                ):
+                    key = (residue.id, atom)
+                    if key not in needed_keys:
+                        continue
+                    weighted.setdefault(key, []).append(
+                        (float(occupancy), np.asarray(coordinate, dtype=float))
+                    )
+
+    values = []
+    fallback = []
+    for residue in base.window.residues:
+        for atom in residue.name.tolist():
+            key = (residue.id, atom)
+            if key in state_by_key:
+                values.append(state_by_key[key])
+                continue
+            observations = weighted.get(key, [])
+            if not observations:
+                raise RuntimeError(f"deposited {state} is missing atom {key}")
+            weights = np.asarray([item[0] for item in observations], dtype=float)
+            coordinates = np.asarray([item[1] for item in observations], dtype=float)
+            if not np.isfinite(weights).all() or weights.sum() <= 0.0:
+                weights = np.ones(len(observations), dtype=float)
+            values.append(np.average(coordinates, axis=0, weights=weights))
+            fallback.append(f"{key[0]}:{key[1]}")
+    return np.asarray(values, dtype=float), fallback
 
 
 def _atomic_text(path: Path, text: str) -> None:
@@ -192,12 +265,17 @@ def _build_site_context(site: tuple[str, str, int], root: Path, device: str,
     # The map from the production constructor is already scaled and has had
     # the external seven-residue-scoped neighbour density subtracted.
     real_target = runner.base.target.copy()
-    deposited_a = runner.base.window_for_deposited_a()
-    deposited_b = runner.base.window_for_deposited_b()
+    deposited_a, deposited_a_fallback = _deposited_window_with_fallback(runner.base, "A")
+    deposited_b, deposited_b_fallback = _deposited_window_with_fallback(runner.base, "B")
     deposited_models = runner.base.model_density_batch(
         np.stack((deposited_a, deposited_b)), slots=np.asarray((0, 1))
     )
     synthetic_clean = runner.base.deposited_occupancies @ deposited_models
+    deposited_synthetic_rss = float(np.square(
+        synthetic_clean - runner.base.deposited_occupancies @ deposited_models
+    ).sum())
+    mean_density = float(np.mean(deposited_models))
+    discriminating = np.abs(deposited_models[0] - deposited_models[1]) > 0.05 * mean_density
     # ΔB is fixed at zero in the ladder, so fit the intercept at the deposited
     # occupancies and zero-width offset instead of profiling a free ΔB.
     intercept_value = float(np.mean(
@@ -245,10 +323,21 @@ def _build_site_context(site: tuple[str, str, int], root: Path, device: str,
         + neighbour_density - neighbour_density,
         "5": real_target,
     }
-    preflight = json.loads((neutral.parent / "preflight.json").read_text())
-    initial_p2 = np.asarray(
-        preflight["initialisation"]["p2_parameters_deg"], dtype=float
+    # The rebuilt/refined neutral-start preflight records geometry and density
+    # metadata, but intentionally does not carry the old v1 initialisation
+    # payload. Recompute the declared rung-1 slot-2 seed from this exact start
+    # so the nullspace axis is tied to the production parameterisation actually
+    # used by the run.
+    nullspace_specs = build_specs(
+        root / "nullspace_specs", FLIP_ROOT,
+        site=site, mask_scope="window", rama_floor=rama_floor,
+        start_pdb=neutral, b_factor_mode="single_conformer",
+        density_atom_scope="all", device=device,
     )
+    initial_spec = next(
+        spec for spec in nullspace_specs if spec["label"] == "D_null_axis2_30deg"
+    )
+    initial_p2 = np.asarray(initial_spec["p2"], dtype=float)
     initial_slots = runner.torch_forward(
         torch.as_tensor(np.vstack((np.zeros(20), initial_p2)), dtype=torch.float64)
     ).detach().cpu().numpy()
@@ -274,6 +363,13 @@ def _build_site_context(site: tuple[str, str, int], root: Path, device: str,
             f"frozen grid-spacing mismatch for {key}: {grid_spacing_xyz.tolist()} != "
             f"{expected['grid_spacing_A_xyz'].tolist()}"
         )
+    if not np.isclose(runner.base._renderer_u_base, expected["u_base_A2"], atol=5e-12, rtol=0.0):
+        raise RuntimeError(
+            f"production u_base mismatch for {key}: {runner.base._renderer_u_base} != "
+            f"{expected['u_base_A2']}"
+        )
+    mask_indices = np.argwhere(runner.base.mask)
+    mask_hash = _sha256_array(mask_indices)
     context = {
         "site": key,
         "source_neutral_start": str(neutral),
@@ -285,6 +381,18 @@ def _build_site_context(site: tuple[str, str, int], root: Path, device: str,
         "u_base_A2": float(runner.base._renderer_u_base),
         "u_base_source": "cctbx.xray.ext.calc_u_base(d_min=resolution, grid_resolution_factor=0.25), matching SequentialBackbonePOC",
         "mask_voxels": actual_mask_voxels,
+        "mask_indices_sha256": mask_hash,
+        "target_model_same_mask": bool(len(runner.base.target) == actual_mask_voxels and len(runner.base._renderer_grid) == actual_mask_voxels),
+        "target_model_grid_shape_zyx": list(runner.base.qfit.xmap.array.shape),
+        "target_model_grid_points": int(len(runner.base._renderer_grid)),
+        "deposited_synthetic_density_rss": deposited_synthetic_rss,
+        "deposited_window_fallback_atoms": {
+            "A": deposited_a_fallback,
+            "B": deposited_b_fallback,
+            "definition": "occupancy-weighted raw deposited conformers used only where the selected A/B altloc lacks an atom required by the fixed seven-residue model topology",
+        },
+        "discriminating_voxels_5pct_mean_AB": int(discriminating.sum()),
+        "discriminating_fraction_5pct_mean_AB": float(discriminating.mean()),
         "frozen_metadata_check": "passed",
         "mask_radius_A": mask_radius,
         "mask_builder": "SequentialBackbonePOC(mask_scope=window, density_atom_scope=all, start_pdb=neutral) -> full_window_mask -> cctbx.masks.around_atoms",
@@ -398,7 +506,11 @@ def _run_backbone_rung(runner: APrimeSequential, target: np.ndarray, output: Pat
                        initial_p2: np.ndarray, context: dict[str, object], rung: str,
                        inner_nfev: int, carry_trust_radii: bool = False,
                        rama_floor: float = D1_RAMA_FLOOR,
-                       omega_scale_deg: float = D1_OMEGA_SCALE_DEG) -> dict[str, object]:
+                       omega_scale_deg: float = D1_OMEGA_SCALE_DEG,
+                       density_normalizer: float = 1.0,
+                       geometry_gradient_mode: str = "standard",
+                       geometry_gradient_occupancy_floor: float = 0.05,
+                       free_parameter_mask: np.ndarray | None = None) -> dict[str, object]:
     runner.target = np.asarray(target, dtype=float)
     runner.base.target = runner.target.copy()
     runner.output = output
@@ -415,29 +527,49 @@ def _run_backbone_rung(runner: APrimeSequential, target: np.ndarray, output: Pat
         "occupancy_updates": {"method": "multiplicative mirror descent", "eta": 0.01, "gradient_normalization": "unit norm"},
         "rama_floor": float(rama_floor), "omega_scale_deg": float(omega_scale_deg), "omega_weight": 0.05,
         "augmented_lagrangian_rho": 0.755,
-        "outer_updates_max": 200, "outer_stop": "lambda norm change <=1%",
+        "outer_updates_max": 200, "outer_stop": "seam norm <=0.01 A, otherwise max updates",
         "inner_solver": {"method": "two independent scipy least_squares(method=trf)", "max_nfev": inner_nfev, "xtol": 1e-10, "ftol": 1e-10, "gtol": 1e-10},
         "jacobian": {"mode": "forward-mode", "tangent_chunk_size": int(os.environ.get("D1_JACOBIAN_CHUNK_SIZE", "40"))},
         "carry_trust_radii": bool(carry_trust_radii),
+        "free_parameter_mask": (
+            None if free_parameter_mask is None else free_parameter_mask.tolist()
+        ),
+        "free_parameter_count": (
+            40 if free_parameter_mask is None else int(np.asarray(free_parameter_mask).sum())
+        ),
+        "density_normalizer": float(density_normalizer),
+        "geometry_gradient_mode": geometry_gradient_mode,
+        "geometry_gradient_occupancy_floor": float(geometry_gradient_occupancy_floor),
         "initialization": context["initialization"],
     })
-    p1 = np.zeros(20, dtype=float)
-    result = joint_run(
-        runner, p1, initial_p2, f"rung_{rung}_A_backbone_only", output,
-        float(context["initialization"]["initial_slot_to_slot_backbone_rmsd_A"]),
-        fixed_b_offset=0.0, occupancy_scheme="mirror", mirror_eta=0.01,
-        inner_nfev=inner_nfev, outer_updates=200, lambda_relative_tolerance=0.01,
-        per_slot_trust_radii=True, torch_native_trf=False,
-        carry_trust_radii=carry_trust_radii,
-    )
+    result_path = output / "result.json"
+    slots_path = output / "final_slots.npz"
+    if result_path.is_file() and slots_path.is_file():
+        # A reporting failure must never repeat an expensive completed solve.
+        # This permits a safe resume that only reconstructs ladder artifacts.
+        result = json.loads(result_path.read_text())
+    else:
+        p1 = np.zeros(20, dtype=float)
+        result = joint_run(
+            runner, p1, initial_p2, f"rung_{rung}_A_backbone_only", output,
+            float(context["initialization"]["initial_slot_to_slot_backbone_rmsd_A"]),
+            fixed_b_offset=0.0, occupancy_scheme="mirror", mirror_eta=0.01,
+            inner_nfev=inner_nfev, outer_updates=200, seam_tolerance_A=0.01,
+            per_slot_trust_radii=True, torch_native_trf=False,
+            carry_trust_radii=carry_trust_radii,
+            density_normalizer=density_normalizer,
+            geometry_gradient_mode=geometry_gradient_mode,
+            geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
+            free_parameter_mask=free_parameter_mask,
+        )
     saved = np.load(output / "final_slots.npz")
     slots = np.stack((saved["slot1_window"], saved["slot2_window"]))
     weights = np.asarray(result["final_occupancies"], dtype=float)
     intercept = float(result["final_intercept"])
-    aa_models = runner.base.model_density_batch(
-        np.stack((runner.initial, runner.initial)), slots=np.asarray((0, 1))
-    )
-    normalizer = max(float(np.square(runner.target - np.array([0.5, 0.5]) @ aa_models - np.mean(runner.target - np.array([0.5, 0.5]) @ aa_models)).sum()), 1e-12)
+    # Use the exact scalar passed into joint_run.  Recomputing a different
+    # post-hoc normalizer here makes the reported objective disagree with the
+    # objective that was optimized.
+    normalizer = float(result["normalizer_initial_A_A_rss"])
     row = {
         **result,
         "rung": rung,
@@ -445,7 +577,9 @@ def _run_backbone_rung(runner: APrimeSequential, target: np.ndarray, output: Pat
         "recovery": _rmsd_report(runner, slots),
         "occupancies": {
             "final": weights.tolist(),
-            "total_L1_path_from_0p5": float(sum(
+            "total": float(weights.sum()),
+            "unexplained": float(1.0 - weights.sum()),
+            "total_L1_path": float(sum(
                 np.abs(current - previous).sum()
                 for previous, current in _occupancy_path(result.get("trajectory", []))
             )),
@@ -455,7 +589,10 @@ def _run_backbone_rung(runner: APrimeSequential, target: np.ndarray, output: Pat
         "geometry": _geometry_report(runner, slots),
         "convergence": {
             "outer_updates": result.get("outer_updates_completed"),
-            "lambda_rule_fired": bool(result.get("lambda_stop_reached")),
+            "stopping_rule": result.get("stopping_rule"),
+            "seam_tolerance_A": result.get("seam_tolerance_A"),
+            "seam_tolerance_reached": bool(result.get("seam_tolerance_reached")),
+            "final_seam_norm_A_equivalent": float(np.linalg.norm(result.get("final_seam_vectors", []))),
             "inner_diagnostics": result.get("inner_solve_diagnostics", []),
             "any_inner_evaluation_cap": any(bool(item.get("hit_evaluation_cap")) for item in result.get("inner_solve_diagnostics", [])),
         },
@@ -475,7 +612,7 @@ def _occupancy_values(trajectory: list[dict[str, object]]) -> list[np.ndarray]:
             current = np.asarray(item["occupancies"], dtype=float)
             if not values or not np.allclose(current, values[-1]):
                 values.append(current)
-    return [np.asarray((0.5, 0.5))] + values
+    return [np.asarray((1.0 / 3.0, 1.0 / 3.0))] + values
 
 
 def _occupancy_path(trajectory: list[dict[str, object]]):
@@ -510,6 +647,11 @@ def run(args: argparse.Namespace) -> None:
         })
         return
     initial_p2 = np.asarray(context["initialization"]["p2_parameters_deg"], dtype=float)
+    free_parameter_mask = None
+    if args.slot2_fixed_deposited_b:
+        initial_p2 = inverse_seed(runner, runner.base.window_for_deposited_b())
+        free_parameter_mask = np.zeros(40, dtype=bool)
+        free_parameter_mask[:20] = True
     atomic_json(root / "progress.json", {"status": "rung_1", "site": site_name(args.site)})
     rows = {}
     for variant in ("A",):
@@ -517,7 +659,9 @@ def run(args: argparse.Namespace) -> None:
         row = _run_backbone_rung(
             runner, targets["1"], variant_root / "rung_1", initial_p2, context, "1",
             args.inner_nfev, args.carry_trust_radii,
-            args.rama_floor, args.omega_scale_deg,
+            args.rama_floor, args.omega_scale_deg, args.density_normalizer,
+            args.geometry_gradient_mode, args.geometry_gradient_occupancy_floor,
+            free_parameter_mask=free_parameter_mask,
         )
         rows[f"1_{variant}"] = row
         # Ground truth is intentionally direct: two slots must be assigned to
@@ -543,7 +687,9 @@ def run(args: argparse.Namespace) -> None:
         row = _run_backbone_rung(
             runner, targets[rung], root / "variant_A" / f"rung_{rung}",
             initial_p2, context, rung, args.inner_nfev, args.carry_trust_radii,
-            args.rama_floor, args.omega_scale_deg,
+            args.rama_floor, args.omega_scale_deg, args.density_normalizer,
+            args.geometry_gradient_mode, args.geometry_gradient_occupancy_floor,
+            free_parameter_mask=free_parameter_mask,
         )
         rows[f"{rung}_A"] = row
     atomic_json(root / "summary.json", {"status": "complete", "rows": rows})
@@ -569,6 +715,15 @@ def main() -> None:
                         help="Ramachandran population floor for the barrier.")
     parser.add_argument("--omega-scale-deg", type=float, default=D1_OMEGA_SCALE_DEG,
                         help="Omega restraint scale in degrees.")
+    parser.add_argument("--density-normalizer", type=float, default=1.0,
+                        help="Positive scalar dividing raw density RSS; 1.0 uses raw RSS.")
+    parser.add_argument("--geometry-gradient-mode", choices=("standard", "per_slot_occupancy_decoupled"),
+                        default="standard",
+                        help="Leave the objective unchanged or precondition density geometry columns per slot.")
+    parser.add_argument("--geometry-gradient-occupancy-floor", type=float, default=0.05,
+                        help="Minimum occupancy used by per-slot density-Jacobian decoupling.")
+    parser.add_argument("--slot2-fixed-deposited-b", action="store_true",
+                        help="Freeze slot 2 at deposited-B torsions and solve only the free-index mask.")
     parser.add_argument("--carry-trust-radii", action="store_true",
                         help="carry each slot's ending TRF radius into the next outer update.")
     parser.add_argument("--resume", action="store_true")
@@ -586,6 +741,10 @@ def main() -> None:
         "carry_trust_radii": bool(args.carry_trust_radii),
         "rama_floor": float(args.rama_floor),
         "omega_scale_deg": float(args.omega_scale_deg),
+        "density_normalizer": float(args.density_normalizer),
+        "geometry_gradient_mode": args.geometry_gradient_mode,
+        "geometry_gradient_occupancy_floor": float(args.geometry_gradient_occupancy_floor),
+        "slot2_fixed_deposited_b": bool(args.slot2_fixed_deposited_b),
         "rungs": {"1": "clean production-rendered synthetic", "2": "plus matched noise", "3": "plus fitted intercept", "4": "plus neighbours then exact production subtraction", "5": "real experimental production target"},
         "policy": "stop after rung 1 failure",
     })

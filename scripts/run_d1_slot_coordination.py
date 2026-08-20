@@ -275,6 +275,79 @@ def inverse_seed(runner: APrimeSequential, target_window: np.ndarray) -> np.ndar
     return seed
 
 
+def embed_free_parameters(
+    free_values: np.ndarray,
+    fixed_values: np.ndarray,
+    free_parameter_indices: np.ndarray,
+) -> np.ndarray:
+    """Embed an optimizer's free vector into the full torsion vector."""
+    free_values = np.asarray(free_values, dtype=float)
+    fixed_values = np.asarray(fixed_values, dtype=float)
+    free_parameter_indices = np.asarray(free_parameter_indices, dtype=int)
+    if fixed_values.ndim != 1 or free_values.ndim != 1:
+        raise ValueError("free_values and fixed_values must be one-dimensional")
+    if len(free_values) != len(free_parameter_indices):
+        raise ValueError("free_values and free_parameter_indices must have equal length")
+    if np.any(free_parameter_indices < 0) or np.any(
+        free_parameter_indices >= len(fixed_values)
+    ) or len(np.unique(free_parameter_indices)) != len(free_parameter_indices):
+        raise ValueError("free_parameter_indices must be unique and in range")
+    result = fixed_values.copy()
+    result[free_parameter_indices] = free_values
+    return result
+
+
+def _save_joint_resume_state(output: Path, completed_outer: int,
+                             parameters: np.ndarray, lambdas: np.ndarray,
+                             occupancy_weights: np.ndarray | None,
+                             carried_trust_radii: list[float | None],
+                             trajectory: list[dict[str, object]],
+                             inner_diagnostics: list[dict[str, object]]) -> None:
+    """Atomically persist everything required to resume a joint outer loop."""
+    state_path = output / "resume_state.npz"
+    temporary = output / "resume_state.tmp.npz"
+    radii = np.asarray([
+        np.nan if value is None else float(value) for value in carried_trust_radii
+    ], dtype=float)
+    weights = (np.empty(0, dtype=float) if occupancy_weights is None
+               else np.asarray(occupancy_weights, dtype=float))
+    np.savez_compressed(
+        temporary, completed_outer=int(completed_outer), parameters=parameters,
+        lambdas=lambdas, occupancy_weights=weights, carried_trust_radii=radii,
+    )
+    temporary.replace(state_path)
+    json_path = output / "resume_history.json"
+    json_temporary = output / "resume_history.tmp.json"
+    json_temporary.write_text(json.dumps({
+        "completed_outer": int(completed_outer), "trajectory": trajectory,
+        "inner_diagnostics": inner_diagnostics,
+    }, indent=2, sort_keys=True))
+    json_temporary.replace(json_path)
+
+
+def _load_joint_resume_state(output: Path) -> dict[str, object] | None:
+    """Load an exact joint-loop checkpoint only when both atomic artifacts exist."""
+    state_path, history_path = output / "resume_state.npz", output / "resume_history.json"
+    if not (state_path.is_file() and history_path.is_file()):
+        return None
+    with np.load(state_path) as state:
+        weights = np.asarray(state["occupancy_weights"], dtype=float)
+        radii = np.asarray(state["carried_trust_radii"], dtype=float)
+        values = {
+            "completed_outer": int(state["completed_outer"]),
+            "parameters": np.asarray(state["parameters"], dtype=float),
+            "lambdas": np.asarray(state["lambdas"], dtype=float),
+            "occupancy_weights": None if weights.size == 0 else weights,
+            "carried_trust_radii": [None if np.isnan(value) else float(value) for value in radii],
+        }
+    history = json.loads(history_path.read_text())
+    if int(history["completed_outer"]) != values["completed_outer"]:
+        raise RuntimeError("joint resume state/history outer-update mismatch")
+    values["trajectory"] = history["trajectory"]
+    values["inner_diagnostics"] = history["inner_diagnostics"]
+    return values
+
+
 def joint_rama_rows(runner: APrimeSequential, parameters: np.ndarray,
                     parameterization: SharedJointParameterization,
                     fixed_b_offset: float | None = None) -> np.ndarray:
@@ -479,17 +552,111 @@ def _least_squares_with_trust_trace(
         scipy_trf.trf_bounds = original_bounds
 
 
+DEFAULT_SEAM_TOLERANCE_A = 0.01
+# A carried radius below this is numerically indistinguishable from a frozen
+# outer iteration (the failed 7SC4 run reached 1e-93).  Resetting only this
+# underflow case restores SciPy's documented default radius; it does not tune
+# any meaningful trust-region scale.
+MIN_CARRIED_TRUST_RADIUS_SCALED = float(np.sqrt(np.finfo(float).eps))
+# The panel's deposited per-state occupancy p0.5 is 0.05.  This bounds the
+# per-slot density-Jacobian preconditioner at 20x while still giving a 5%
+# slot a full shape-mismatch signal.
+DEFAULT_GEOMETRY_GRADIENT_OCCUPANCY_FLOOR = 0.05
+
+
+def carryable_trust_radius(radius: float) -> float | None:
+    """Return a safe carried radius, or ``None`` to request SciPy's default."""
+    value = float(radius)
+    if not np.isfinite(value) or value < MIN_CARRIED_TRUST_RADIUS_SCALED:
+        return None
+    return value
+
+
+def mirror_initial_occupancies(n_slots: int) -> np.ndarray:
+    """Return the symmetric interior point of slots plus one slack component.
+
+    The slack component represents density not assigned to any fitted slot.
+    Keeping it explicit makes the physical constraint ``sum(slot occupancy) <=
+    1`` rather than silently forcing every run onto the equality simplex.
+    """
+    if n_slots < 1:
+        raise ValueError("mirror descent requires at least one slot")
+    return np.full(n_slots, 1.0 / float(n_slots + 1), dtype=float)
+
+
+def occupancy_decoupled_density_jacobian(
+    jacobian: np.ndarray,
+    density_rows: int,
+    weights: np.ndarray,
+    parameterization: FullJointParameterization,
+    full_parameter_indices: np.ndarray | None = None,
+    occupancy_floor: float = DEFAULT_GEOMETRY_GRADIENT_OCCUPANCY_FLOOR,
+) -> np.ndarray:
+    """Precondition only density geometry columns by each slot occupancy.
+
+    The density residual is unchanged: at fixed geometry it therefore has the
+    exact same QP/mirror occupancy solution and RSS.  During a geometry solve,
+    however, its derivative for slot ``i`` is divided by
+    ``max(weight_i, occupancy_floor)``.  Since the physical density derivative
+    contains ``weight_i``, this makes a low-occupancy slot respond to density
+    shape mismatch rather than becoming geometrically inert.  Seam, Rama and
+    omega rows deliberately remain unscaled.
+    """
+    if not isinstance(parameterization, FullJointParameterization):
+        raise ValueError("per-slot occupancy decoupling requires the full 40-parameter chart")
+    jacobian = np.asarray(jacobian, dtype=float).copy()
+    weights = np.asarray(weights, dtype=float)
+    if weights.shape != (2,) or not np.all(np.isfinite(weights)) or np.any(weights <= 0.0):
+        raise ValueError("occupancy decoupling requires two finite positive occupancies")
+    if density_rows < 0 or density_rows > jacobian.shape[0]:
+        raise ValueError("density_rows must index the leading density residual block")
+    if not np.isfinite(occupancy_floor) or occupancy_floor <= 0.0:
+        raise ValueError("occupancy_floor must be finite and positive")
+    if full_parameter_indices is None:
+        full_parameter_indices = np.arange(jacobian.shape[1], dtype=int)
+    else:
+        full_parameter_indices = np.asarray(full_parameter_indices, dtype=int)
+    if full_parameter_indices.shape != (jacobian.shape[1],):
+        raise ValueError("full_parameter_indices must match Jacobian columns")
+    for local_column, full_index in enumerate(full_parameter_indices):
+        if 0 <= full_index < 2 * parameterization.ndofs:
+            slot = full_index // parameterization.ndofs
+            jacobian[:density_rows, local_column] /= max(
+                float(weights[slot]), float(occupancy_floor)
+            )
+    return jacobian
+
+
 def mirror_descent_occupancy_update(target: np.ndarray, models: np.ndarray,
                                    weights: np.ndarray, intercept: float,
-                                   eta: float, tau: float = 0.0) -> np.ndarray:
-    """Take one strictly-positive multiplicative occupancy step."""
+                                   eta: float, tau: float = 0.0,
+                                   fixed_weights: np.ndarray | None = None) -> np.ndarray:
+    """Mirror step on slots plus an explicit unexplained-density slack weight.
+
+    ``fixed_weights`` uses NaN for free slots and a finite value for a fixed
+    occupancy.  This supports sequential residual fitting without changing the
+    first slot's fitted amplitude.
+    """
     weights = np.asarray(weights, dtype=float)
     models = np.asarray(models, dtype=float)
     target = np.asarray(target, dtype=float)
-    if weights.shape != (2,) or np.any(weights <= 0.0):
-        raise ValueError("mirror descent requires two strictly-positive weights")
+    if weights.ndim != 1 or models.shape[0] != len(weights) or np.any(weights <= 0.0):
+        raise ValueError("mirror descent requires one positive weight per model")
+    if weights.sum() >= 1.0:
+        raise ValueError("mirror descent requires a positive explicit slack component")
     if eta <= 0.0 or tau < 0.0:
         raise ValueError("mirror eta must be positive and entropy tau non-negative")
+    if fixed_weights is None:
+        fixed_weights = np.full_like(weights, np.nan)
+    else:
+        fixed_weights = np.asarray(fixed_weights, dtype=float)
+        if fixed_weights.shape != weights.shape:
+            raise ValueError("fixed_weights must match occupancy weights")
+        finite = np.isfinite(fixed_weights)
+        if np.any(fixed_weights[finite] <= 0.0) or fixed_weights[finite].sum() >= 1.0:
+            raise ValueError("fixed occupancies must be positive and leave slack")
+        if np.any(finite) and not np.allclose(weights[finite], fixed_weights[finite], atol=1e-12, rtol=0.0):
+            raise ValueError("fixed occupancy changed before mirror update")
     residual = models.T @ weights + float(intercept) - target
     gradient = 2.0 * (models @ residual)
     if tau:
@@ -497,13 +664,24 @@ def mirror_descent_occupancy_update(target: np.ndarray, models: np.ndarray,
     gradient_norm = float(np.linalg.norm(gradient))
     if gradient_norm > 0.0:
         gradient = gradient / gradient_norm
-    log_weights = np.log(weights) - float(eta) * gradient
-    log_weights -= np.max(log_weights)
-    updated = np.exp(log_weights)
-    if updated.sum() > 1.0:
-        updated /= updated.sum()
-    if not np.all(updated > 0.0) or updated.sum() > 1.0 + 1e-12:
-        raise AssertionError("multiplicative occupancy update violated positivity or budget")
+    fixed = np.isfinite(fixed_weights)
+    free = ~fixed
+    slack = float(1.0 - weights.sum())
+    # Apply exponentiated-gradient updates over free slot weights and the
+    # slack component, then normalize only that sub-simplex.  Fixed slots
+    # retain their exact contribution to the rendered density.
+    active = np.concatenate((weights[free], np.array((slack,))))
+    active_gradient = np.concatenate((gradient[free], np.array((0.0,))))
+    log_active = np.log(active) - float(eta) * active_gradient
+    log_active -= np.max(log_active)
+    updated_active = np.exp(log_active)
+    budget = float(1.0 - weights[fixed].sum())
+    updated_active *= budget / updated_active.sum()
+    updated = weights.copy()
+    updated[fixed] = fixed_weights[fixed]
+    updated[free] = updated_active[:-1]
+    if not np.all(updated > 0.0) or updated.sum() >= 1.0:
+        raise AssertionError("mirror update violated positive slot/slack occupancy budget")
     return updated
 
 
@@ -549,11 +727,45 @@ def joint_jacobian(runner: APrimeSequential, parameters: np.ndarray,
                    amplitude_prior_lambda: float = 0.0,
                    amplitude_prior_reference: np.ndarray | None = None,
                    deflation_mode: str = "none",
-                   profile: dict[str, float] | None = None) -> np.ndarray:
+                   profile: dict[str, float] | None = None,
+                   free_parameter_indices: np.ndarray | None = None,
+                   fixed_parameters: np.ndarray | None = None,
+                   geometry_gradient_mode: str = "standard",
+                   geometry_gradient_occupancy_floor: float = DEFAULT_GEOMETRY_GRADIENT_OCCUPANCY_FLOOR) -> np.ndarray:
     """Return the CPU copy of the Torch-resident objective Jacobian."""
     total_started = time.perf_counter()
     device = runner.base.torch_device
-    value = torch.tensor(parameters, dtype=torch.float64, device=device, requires_grad=True)
+    parameters = np.asarray(parameters, dtype=float)
+    if free_parameter_indices is None:
+        value = torch.tensor(parameters, dtype=torch.float64, device=device, requires_grad=True)
+
+        def residual_function(current: torch.Tensor) -> torch.Tensor:
+            return joint_residual_torch(
+                runner, current, state, normalizer, lambdas, parameterization,
+                fixed_b_offset, amplitude_prior_lambda, amplitude_prior_reference,
+            )
+    else:
+        free_parameter_indices = np.asarray(free_parameter_indices, dtype=int)
+        if fixed_parameters is None:
+            raise ValueError("fixed_parameters are required with free_parameter_indices")
+        fixed_parameters = np.asarray(fixed_parameters, dtype=float)
+        if fixed_parameters.shape != parameters.shape:
+            raise ValueError("fixed_parameters must match parameters")
+        if len(free_parameter_indices) == 0:
+            raise ValueError("at least one free parameter is required")
+        index_tensor = torch.as_tensor(free_parameter_indices, dtype=torch.long, device=device)
+        fixed_tensor = torch.as_tensor(fixed_parameters, dtype=torch.float64, device=device)
+        value = torch.tensor(
+            parameters[free_parameter_indices], dtype=torch.float64,
+            device=device, requires_grad=True,
+        )
+
+        def residual_function(current: torch.Tensor) -> torch.Tensor:
+            full = fixed_tensor.index_copy(0, index_tensor, current)
+            return joint_residual_torch(
+                runner, full, state, normalizer, lambdas, parameterization,
+                fixed_b_offset, amplitude_prior_lambda, amplitude_prior_reference,
+            )
     # H100 measurement on the frozen 4,655-voxel mask: 40 tangents peak at
     # 5.113 GiB allocated / 5.654 GiB reserved, so the full parameter basis
     # is the production default.  Smaller cards can override this env var.
@@ -562,10 +774,7 @@ def joint_jacobian(runner: APrimeSequential, parameters: np.ndarray,
         torch.cuda.synchronize(device)
     forward_started = time.perf_counter()
     jacobian_torch = _forward_mode_jacobian_chunked(
-        lambda current: joint_residual_torch(
-            runner, current, state, normalizer, lambdas, parameterization,
-            fixed_b_offset, amplitude_prior_lambda, amplitude_prior_reference,
-        ), value, chunk_size,
+        residual_function, value, chunk_size,
     )
     if profile is not None and device.type == "cuda":
         torch.cuda.synchronize(device)
@@ -573,7 +782,20 @@ def joint_jacobian(runner: APrimeSequential, parameters: np.ndarray,
     transfer_started = time.perf_counter()
     jacobian = jacobian_torch.detach().cpu().numpy()
     transfer_elapsed = time.perf_counter() - transfer_started
+    if geometry_gradient_mode == "per_slot_occupancy_decoupled":
+        full_columns = (
+            np.arange(jacobian.shape[1], dtype=int)
+            if free_parameter_indices is None else free_parameter_indices
+        )
+        jacobian = occupancy_decoupled_density_jacobian(
+            jacobian, len(runner.target), np.asarray(state["weights"], dtype=float),
+            parameterization, full_columns, geometry_gradient_occupancy_floor,
+        )
+    elif geometry_gradient_mode != "standard":
+        raise ValueError(f"unknown geometry gradient mode: {geometry_gradient_mode}")
     if deflation_mode == "slot2_gradient":
+        if free_parameter_indices is not None:
+            raise ValueError("slot2 gradient deflation is incompatible with a free-index mask")
         if not isinstance(parameterization, FullJointParameterization):
             raise ValueError("slot2 gradient deflation requires the full 40-parameter chart")
         gradient = jacobian.T @ state["residual"]
@@ -594,6 +816,8 @@ def joint_jacobian(runner: APrimeSequential, parameters: np.ndarray,
         )
         profile["jacobian_forward_s"] = profile.get("jacobian_forward_s", 0.0) + forward_elapsed
         profile["jacobian_host_device_s"] = profile.get("jacobian_host_device_s", 0.0) + transfer_elapsed
+        profile["jacobian_rows"] = float(jacobian.shape[0])
+        profile["jacobian_columns"] = float(jacobian.shape[1])
     return jacobian
 
 
@@ -817,6 +1041,164 @@ def torch_native_trust_region_inner_solve(
     return current, slot_diagnostics, total_nfev
 
 
+def free_parameter_trust_region_inner_solve(
+    runner: APrimeSequential,
+    parameters: np.ndarray,
+    normalizer: float,
+    lambdas: np.ndarray,
+    parameterization: SharedJointParameterization,
+    fixed_b_offset: float,
+    active_slot2_floor: float,
+    occupancy_weights: np.ndarray | None,
+    amplitude_prior_lambda: float,
+    amplitude_prior_reference: np.ndarray | None,
+    inner_nfev: int,
+    label: str,
+    outer: int,
+    trajectory: list[dict[str, object]],
+    deflation_mode: str,
+    free_parameter_indices: np.ndarray,
+    geometry_gradient_mode: str = "standard",
+    geometry_gradient_occupancy_floor: float = DEFAULT_GEOMETRY_GRADIENT_OCCUPANCY_FLOOR,
+    profile: dict[str, float] | None = None,
+    initial_radius: float | None = None,
+    carry_trust_radii: bool = False,
+) -> tuple[np.ndarray, list[dict[str, object]], int, list[float | None]]:
+    """Optimize an arbitrary free subset while rendering all 40 torsions.
+
+    The fixed values are embedded into every residual/Jacobian evaluation.
+    Consequently the Torch forward-mode Jacobian has one column per free
+    parameter rather than computing a 40-column Jacobian and slicing it.
+    """
+    if fixed_b_offset is None:
+        raise ValueError("free-index trust-region solves require fixed dB")
+    current = np.asarray(parameters, dtype=float).copy()
+    free_parameter_indices = np.asarray(free_parameter_indices, dtype=int)
+    if free_parameter_indices.ndim != 1 or len(free_parameter_indices) == 0:
+        raise ValueError("free_parameter_indices must be a non-empty 1-D array")
+    if np.any(free_parameter_indices < 0) or np.any(
+        free_parameter_indices >= len(current)
+    ) or len(np.unique(free_parameter_indices)) != len(free_parameter_indices):
+        raise ValueError("free_parameter_indices must be unique and in range")
+    fixed = current.copy()
+    local_evaluations = 0
+    local_trace: list[dict[str, object]] = []
+    start_radius = (
+        _scipy_default_initial_trust_radius(current[free_parameter_indices], 10.0)
+        if initial_radius is None else float(initial_radius)
+    )
+
+    def full_value(value: np.ndarray) -> np.ndarray:
+        return embed_free_parameters(value, fixed, free_parameter_indices)
+
+    def residual_function(value: np.ndarray) -> np.ndarray:
+        nonlocal local_evaluations
+        full = full_value(value)
+        started = time.perf_counter()
+        state = joint_evaluate(
+            runner, full, normalizer, lambdas, parameterization,
+            fixed_b_offset, active_slot2_floor, occupancy_weights,
+            amplitude_prior_lambda, amplitude_prior_reference,
+        )
+        local_evaluations += 1
+        trajectory.append({
+            "stage": label, "outer_update": outer,
+            "evaluation": local_evaluations,
+            "occupancies": state["weights"].tolist(),
+            "intercept": state["intercept"], "b_offset_A2": state["b_offset_A2"],
+            "slot2_occupancy_floor": active_slot2_floor,
+            "rss": state["rss"], "slot_pair_rmsd": slot_pair_rmsd(runner, state["coordinates"]),
+            **slot2_geometry_metrics(runner, state["coordinates"]),
+        })
+        if profile is not None:
+            profile["residual_calls"] = profile.get("residual_calls", 0.0) + 1.0
+            profile["residual_eval_s"] = profile.get("residual_eval_s", 0.0) + (
+                time.perf_counter() - started
+            )
+        return state["residual"]
+
+    def jacobian_function(value: np.ndarray) -> np.ndarray:
+        full = full_value(value)
+        state_started = time.perf_counter()
+        state = joint_evaluate(
+            runner, full, normalizer, lambdas, parameterization,
+            fixed_b_offset, active_slot2_floor, occupancy_weights,
+            amplitude_prior_lambda, amplitude_prior_reference,
+        )
+        if profile is not None:
+            profile["state_eval_calls"] = profile.get("state_eval_calls", 0.0) + 1.0
+            profile["state_eval_s"] = profile.get("state_eval_s", 0.0) + (
+                time.perf_counter() - state_started
+            )
+        return joint_jacobian(
+            runner, full, state, normalizer, lambdas, parameterization,
+            fixed_b_offset, active_slot2_floor, amplitude_prior_lambda,
+            amplitude_prior_reference, deflation_mode, profile=profile,
+            free_parameter_indices=free_parameter_indices,
+            fixed_parameters=fixed,
+            geometry_gradient_mode=geometry_gradient_mode,
+            geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
+        )
+
+    start_state = joint_evaluate(
+        runner, fixed, normalizer, lambdas, parameterization,
+        fixed_b_offset, active_slot2_floor, occupancy_weights,
+        amplitude_prior_lambda, amplitude_prior_reference,
+    )
+    start_jacobian = jacobian_function(current[free_parameter_indices])
+    start_gradient = start_jacobian.T @ start_state["residual"]
+    result = _least_squares_with_trust_trace(
+        residual_function, current[free_parameter_indices], method="trf",
+        jac=jacobian_function, x_scale=10.0, max_nfev=inner_nfev,
+        ftol=1e-10, xtol=1e-10, gtol=1e-10, trace=local_trace,
+        initial_radius=initial_radius,
+    )
+    current[free_parameter_indices] = result.x
+    end_full = current.copy()
+    end_state = joint_evaluate(
+        runner, end_full, normalizer, lambdas, parameterization,
+        fixed_b_offset, active_slot2_floor, occupancy_weights,
+        amplitude_prior_lambda, amplitude_prior_reference,
+    )
+    end_jacobian = jacobian_function(result.x)
+    end_gradient = end_jacobian.T @ end_state["residual"]
+    end_radius = (
+        float(local_trace[-1]["radius_after_scaled"])
+        if local_trace else start_radius
+    )
+    accepted_steps = sum(bool(item["accepted"]) for item in local_trace)
+    rejected_steps = len(local_trace) - accepted_steps
+    diagnostic = {
+        "slot": "free_subset",
+        "free_parameter_indices": free_parameter_indices.tolist(),
+        "free_parameter_count": int(len(free_parameter_indices)),
+        "jacobian_shape": [int(start_jacobian.shape[0]), int(start_jacobian.shape[1])],
+        "gradient_norm_start": float(np.linalg.norm(start_gradient)),
+        "gradient_norm_end": float(np.linalg.norm(end_gradient)),
+        "projected_gradient_norm_start": float(np.linalg.norm(start_gradient)),
+        "projected_gradient_norm_end": float(np.linalg.norm(end_gradient)),
+        "termination_status": int(result.status),
+        "termination_message": result.message,
+        "nfev": int(result.nfev), "njev": int(result.njev or 0),
+        "evaluation_cap": int(inner_nfev),
+        "hit_evaluation_cap": bool(result.nfev >= inner_nfev and result.status == 0),
+        "trust_radius_carry_enabled": bool(carry_trust_radii),
+        "trust_radius_start_scaled": start_radius,
+        "trust_radius_end_scaled": end_radius,
+        "trust_radius_start_degrees_at_x_scale_10": start_radius * 10.0,
+        "trust_radius_end_degrees_at_x_scale_10": end_radius * 10.0,
+        "trust_radius_trajectory": local_trace,
+        "trust_radius_updates": len(local_trace),
+        "accepted_steps": accepted_steps,
+        "rejected_steps": rejected_steps,
+        "acceptance_ratio": accepted_steps / max(len(local_trace), 1),
+    }
+    diagnostic["trust_radius_reset_for_next_outer"] = bool(
+        carryable_trust_radius(end_radius) is None
+    )
+    return current, [diagnostic], int(result.nfev), [carryable_trust_radius(end_radius), None]
+
+
 def per_slot_trust_region_inner_solve(
     runner: APrimeSequential,
     parameters: np.ndarray,
@@ -833,11 +1215,13 @@ def per_slot_trust_region_inner_solve(
     outer: int,
     trajectory: list[dict[str, object]],
     deflation_mode: str,
+    geometry_gradient_mode: str = "standard",
+    geometry_gradient_occupancy_floor: float = DEFAULT_GEOMETRY_GRADIENT_OCCUPANCY_FLOOR,
     torch_native_trf: bool = False,
     profile: dict[str, float] | None = None,
     initial_radii: tuple[float | None, float | None] | None = None,
     carry_trust_radii: bool = False,
-) -> tuple[np.ndarray, list[dict[str, object]], int, list[float]]:
+) -> tuple[np.ndarray, list[dict[str, object]], int, list[float | None]]:
     """Do two block-coordinate TRF solves with independent trust radii.
 
     Each slot is optimized with the other slot held fixed.  The global dB is
@@ -850,6 +1234,8 @@ def per_slot_trust_region_inner_solve(
     if fixed_b_offset is None:
         raise ValueError("per-slot trust radii require fixed dB")
     if torch_native_trf:
+        if geometry_gradient_mode != "standard":
+            raise ValueError("occupancy-decoupled geometry gradients require the SciPy Jacobian path")
         if carry_trust_radii:
             raise ValueError("trust-radius carry-over is currently implemented for SciPy TRF only")
         return torch_native_trust_region_inner_solve(
@@ -861,7 +1247,7 @@ def per_slot_trust_region_inner_solve(
 
     current = np.asarray(parameters, dtype=float).copy()
     slot_diagnostics: list[dict[str, object]] = []
-    ending_radii: list[float] = []
+    ending_radii: list[float | None] = []
     total_nfev = 0
     for slot in range(2):
         indices = np.arange(slot * runner.rotator.ndofs, (slot + 1) * runner.rotator.ndofs)
@@ -927,6 +1313,8 @@ def per_slot_trust_region_inner_solve(
                 fixed_b_offset, active_slot2_floor, amplitude_prior_lambda,
                 amplitude_prior_reference, deflation_mode,
                 profile=profile,
+                geometry_gradient_mode=geometry_gradient_mode,
+                geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
             )
             local_jacobians += 1
             return full_jacobian[:, indices]
@@ -957,7 +1345,8 @@ def per_slot_trust_region_inner_solve(
             float(local_trace[-1]["radius_after_scaled"])
             if local_trace else start_radius
         )
-        ending_radii.append(end_radius)
+        carried_end_radius = carryable_trust_radius(end_radius)
+        ending_radii.append(carried_end_radius)
         accepted_steps = sum(bool(item["accepted"]) for item in local_trace)
         rejected_steps = len(local_trace) - accepted_steps
         total_nfev += int(result.nfev)
@@ -977,6 +1366,7 @@ def per_slot_trust_region_inner_solve(
             "trust_radius_end_scaled": end_radius,
             "trust_radius_start_degrees_at_x_scale_10": start_radius * 10.0,
             "trust_radius_end_degrees_at_x_scale_10": end_radius * 10.0,
+            "trust_radius_reset_for_next_outer": bool(carried_end_radius is None),
             "trust_radius_trajectory": local_trace,
             "trust_radius_updates": len(local_trace),
             "accepted_steps": accepted_steps,
@@ -999,19 +1389,34 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
               amplitude_prior_reference: np.ndarray | None = None,
               inner_nfev: int = INNER_NFEV,
               outer_updates: int = OUTER_UPDATES,
+              seam_tolerance_A: float | None = None,
               lambda_relative_tolerance: float | None = None,
               lambda_damping_alpha: float = 1.0,
               lambda_norm_cap: float | None = None,
               deflation_mode: str = "none",
               per_slot_trust_radii: bool = False,
               torch_native_trf: bool = False,
-              carry_trust_radii: bool = False) -> dict[str, object]:
+              carry_trust_radii: bool = False,
+              density_normalizer: float | None = None,
+              geometry_gradient_mode: str = "standard",
+              geometry_gradient_occupancy_floor: float = DEFAULT_GEOMETRY_GRADIENT_OCCUPANCY_FLOOR,
+              free_parameter_mask: np.ndarray | None = None,
+              initial_occupancy_weights: np.ndarray | None = None,
+              fixed_occupancy_weights: np.ndarray | None = None,
+              resume: bool = False) -> dict[str, object]:
     if slot2_occupancy_floor < 0.0 or slot2_occupancy_floor >= 1.0:
         raise ValueError("slot2_occupancy_floor must be in [0, 1)")
     if inner_nfev < 1 or outer_updates < 1:
         raise ValueError("inner_nfev and outer_updates must be positive")
-    if lambda_relative_tolerance is not None and not 0.0 < lambda_relative_tolerance < 1.0:
-        raise ValueError("lambda_relative_tolerance must be in (0, 1)")
+    # ``lambda_relative_tolerance`` was the old public spelling.  Preserve
+    # callers but change its semantics to the seam tolerance they intended;
+    # relative multiplier growth is not a convergence test.
+    if seam_tolerance_A is not None and lambda_relative_tolerance is not None:
+        raise ValueError("provide only seam_tolerance_A, not lambda_relative_tolerance")
+    if seam_tolerance_A is None:
+        seam_tolerance_A = lambda_relative_tolerance
+    if seam_tolerance_A is not None and seam_tolerance_A <= 0.0:
+        raise ValueError("seam_tolerance_A must be positive")
     if not 0.0 < lambda_damping_alpha <= 1.0:
         raise ValueError("lambda_damping_alpha must be in (0, 1]")
     if lambda_norm_cap is not None and lambda_norm_cap <= 0.0:
@@ -1030,33 +1435,114 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
         raise ValueError("amplitude prior lambda must be non-negative")
     if deflation_mode not in {"none", "slot2_gradient"}:
         raise ValueError("deflation_mode must be none or slot2_gradient")
+    if geometry_gradient_mode not in {"standard", "per_slot_occupancy_decoupled"}:
+        raise ValueError("geometry_gradient_mode must be standard or per_slot_occupancy_decoupled")
+    if not np.isfinite(geometry_gradient_occupancy_floor) or geometry_gradient_occupancy_floor <= 0.0:
+        raise ValueError("geometry_gradient_occupancy_floor must be finite and positive")
     if per_slot_trust_radii and fixed_b_offset is None:
         raise ValueError("per-slot trust radii are currently benchmarked with dB fixed")
     if per_slot_trust_radii and per_slot_offsets is not None:
         raise ValueError("per-slot trust radii require the full 40-parameter chart")
+    if initial_occupancy_weights is not None and occupancy_scheme == "qp":
+        raise ValueError("initial mirror occupancies require a mirror occupancy scheme")
+    if fixed_occupancy_weights is not None and occupancy_scheme == "qp":
+        raise ValueError("fixed occupancies require a mirror occupancy scheme")
     output.mkdir(parents=True, exist_ok=True)
     parameterization = (
         FullJointParameterization(runner.rotator.ndofs)
         if per_slot_offsets is None
         else SharedJointParameterization(runner.rotator.ndofs, per_slot_offsets)
     )
+    if (geometry_gradient_mode == "per_slot_occupancy_decoupled" and
+            not isinstance(parameterization, FullJointParameterization)):
+        raise ValueError("per-slot occupancy decoupling requires the full 40-parameter chart")
+    if free_parameter_mask is not None:
+        if fixed_b_offset is None:
+            raise ValueError("free_parameter_mask requires fixed dB")
+        if not isinstance(parameterization, FullJointParameterization):
+            raise ValueError("free_parameter_mask requires the full 40-parameter chart")
+        free_parameter_mask = np.asarray(free_parameter_mask, dtype=bool)
+        if free_parameter_mask.shape != (parameterization.reduced_ndofs,):
+            raise ValueError(
+                f"free_parameter_mask must have shape ({parameterization.reduced_ndofs},)"
+            )
+        if not np.any(free_parameter_mask):
+            raise ValueError("free_parameter_mask must leave at least one parameter free")
+        if per_slot_trust_radii is False:
+            # The free-subset solver below supplies the one trust region for
+            # the active subset; it is equivalent to per-slot TRF when only
+            # one slot is free and supports arbitrary masks generally.
+            pass
+    free_parameter_indices = (
+        None if free_parameter_mask is None else np.flatnonzero(free_parameter_mask)
+    )
     aa_models = runner.base.model_density_batch(
         np.stack((runner.initial, runner.initial)), slots=np.array((0, 1)),
     )
     if runner.training_indices is not None:
         aa_models = aa_models[:, runner.training_indices]
-    _, _, normalizer = runner.joint_qp_weights(runner.target, aa_models)
-    normalizer = max(float(normalizer), 1e-12)
+    _, _, legacy_normalizer = runner.joint_qp_weights(runner.target, aa_models)
+    if density_normalizer is None:
+        normalizer = max(float(legacy_normalizer), 1e-12)
+    else:
+        normalizer = float(density_normalizer)
+        if not np.isfinite(normalizer) or normalizer <= 0.0:
+            raise ValueError("density_normalizer must be finite and positive")
     parameters = parameterization.pack(p1, p2)
     if fixed_b_offset is None:
         parameters = np.concatenate((parameters, np.array((0.0,))))
     lambdas = np.zeros(12)
-    occupancy_weights = (None if occupancy_scheme == "qp"
-                         else np.asarray((0.5, 0.5), dtype=float))
+    initial_mirror_occupancy_weights = None
+    if occupancy_scheme == "qp":
+        occupancy_weights = None
+        fixed_occupancy_weights = None
+    else:
+        occupancy_weights = (
+            mirror_initial_occupancies(2) if initial_occupancy_weights is None
+            else np.asarray(initial_occupancy_weights, dtype=float).copy()
+        )
+        if occupancy_weights.shape != (2,) or np.any(occupancy_weights <= 0.0) or occupancy_weights.sum() >= 1.0:
+            raise ValueError("initial mirror occupancies must be positive and sum to less than one")
+        if fixed_occupancy_weights is None:
+            fixed_occupancy_weights = np.full(2, np.nan, dtype=float)
+        else:
+            fixed_occupancy_weights = np.asarray(fixed_occupancy_weights, dtype=float)
+            if fixed_occupancy_weights.shape != (2,):
+                raise ValueError("fixed_occupancy_weights must have shape (2,)")
+            fixed = np.isfinite(fixed_occupancy_weights)
+            if np.any(fixed_occupancy_weights[fixed] <= 0.0) or fixed_occupancy_weights[fixed].sum() >= 1.0:
+                raise ValueError("fixed occupancies must be positive and leave slack")
+            if not np.allclose(occupancy_weights[fixed], fixed_occupancy_weights[fixed], atol=1e-12, rtol=0.0):
+                raise ValueError("initial mirror occupancies must match fixed occupancies")
+        initial_mirror_occupancy_weights = occupancy_weights.copy()
     carried_trust_radii: list[float | None] = [None, None]
     trajectory = []
     inner_diagnostics = []
-    for outer in range(1, outer_updates + 1):
+    resume_state = _load_joint_resume_state(output) if resume else None
+    start_outer = 1
+    if resume_state is not None:
+        if resume_state["parameters"].shape != parameters.shape:
+            raise RuntimeError("joint resume parameter shape does not match this run")
+        if resume_state["lambdas"].shape != lambdas.shape:
+            raise RuntimeError("joint resume lambda shape does not match this run")
+        if occupancy_scheme == "qp" and resume_state["occupancy_weights"] is not None:
+            raise RuntimeError("joint resume occupancy scheme differs from checkpoint")
+        if occupancy_scheme != "qp" and (
+            resume_state["occupancy_weights"] is None or
+            resume_state["occupancy_weights"].shape != (2,)
+        ):
+            raise RuntimeError("joint mirror-occupancy resume state is missing or invalid")
+        parameters = resume_state["parameters"]
+        lambdas = resume_state["lambdas"]
+        occupancy_weights = resume_state["occupancy_weights"]
+        if occupancy_weights is not None and (
+                np.any(occupancy_weights <= 0.0) or occupancy_weights.sum() >= 1.0):
+            raise RuntimeError("resume state predates the explicit-slack mirror occupancy constraint")
+        carried_trust_radii = resume_state["carried_trust_radii"]
+        trajectory = resume_state["trajectory"]
+        inner_diagnostics = resume_state["inner_diagnostics"]
+        start_outer = int(resume_state["completed_outer"]) + 1
+    for outer in range(start_outer, outer_updates + 1):
         outer_started = time.perf_counter()
         profile = {
             "outer_update": float(outer),
@@ -1105,6 +1591,8 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                 active_slot2_floor,
                 amplitude_prior_lambda, amplitude_prior_reference,
                 deflation_mode,
+                geometry_gradient_mode=geometry_gradient_mode,
+                geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
             )
 
         lower_bounds = np.full(len(parameters), -np.inf)
@@ -1133,7 +1621,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             return jacobian
 
         slot_inner_diagnostics = []
-        if per_slot_trust_radii:
+        if free_parameter_indices is not None:
             pre_state = joint_evaluate(
                 runner, parameters, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, occupancy_weights,
@@ -1143,6 +1631,55 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                 runner, parameters, pre_state, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, amplitude_prior_lambda,
                 amplitude_prior_reference, deflation_mode, profile=profile,
+                free_parameter_indices=free_parameter_indices,
+                fixed_parameters=parameters,
+                geometry_gradient_mode=geometry_gradient_mode,
+                geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
+            )
+            start_gradient = pre_jacobian.T @ pre_state["residual"]
+            trust_started = time.perf_counter()
+            parameters, slot_inner_diagnostics, total_nfev, ending_radii = free_parameter_trust_region_inner_solve(
+                runner, parameters, normalizer, lambdas, parameterization,
+                fixed_b_offset, active_slot2_floor, occupancy_weights,
+                amplitude_prior_lambda, amplitude_prior_reference, inner_nfev,
+                label, outer, trajectory, deflation_mode,
+                free_parameter_indices,
+                geometry_gradient_mode=geometry_gradient_mode,
+                geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
+                profile=profile,
+                initial_radius=(None if not carry_trust_radii else carried_trust_radii[0]),
+                carry_trust_radii=carry_trust_radii,
+            )
+            if carry_trust_radii:
+                carried_trust_radii = ending_radii
+            profile["scipy_trust_region_s"] = time.perf_counter() - trust_started
+            result_nfev = total_nfev
+            result_njev = sum(int(item["njev"]) for item in slot_inner_diagnostics)
+            result_status = max(int(item["termination_status"]) for item in slot_inner_diagnostics)
+            result_message = "; ".join(
+                f"free_subset: {item['termination_message']}"
+                for item in slot_inner_diagnostics
+            )
+            result_active_mask = np.zeros_like(parameters, dtype=int)
+            result_optimality = max(
+                float(item["projected_gradient_norm_end"])
+                for item in slot_inner_diagnostics
+            )
+            diagnostic_value = parameters[free_parameter_indices]
+            diagnostic_lower_bounds = lower_bounds[free_parameter_indices]
+            diagnostic_upper_bounds = upper_bounds[free_parameter_indices]
+        elif per_slot_trust_radii:
+            pre_state = joint_evaluate(
+                runner, parameters, normalizer, lambdas, parameterization,
+                fixed_b_offset, active_slot2_floor, occupancy_weights,
+                amplitude_prior_lambda, amplitude_prior_reference,
+            )
+            pre_jacobian = joint_jacobian(
+                runner, parameters, pre_state, normalizer, lambdas, parameterization,
+                fixed_b_offset, active_slot2_floor, amplitude_prior_lambda,
+                amplitude_prior_reference, deflation_mode, profile=profile,
+                geometry_gradient_mode=geometry_gradient_mode,
+                geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
             )
             start_gradient = pre_jacobian.T @ pre_state["residual"]
             trust_started = time.perf_counter()
@@ -1150,13 +1687,16 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                 runner, parameters, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, occupancy_weights,
                 amplitude_prior_lambda, amplitude_prior_reference, inner_nfev,
-                label, outer, trajectory, deflation_mode, torch_native_trf,
+                label, outer, trajectory, deflation_mode,
+                geometry_gradient_mode=geometry_gradient_mode,
+                geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
+                torch_native_trf=torch_native_trf,
                 profile=profile,
                 initial_radii=(tuple(carried_trust_radii) if carry_trust_radii else None),
                 carry_trust_radii=carry_trust_radii,
             )
             if carry_trust_radii:
-                carried_trust_radii = [float(value) for value in ending_radii]
+                carried_trust_radii = ending_radii
             profile["scipy_trust_region_s"] = time.perf_counter() - trust_started
             result_nfev = total_nfev
             result_njev = sum(int(item["njev"]) for item in slot_inner_diagnostics)
@@ -1170,6 +1710,9 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                 float(item["projected_gradient_norm_end"])
                 for item in slot_inner_diagnostics
             )
+            diagnostic_value = parameters
+            diagnostic_lower_bounds = lower_bounds
+            diagnostic_upper_bounds = upper_bounds
         else:
             result = least_squares(
                 residual_function, parameters, method="trf", jac=jacobian_with_start_diagnostic,
@@ -1184,6 +1727,9 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             result_message = result.message
             result_active_mask = np.asarray(result.active_mask, dtype=int)
             result_optimality = float(result.optimality)
+            diagnostic_value = parameters
+            diagnostic_lower_bounds = lower_bounds
+            diagnostic_upper_bounds = upper_bounds
         state = joint_evaluate(
             runner, parameters, normalizer, lambdas, parameterization,
             fixed_b_offset, active_slot2_floor, occupancy_weights,
@@ -1198,11 +1744,22 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                 lambda_candidate *= float(lambda_norm_cap) / candidate_norm
                 lambda_cap_active = True
         lambdas = lambda_candidate
-        if per_slot_trust_radii:
+        if free_parameter_indices is not None:
             end_jacobian = joint_jacobian(
                 runner, parameters, state, normalizer, lambdas, parameterization,
                 fixed_b_offset, active_slot2_floor, amplitude_prior_lambda,
                 amplitude_prior_reference, deflation_mode, profile=profile,
+                free_parameter_indices=free_parameter_indices,
+                fixed_parameters=parameters,
+            )
+            end_gradient = end_jacobian.T @ state["residual"]
+        elif per_slot_trust_radii:
+            end_jacobian = joint_jacobian(
+                runner, parameters, state, normalizer, lambdas, parameterization,
+                fixed_b_offset, active_slot2_floor, amplitude_prior_lambda,
+                amplitude_prior_reference, deflation_mode, profile=profile,
+                geometry_gradient_mode=geometry_gradient_mode,
+                geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
             )
             end_gradient = end_jacobian.T @ state["residual"]
         else:
@@ -1212,12 +1769,13 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             "outer_update": outer,
             "gradient_norm_start": float(np.linalg.norm(start_gradient)),
             "projected_gradient_norm_start": projected_gradient_norm(
-                start_gradient, parameters if False else parameters,
-                lower_bounds, upper_bounds,
+                start_gradient, diagnostic_value,
+                diagnostic_lower_bounds, diagnostic_upper_bounds,
             ),
             "gradient_norm_end": float(np.linalg.norm(end_gradient)),
             "projected_gradient_norm_end": projected_gradient_norm(
-                end_gradient, parameters, lower_bounds, upper_bounds,
+                end_gradient, diagnostic_value,
+                diagnostic_lower_bounds, diagnostic_upper_bounds,
             ),
             "scipy_optimality_end": result_optimality,
             "termination_status": result_status,
@@ -1227,10 +1785,18 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             "evaluation_cap": int(inner_nfev),
             "hit_evaluation_cap": bool(
                 any(item["hit_evaluation_cap"] for item in slot_inner_diagnostics)
-                if per_slot_trust_radii else result_nfev >= inner_nfev and result_status == 0
+                if (per_slot_trust_radii or free_parameter_indices is not None)
+                else result_nfev >= inner_nfev and result_status == 0
             ),
             "active_mask": result_active_mask.tolist(),
             "per_slot_trust_radii": bool(per_slot_trust_radii),
+            "free_parameter_mask": (
+                None if free_parameter_mask is None else free_parameter_mask.tolist()
+            ),
+            "free_parameter_count": (
+                int(len(free_parameter_indices)) if free_parameter_indices is not None else
+                int(parameterization.reduced_ndofs)
+            ),
             "torch_native_trf": bool(torch_native_trf),
             "carry_trust_radii": bool(carry_trust_radii),
             "timing": profile,
@@ -1264,6 +1830,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                 runner.target, state["models"], occupancy_weights,
                 state["intercept"], mirror_eta,
                 mirror_tau if occupancy_scheme == "mirror_entropy" else 0.0,
+                fixed_occupancy_weights,
             )
             state = joint_evaluate(
                 runner, parameters, normalizer, lambdas, parameterization,
@@ -1307,7 +1874,7 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                 "carry_enabled": bool(carry_trust_radii),
                 "slots": [
                     {
-                        "slot": int(item["slot"]),
+                        "slot": item["slot"],
                         "start_scaled": float(item["trust_radius_start_scaled"]),
                         "end_scaled": float(item["trust_radius_end_scaled"]),
                         "start_degrees_at_x_scale_10": float(item["trust_radius_start_degrees_at_x_scale_10"]),
@@ -1339,9 +1906,13 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
                 "accept_reject": trust_checkpoint["accept_reject"],
                 "trust_radius": trust_checkpoint["trust_radius"],
             }, handle)
-        if (lambda_relative_tolerance is not None and outer >= 2
-                and inner_diagnostics[-1]["lambda_delta_norm"] <=
-                lambda_relative_tolerance * max(inner_diagnostics[-1]["lambda_norm_after"], 1e-12)):
+        if resume:
+            _save_joint_resume_state(
+                output, outer, parameters, lambdas, occupancy_weights,
+                carried_trust_radii, trajectory, inner_diagnostics,
+            )
+        if (seam_tolerance_A is not None
+                and inner_diagnostics[-1]["seam_norm_before_lambda_update"] <= seam_tolerance_A):
             break
 
     # The final endpoint and selection are always released from the temporary
@@ -1378,23 +1949,34 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
     min_occ = np.min(np.asarray([row["occupancies"] for row in trajectory if "occupancies" in row]), axis=0)
     result_json = {
         "status": "complete", "label": label, "initial_slot_to_slot_rmsd_A": initial_pair_rmsd,
-        "final_occupancies": final["weights"].tolist(), "final_intercept": final["intercept"],
+        "final_occupancies": final["weights"].tolist(),
+        "final_occupancy_total": float(np.asarray(final["weights"]).sum()),
+        "final_unexplained_occupancy": float(1.0 - np.asarray(final["weights"]).sum()),
+        "final_intercept": final["intercept"],
         "final_b_offset_A2": final["b_offset_A2"],
         "final_rss": final["rss"], "final_energy": final["energy"],
         "final_selection": final_selection, "slot_rmsds": slot_rmsds,
         "final_seam_vectors": np.asarray(state["seam_vectors"]).tolist(),
         "outer_updates_completed": len(inner_diagnostics),
-        "lambda_relative_tolerance": lambda_relative_tolerance,
+        "seam_tolerance_A": seam_tolerance_A,
+        "lambda_relative_tolerance": None,
         "lambda_damping_alpha": float(lambda_damping_alpha),
         "lambda_norm_cap": None if lambda_norm_cap is None else float(lambda_norm_cap),
-        "lambda_stop_reached": bool(
-            lambda_relative_tolerance is not None and len(inner_diagnostics) >= 2 and
-            inner_diagnostics[-1]["lambda_delta_norm"] <=
-            lambda_relative_tolerance * max(inner_diagnostics[-1]["lambda_norm_after"], 1e-12)
+        "lambda_stop_reached": False,
+        "seam_tolerance_reached": bool(
+            seam_tolerance_A is not None and len(inner_diagnostics) >= 1 and
+            inner_diagnostics[-1]["seam_norm_before_lambda_update"] <= seam_tolerance_A
+        ),
+        "stopping_rule": (
+            "seam_norm_below_tolerance" if (seam_tolerance_A is not None and len(inner_diagnostics) >= 1 and
+                                              inner_diagnostics[-1]["seam_norm_before_lambda_update"] <= seam_tolerance_A)
+            else "max_outer_updates"
         ),
         "inner_solve_diagnostics": inner_diagnostics,
         "minimum_occupancy_seen": min_occ.tolist(), "trajectory": trajectory,
         "normalizer_initial_A_A_rss": normalizer,
+        "density_normalizer_requested": density_normalizer,
+        "legacy_normalizer_initial_A_A_rss": float(legacy_normalizer),
         "fit_provenance": {
             **{key: value for key, value in provenance.items() if key != "indices"},
             "fit_voxel_indices_artifact": "final_slots.npz:fit_voxel_indices",
@@ -1418,6 +2000,26 @@ def joint_run(runner: APrimeSequential, p1: np.ndarray, p2: np.ndarray,
             "occupancy_scheme": occupancy_scheme,
             "mirror_eta": float(mirror_eta),
             "mirror_tau": float(mirror_tau),
+            "geometry_gradient_mode": geometry_gradient_mode,
+            "geometry_gradient_occupancy_floor": float(geometry_gradient_occupancy_floor),
+            "geometry_gradient_definition": (
+                "density Jacobian columns divided per slot by max(occupancy, floor); "
+                "density residual, occupancy update, and non-density residual blocks unchanged"
+                if geometry_gradient_mode == "per_slot_occupancy_decoupled"
+                else "unmodified objective Jacobian"
+            ),
+            "initial_occupancies": (None if initial_mirror_occupancy_weights is None
+                                      else initial_mirror_occupancy_weights.tolist()),
+            # ``NaN`` is the in-memory sentinel for a free occupancy.  JSON
+            # deliberately rejects NaN, and consumers need an explicit
+            # representation that distinguishes free from fixed slots.
+            "fixed_occupancy_weights": (
+                None if fixed_occupancy_weights is None else [
+                    None if not np.isfinite(value) else float(value)
+                    for value in fixed_occupancy_weights
+                ]
+            ),
+            "occupancy_constraint": "sum(slot occupancies) <= 1 via explicit slack component",
             "amplitude_prior_lambda": float(amplitude_prior_lambda),
             "lambda_damping_alpha": float(lambda_damping_alpha),
             "lambda_norm_cap": None if lambda_norm_cap is None else float(lambda_norm_cap),
