@@ -321,11 +321,11 @@ def main() -> None:
     import qfit  # noqa: F401
     from run_zenodo_qfit_aprime_metrics import (
         PairInitialAPrime, parse_pair, score_pair, local_map_audit,
-        displacement_classes, cbeta_index, hydrogen_audit,
+        displacement_classes, cbeta_index,
     )
     from diagnose_zenodo_ensemble_tradeoff import (
         map_context, observed_model_metrics, bfactor_refit,
-        coordinate_noise_floor, half_map_noise, voxel_tradeoff,
+        coordinate_noise_floor, half_map_noise, voxel_tradeoff, hydrogen_audit,
     )
     from run_d1_aprime_leakage_corrected_cv import blocked_splits
     imports = (
