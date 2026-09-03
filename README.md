@@ -2,7 +2,7 @@
 
 User-friendly optimization pipeline for qFit multi-conformer protein models. Supply
 one target site or a batch of sites, let the pipeline optimize the qFit
-starting model, and collect the A′ and Phenix results in a structured output
+starting model, and collect the ConformOpt and Phenix results in a structured output
 directory.
 
 The workflow is designed for site-level optimization. A protein with several
@@ -14,8 +14,8 @@ For each manifest row, the pipeline:
 
 1. loads the deposited structure, qFit model, and reflection data;
 2. reads the qFit A/B conformers and occupancies;
-3. runs the A′ backbone and side-chain optimization;
-4. writes a Phenix-ready A′ model;
+3. runs the ConformOpt backbone and side-chain optimization;
+4. writes a Phenix-ready ConformOpt model;
 5. runs Phenix refinement when Phenix is available; and
 6. records intermediate coordinates, configuration, provenance, and metrics.
 
@@ -222,7 +222,7 @@ results/
 
 The main files are:
 
-- `phenix_input.pdb` — the A′ endpoint sent to refinement;
+- `phenix_input.pdb` — the ConformOpt endpoint sent to refinement;
 - `phenix/refined_001.pdb` — the Phenix-refined model, when available;
 - `result.json` — site status, parameters, provenance, and summary metrics;
 - `run_config.json` — input paths and optimization settings;
@@ -257,7 +257,7 @@ Preserve the input files with the output directory. `run_config.json` and
 - The current interface optimizes target sites within protein structures.
 - qFit inputs must provide the two conformers and occupancy metadata expected
   by the manifest.
-- Phenix produces the refined endpoint after A′ optimization.
+- Phenix produces the refined endpoint after ConformOpt optimization.
 - A new output directory is required for each invocation.
 
 ## Source entry point
