@@ -1,0 +1,3 @@
+# Runtime environments and caches must remain on the pod PVC.
+external/sampleworks/.pixi/
+external/sampleworks/.pixi/**

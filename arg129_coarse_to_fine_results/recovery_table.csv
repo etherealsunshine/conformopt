@@ -1,2 +1,0 @@
-site,split,hits_rmsd_B_lt_0_50,hits_rmsd_B_lt_0_75,mean_final_rmsd_to_B,mean_final_loss,best_final_loss,mean_steps_to_first_lt_0_50,std_steps_to_first_lt_0_50
-A_ARG129,train,0,0,3.429989399909973,2.8079185676574707,2.5308127403259277,44.06521739130435,34.82028530082719

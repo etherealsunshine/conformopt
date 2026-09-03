@@ -1,2 +1,0 @@
-site,split,hits_rmsd_B_lt_0_50,hits_rmsd_B_lt_0_75,mean_final_rmsd_to_B,mean_final_loss,best_final_loss,mean_steps_to_first_lt_0_50,std_steps_to_first_lt_0_50
-B_ARG129,held_out,25,25,0.5265077776512408,1.0518587958439587,6.1349694213674866e-09,22.571428571428573,10.857612771785556

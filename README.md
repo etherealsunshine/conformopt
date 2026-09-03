@@ -1,155 +1,255 @@
 # qFit on Steroids
 
-Research code for learning and optimizing crystallographic side-chain ensembles from experimental electron density. The current pipeline pairs an experimental omit-map patch with a synthetic structure-density target, denoises it with a residual 3D U-Net, and then performs differentiable multi-conformer torsion optimization with a soft physical prior.
+User-friendly A′ optimization for qFit multi-conformer protein models. Supply
+one target site or a batch of sites, let the pipeline optimize the qFit
+starting model, and collect the A′ and Phenix results in a structured output
+directory.
 
-This repository is an experiment record as well as an active codebase. The Probe 2/4/4b/4c scripts and their saved results document how the project progressed from learned-energy feasibility tests to experimental-density multi-conformer fitting.
+The workflow is designed for site-level optimization. A protein with several
+target sites is represented by several rows in the input manifest.
 
-## Current production pipeline
+## What the pipeline does
 
-```text
-PDB + deposited structure factors
-            |
-            v
-sidechain-omit experimental patch ──> residual 3D U-Net ──> denoised patch
-                                                              |
-                                                              v
-                                              K=4 torsion/occupancy optimizer
-                                                stage 1: density only
-                                                stage 2: soft physics
-                                                              |
-                                                              v
-                                  RMSD + occupancy + clash + rotamer + tmol audit
-```
+For each manifest row, the pipeline:
 
-The frozen downstream optimizer uses 50 random starts per site, 500 density-only Adam steps at `lr=1.0`, then an Adam reset and 200 soft-physics steps at one tenth the learning rate. The physics loss uses `lambda_vdw=1.0`, `lambda_rot=0.5`, and `lambda_clash=5.0`.
-
-The strict success criterion is:
-
-- both deposited conformers recovered with conventional, symmetry-aware RMSD below 1.0 Å;
-- recovered occupancy within ±0.20 of the deposited value;
-- no direct or crystallographic-symmetry contact below 2.0 Å;
-- every active chi angle within 30° of an allowed residue-specific rotamer center;
-- tmol energy no more than 10 units above the better deposited A/B control.
-
-## Repository map
-
-| Path | Purpose |
-|---|---|
-| `density_denoiser/` | Active data, U-Net, optimizer, validation, and audit package. |
-| `data/` | Small checked-in 2O1K reference PDB/CIF/MTZ files. |
-| `probe2*.py` | Early direct-coordinate and tmol/SFcalculator controls. |
-| `probe4*.py` | Learned-energy, localized-loss, physics, and endpoint-audit experiments. |
-| `direct_optimization_modal.py` | Direct kinematic landscape control without a learned model. |
-| `multi_conformer_modal.py` | Synthetic K=4 multi-conformer fitting on 2O1K. |
-| `experimental_multi_conformer_modal.py` | Experimental-map multi-conformer variants. |
-| `five_site_tmol_audit.py` | Restartable local/pod tmol endpoint scorer. |
-| `*_results/`, `*_audit/`, `results/` | Curated experiment outputs and reports. |
-| `PROBE*.md`, `ARG129_*.md` | Scientific experiment write-ups. |
-| `EBT_RESEARCH_CONTEXT.md` | Original long-form scientific motivation and project context. |
-| `AGENTS.md` | Detailed operational manual, complete source-file catalog, and pod layout. |
-
-## Runtime model
-
-Source code lives here on the Mac. GPU execution and the large dataset live in the Astera `qfit-unet` workspace pod.
+1. loads the deposited structure, qFit model, and reflection data;
+2. reads the qFit A/B conformers and occupancies;
+3. runs the A′ backbone and side-chain optimization;
+4. writes a Phenix-ready A′ model;
+5. runs Phenix refinement when Phenix is available; and
+6. records intermediate coordinates, configuration, provenance, and metrics.
 
 ```text
-local:  /Users/utkarsh/qfitonsteroids
-pod:    /home/dev/workspace                 # synced source
-pod:    /home/dev/qfit_unet_data            # persistent datasets/results/envs
+deposited PDB + qFit PDB + MTZ + site manifest
+                         │
+                         ▼
+                   A′ optimization
+                         │
+                         ▼
+       A′ model + Phenix refinement + diagnostics
 ```
 
-Never develop a separate copy of the source inside the pod. Edit locally, keep `actl pod sync qfit-unet` running, verify the synced file, and run commands remotely.
+## Installation
+
+Clone the repository into the environment where you want to run the pipeline:
 
 ```bash
-# From this local repository
-actl pod status qfit-unet
-actl pod sync qfit-unet
-
-# One-shot remote test (works whenever the pod is running)
-actl pod exec qfit-unet --no-forwarding -- bash -lc \
-  'cd /home/dev/workspace && /home/dev/qfit_unet_data/.venv/bin/python -m pytest -q'
+git clone <repository-url> qfit-on-steroids
+cd qfit-on-steroids
 ```
 
-The primary Python environment is `/home/dev/qfit_unet_data/.venv`. The separate CUDA/tmol environment is `/home/dev/qfit_unet_data/.venv-tmol`.
+Run the pipeline in a Python environment containing the scientific packages
+used by the runner (`qfit`/CCTBX, NumPy, SciPy, and PyTorch). Phenix provides
+the final refinement step.
 
-## Dataset preparation
+For clash-weighted optimization, set `PHENIX_ROOT` to the root of the Phenix
+installation so the runner can load its monomer-library connectivity data.
 
-The persistent dataset contains 1,985 train PDB files and 99 untouched test PDB files. Acquire deposited reflection data and convert them to MTZ:
+Because qFit/CCTBX and Phenix are external crystallographic software stacks,
+their installation is environment-specific. Confirm the environment before
+starting a production run:
 
 ```bash
-cd /home/dev/workspace
-/home/dev/qfit_unet_data/.venv/bin/python -m density_denoiser.data_pipeline acquire \
-  --data-root /home/dev/qfit_unet_data --split both --workers 24
+python3 scripts/run_qfit_aprime.py --help
 ```
 
-Generate experimental/synthetic patch pairs in the crystal frame:
+## Quick start
+
+Prepare a panel directory containing the input files and manifest described
+below. Run one target site with:
 
 ```bash
-/home/dev/qfit_unet_data/.venv/bin/python -m density_denoiser.data_pipeline prepare \
-  --data-root /home/dev/qfit_unet_data --split both \
-  --map-type omit_mfo_dfc --frame crystal --workers 24 --negatives-per-altloc 4
+python3 scripts/run_qfit_aprime.py \
+  --panel /path/to/panel \
+  --output /path/to/results \
+  --site 1ABC_A_MET112
 ```
 
-Use `--frame residue` to generate canonical residue-frame patches. Preparation is restartable and records per-protein/per-site status immediately. Do not use `--overwrite` casually.
-
-## Train and evaluate the baseline U-Net
+Run every row in the manifest as one batch:
 
 ```bash
-cd /home/dev/workspace
-PY=/home/dev/qfit_unet_data/.venv/bin/python
-
-$PY -m density_denoiser.train \
-  --data-root /home/dev/qfit_unet_data \
-  --frame crystal --base-channels 16 --batch-size 8 \
-  --epochs 100 --workers 8 --resume
-
-$PY -m density_denoiser.evaluate \
-  --data-root /home/dev/qfit_unet_data \
-  --frame crystal \
-  --checkpoint /home/dev/qfit_unet_data/density_denoiser/model/denoiser_best.pt
+python3 scripts/run_qfit_aprime.py \
+  --panel /path/to/panel \
+  --output /path/to/results
 ```
 
-The historical baseline split and training curve are preserved in `original_crystal_unet_split.json` and `original_crystal_unet_training_log.csv`.
-
-## Run the frozen held-out optimizer
-
-The current 15-site prospective launcher performs calibration, launches one checkpointed shard per site, waits for all shards, then runs the geometry, tmol, and strict-summary audits:
+Run a selected batch by repeating `--site`:
 
 ```bash
-cd /home/dev/workspace
-nohup bash density_denoiser/run_expanded_heldout_two_stage_shards.sh \
-  > /home/dev/qfit_unet_data/density_denoiser/expanded_heldout_two_stage_prospective_v1/logs/controller.log \
-  2>&1 < /dev/null &
+python3 scripts/run_qfit_aprime.py \
+  --panel /path/to/panel \
+  --output /path/to/results \
+  --site 1ABC_A_MET112 \
+  --site 2XYZ_B_ARG58
 ```
 
-Monitor it without disturbing the job:
+Use a new output directory for each invocation so every run remains a separate
+record.
+
+## Preparing the input panel
+
+Use this directory layout:
+
+```text
+panel/
+├── selected_sites.csv
+└── inputs/
+    ├── source/
+    │   ├── 1ABC.pdb
+    │   └── 2XYZ.pdb
+    ├── qfit/
+    │   ├── 1ABC_qFit.pdb
+    │   └── 2XYZ_qFit.pdb
+    └── map_mtz/
+        ├── 1abc.mtz
+        └── 2xyz.mtz
+```
+
+The runner finds files using the PDB identifier:
+
+```text
+inputs/source/{pdb_id}.pdb
+inputs/qfit/{pdb_id}_qFit.pdb
+inputs/map_mtz/{pdb_id}.mtz
+```
+
+The PDB identifier matching is case-insensitive. Use the complete deposited
+structure to define the local environment. The qFit PDB should contain the A/B
+conformers for the target.
+
+### `selected_sites.csv`
+
+The manifest contains one row per target site:
+
+| Column | Description |
+| --- | --- |
+| `pdb_id` | Identifier used to locate the source PDB, qFit PDB, and MTZ. |
+| `chain` | Chain containing the target residue. |
+| `resname` | Three-letter residue name, for example `MET` or `ARG`. |
+| `residue_number` | Target residue number in the deposited model. |
+| `qfit_occupancies` | JSON object containing the qFit `A` and `B` occupancies. |
+
+Example:
+
+```csv
+pdb_id,chain,resname,residue_number,qfit_occupancies
+1ABC,A,MET,112,"{""A"":0.70,""B"":0.30}"
+2XYZ,B,ARG,58,"{""A"":0.55,""B"":0.45}"
+```
+
+Use ordinary doubled ASCII quotes in the actual CSV file. The example above
+is shown with CSV escaping; the equivalent values are:
+
+```text
+{"A": 0.70, "B": 0.30}
+{"A": 0.55, "B": 0.45}
+```
+
+The site label used by `--site` is:
+
+```text
+{pdb_id}_{chain}_{resname}{residue_number}
+```
+
+For example, the first row becomes `1ABC_A_MET112`.
+
+## Configuration
+
+The default command is suitable for a smoke test. Production runs can adjust
+the optimization and objective settings:
+
+```text
+--inner-nfev N             inner optimizer evaluations per update
+--outer-updates N          number of outer optimization updates
+--chi-nfev N               side-chain chi optimization evaluations
+--clash-weight X           weight of the clash objective
+--rotamer-weight X         weight of the rotamer objective
+--rotamer-calibration PATH provenance for a positive rotamer weight
+--density-mode raw|zscore  density residual convention
+--fitting-mask-radius X    radius of the observed-map fitting mask in Å
+--map-protocol NAME        native_deposited or rebuilt_fmodel
+--free-occupancy-ratio     optimize the A/B ratio with total occupancy fixed
+--normalize-clash-by-pair-count
+                            normalize clash residuals by monitored pair count
+--preflight-only           validate inputs and stop before optimization
+```
+
+Always inspect the version of the interface in the checkout being used:
 
 ```bash
-ROOT=/home/dev/qfit_unet_data/density_denoiser/expanded_heldout_two_stage_prospective_v1
-cat "$ROOT/status.txt"
-find "$ROOT/pids" -name '*.status' -maxdepth 1 -print
-tail -n 30 "$ROOT/logs/controller.log"
-nvidia-smi
+python3 scripts/run_qfit_aprime.py --help
 ```
 
-Do not relaunch into an existing output directory. The launcher deliberately refuses to overwrite a previous prospective run.
+## Results
 
-## Tests
+Each site gets an independent result directory:
 
-Run all tests on the pod because the local machine does not carry the Linux/CUDA scientific environments:
-
-```bash
-actl pod exec qfit-unet --no-forwarding -- bash -lc \
-  'cd /home/dev/workspace && /home/dev/qfit_unet_data/.venv/bin/python -m pytest -q'
+```text
+results/
+├── progress.json
+├── status.txt
+└── 1ABC_A_MET112/
+    ├── status.json
+    ├── run_config.json
+    ├── qfit_input.npz
+    ├── qfit_input_objective.json
+    ├── aprime_backbone_1/
+    ├── aprime_backbone_only_2/
+    ├── aprime_sidechain_chi/
+    ├── aprime_backbone_2/
+    ├── aprime_sidechain_chi_2/
+    ├── phenix_input.pdb
+    ├── phenix/
+    │   ├── phenix.log
+    │   ├── status.json
+    │   └── refined_001.pdb
+    └── result.json
 ```
 
-The tests cover differentiable torsion kinematics, omit-map subtraction, canonical-frame invariance, synthetic rendering, the U-Net shape contract, residue topology, residue-specific rotamer centers, and atom-label symmetry in RMSD.
+The main files are:
 
-## More documentation
+- `phenix_input.pdb` — the A′ endpoint sent to refinement;
+- `phenix/refined_001.pdb` — the Phenix-refined model, when available;
+- `result.json` — site status, parameters, provenance, and summary metrics;
+- `run_config.json` — input paths and optimization settings;
+- `progress.json` — batch-level completion state and per-site summaries.
 
-- Read `AGENTS.md` before changing or launching anything.
-- Read `density_denoiser/README.md` for the density-pair preparation conventions.
-- Read `PROBE4_FULL_EXPERIMENT_REPORT.md` and `PROBE4C1_4C2_REPORT.md` for the main experimental findings.
-- Read `EBT_RESEARCH_CONTEXT.md` for the original motivation, terminology, and long-range research plan.
+Intermediate stage directories contain the checkpointed objective values and
+coordinates needed to inspect or diagnose a run.
 
-This is research software. Saved outputs are evidence tied to exact run configurations, not interchangeable benchmark numbers.
+## Batch organization
+
+Add N rows to process N sites and omit `--site`. To process a selected subset,
+provide the desired site labels explicitly.
+
+The same source and qFit files can be reused by multiple rows when a protein
+has multiple target residues. Each row remains independently checkpointed and
+reported.
+
+## Reproducibility
+
+Keep these items together for every run:
+
+1. the exact `selected_sites.csv`;
+2. the deposited PDB, qFit PDB, and MTZ files;
+3. the command line used;
+4. the complete output directory.
+
+Preserve the input files with the output directory. `run_config.json` and
+`result.json` record the input provenance used by each site.
+
+## Known limitations
+
+- The current interface optimizes target sites within protein structures.
+- qFit inputs must provide the two conformers and occupancy metadata expected
+  by the manifest.
+- Phenix produces the refined endpoint after A′ optimization.
+- A new output directory is required for each invocation.
+
+## Source entry point
+
+The reusable command-line entry point is:
+
+```text
+scripts/run_qfit_aprime.py
+```
