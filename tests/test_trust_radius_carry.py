@@ -1,5 +1,6 @@
 import os
 import sys
+import inspect
 from pathlib import Path
 
 
@@ -15,6 +16,7 @@ except (ImportError, OSError):
     pytest.skip("qFit GPU-audit runtime is unavailable", allow_module_level=True)
 
 from scripts.run_d1_slot_coordination import (
+    DEFAULT_STATIONARITY_PROJECTED_GRADIENT_THRESHOLD,
     _least_squares_with_trust_trace,
     DEFAULT_GEOMETRY_GRADIENT_OCCUPANCY_FLOOR,
     FullJointParameterization,
@@ -24,7 +26,12 @@ from scripts.run_d1_slot_coordination import (
     mirror_descent_occupancy_update,
     mirror_initial_occupancies,
     occupancy_decoupled_density_jacobian,
+    occupancy_step_scale,
+    slot_geometry_metrics,
+    two_part_outer_stop,
+    trust_radius_floor_scaled,
 )
+from run_d1_synthetic_backbone_ladder import _run_backbone_rung
 
 
 def _residual(x: np.ndarray) -> np.ndarray:
@@ -92,13 +99,16 @@ def test_mirror_descent_preserves_a_fixed_slot_occupancy():
     assert updated.sum() < 1.0
 
 
-def test_underflowed_carried_radius_resets_to_default_only_below_numeric_floor():
+def test_carried_trust_radius_preserves_positive_tiny_values():
     assert carryable_trust_radius(0.1) == pytest.approx(0.1)
     assert carryable_trust_radius(MIN_CARRIED_TRUST_RADIUS_SCALED) == pytest.approx(
         MIN_CARRIED_TRUST_RADIUS_SCALED
     )
-    assert carryable_trust_radius(MIN_CARRIED_TRUST_RADIUS_SCALED / 2.0) is None
-    assert carryable_trust_radius(1e-100) is None
+    assert carryable_trust_radius(MIN_CARRIED_TRUST_RADIUS_SCALED / 2.0) == pytest.approx(
+        MIN_CARRIED_TRUST_RADIUS_SCALED / 2.0
+    )
+    assert carryable_trust_radius(1e-100) == pytest.approx(1e-100)
+    assert carryable_trust_radius(-1.0) is None
 
 
 def test_per_slot_density_jacobian_decoupling_leaves_non_density_rows_unchanged():
@@ -125,3 +135,54 @@ def test_per_slot_density_jacobian_decoupling_caps_low_occupancy_amplification()
     np.testing.assert_allclose(
         transformed[:, :20], 1.0 / DEFAULT_GEOMETRY_GRADIENT_OCCUPANCY_FLOOR,
     )
+
+
+def test_occupancy_decoupling_provides_solver_variable_scale():
+    assert occupancy_step_scale(np.asarray((0.25, 0.50)), 0) == pytest.approx(4.0)
+    assert occupancy_step_scale(np.asarray((0.01, 0.50)), 0) == pytest.approx(
+        1.0 / DEFAULT_GEOMETRY_GRADIENT_OCCUPANCY_FLOOR
+    )
+
+
+def test_backbone_ladder_defaults_to_damped_multiplier_updates():
+    parameters = inspect.signature(_run_backbone_rung).parameters
+    assert parameters["lambda_damping_alpha"].default == pytest.approx(0.3)
+    assert parameters["deposited_seam_tolerance_factor"].default == pytest.approx(1.5)
+
+
+def test_outer_stop_requires_both_seam_and_projected_gradient():
+    threshold = DEFAULT_STATIONARITY_PROJECTED_GRADIENT_THRESHOLD
+    assert two_part_outer_stop(1.0, 1.5, threshold, threshold)
+    assert not two_part_outer_stop(1.6, 1.5, threshold, threshold)
+    assert not two_part_outer_stop(1.0, 1.5, threshold * 2.0, threshold)
+
+
+def test_trust_radius_floor_uses_scaled_gradient():
+    gradient = np.ones(20, dtype=float)
+    x_scale = np.full(20, 4.0, dtype=float)
+    expected = 1.0e-10 / (4.0 * np.sqrt(20.0))
+    assert trust_radius_floor_scaled(gradient, x_scale) == pytest.approx(expected)
+
+
+def test_slot_geometry_metrics_reports_both_slots_and_pair():
+    class Base:
+        @staticmethod
+        def central_backbone(value):
+            return np.asarray(value, dtype=float)
+
+    class Runner:
+        base = Base()
+        a_backbone = np.zeros((2, 3), dtype=float)
+        b_backbone = np.ones((2, 3), dtype=float)
+
+    coordinates = np.asarray((
+        ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)),
+        ((1.0, 1.0, 1.0), (1.0, 1.0, 1.0)),
+    ))
+    metrics = slot_geometry_metrics(Runner(), coordinates)
+    assert set(metrics) == {
+        "slot1_rmsd_to_A", "slot1_rmsd_to_B",
+        "slot2_rmsd_to_A", "slot2_rmsd_to_B", "slot_pair_rmsd",
+    }
+    assert metrics["slot1_rmsd_to_A"] == pytest.approx(0.0)
+    assert metrics["slot2_rmsd_to_B"] == pytest.approx(0.0)

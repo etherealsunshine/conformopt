@@ -17,6 +17,7 @@ separate here.
 from __future__ import annotations
 
 import math
+from itertools import combinations
 from typing import Any
 
 import numpy as np
@@ -190,9 +191,42 @@ def _solve_decoupled_affine_miqp(
     target: np.ndarray, models: np.ndarray, *, cardinality: int, threshold: float
 ) -> tuple[np.ndarray, float, float]:
     """Solve the adopted decoupled MIQP with the same free intercept."""
+    # The Zenodo panel has exactly two candidate slots at this point.  SCIP's
+    # dense 8k-row MIQP path can spend minutes in presolve for this trivial
+    # binary problem, even though there are only four possible subsets.  For
+    # small candidate sets, enumerate those subsets exactly and solve the
+    # corresponding continuous affine QP.  This preserves every MIQP
+    # constraint while avoiding an opaque solver stall; larger candidate sets
+    # retain the general SCIP path below.
+    n_models = models.shape[0]
+    if n_models <= 12:
+        best = None
+        max_selected = min(int(cardinality), n_models)
+        for size in range(max_selected + 1):
+            for selected_tuple in combinations(range(n_models), size):
+                lower = np.zeros(n_models, dtype=float)
+                upper = np.zeros(n_models, dtype=float)
+                if selected_tuple:
+                    selected = np.asarray(selected_tuple, dtype=int)
+                    lower[selected] = float(threshold)
+                    upper[selected] = 1.0
+                    weights, intercept, rss = solve_affine_qp(
+                        target, models, lower_bounds=lower, upper_bounds=upper,
+                        max_total=1.0,
+                    )
+                else:
+                    weights = np.zeros(n_models, dtype=float)
+                    intercept = float(np.mean(target))
+                    rss = float(np.square(target - intercept).sum())
+                candidate = (float(rss), np.asarray(weights, dtype=float),
+                             float(intercept))
+                if best is None or candidate[0] < best[0]:
+                    best = candidate
+        assert best is not None
+        return best[1], best[2], best[0]
+
     import cvxpy as cp
 
-    n_models = models.shape[0]
     weights = cp.Variable(n_models)
     selected = cp.Variable(n_models, boolean=True)
     intercept = cp.Variable()

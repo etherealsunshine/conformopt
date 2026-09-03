@@ -117,9 +117,15 @@ CCTBX_N_GAUSSIAN = {
     "S": ((6.19471472659, 1.53178413602), (5.16819319919, 22.1507217003),
           (1.61773530525, 55.6787080933), (1.3650575984, 0.703821007249),
           (1.34512095473, 0.0683366362597), (0.308863001721, 0.0118868832735)),
+    "SE": ((17.2768180281, 2.33102560067), (9.16660654752, 0.1603154705),
+           (4.50821648644, 43.2977383756), (4.00155978598, 14.2929240931),
+           (-2.80109328916, 0.110854365863), (1.83632028986, 0.0139037684536)),
     "P": ((4.58130864999, 2.17601600204), (4.57605457281, 28.9931294943),
           (3.08152339098, 1.11652407588), (1.12796052602, 0.0956320460069),
           (1.05066132618, 81.0370412982), (0.585707561577, 0.0257396812627)),
+    "F": ((3.45429724648, 10.9155367588), (2.86373677364, 4.46289905515),
+          (0.872647810615, 27.6707970367), (0.789193654941, 0.153245585458),
+          (0.786475326738, 0.361687002613), (0.233254739503, 0.0418247586665)),
 }
 
 
@@ -149,7 +155,10 @@ def render_cctbx_density(
     grid_mask: Optional[torch.Tensor] = None,
     voxel_atom_mask: Optional[torch.Tensor] = None,
     voxel_chunk: int = 4096,
-    exp_table_one_over_step_size: float = -100.0,
+    # The differentiable default must evaluate the same smooth function that
+    # autodiff differentiates.  Pass a negative inverse step explicitly only
+    # when reproducing CCTBX's quantized exponent table is required.
+    exp_table_one_over_step_size: float = 0.0,
     straight_through_exp_table: bool = True,
 ) -> torch.Tensor:
     """Render CCTBX ``n_gaussian`` density on an explicit Cartesian grid.

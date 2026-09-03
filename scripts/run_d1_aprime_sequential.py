@@ -29,6 +29,8 @@ from run_d1_reachability import (
 from qfit.structure.math import dihedral_angle
 from run_d1_tier_a_flips import atom_local_index
 from d1_population_calibrated_weights import D1_OMEGA_SCALE_DEG, D1_RAMA_FLOOR
+from aprime_clash import build_context_for_runner
+from result_provenance import runner_provenance
 from occupancy_selection import (
     DEFAULT_CARDINALITY_CAP,
     DEFAULT_MIN_OCCUPANCY,
@@ -112,7 +114,14 @@ class APrimeSequential:
                  mask_scope: str = "central", device: str = "auto",
                  start_pdb: str | Path | None = None,
                  b_factor_mode: str | None = None,
-                 density_atom_scope: str = "backbone"):
+                 density_atom_scope: str = "backbone",
+                 mask_indices_cache: str | Path | None = None,
+                 verify_mask_cache: bool = True,
+                 clash_weight: float = 0.0,
+                 clash_pair_cutoff_A: float = 4.5,
+                 clash_threshold_scale: float = 0.75,
+                 source_pdb: str | Path | None = None,
+                 mtz_path: str | Path | None = None):
         self.output = output
         self.inner_nfev, self.outer_updates = inner_nfev, outer_updates
         self.base = SequentialBackbonePOC(
@@ -124,6 +133,10 @@ class APrimeSequential:
             start_pdb=start_pdb,
             b_factor_mode=b_factor_mode,
             density_atom_scope=density_atom_scope,
+            mask_indices_cache=mask_indices_cache,
+            verify_mask_cache=verify_mask_cache,
+            source_pdb=source_pdb,
+            mtz_path=mtz_path,
         )
         self.window, self.initial = self.base.window, self.base.initial_window.copy()
         self.rotator = PhiPsiOmegaRotator(self.window)
@@ -184,6 +197,16 @@ class APrimeSequential:
         # genuinely held-out evaluation after fitting.
         self.target = (self.base.target if self.training_indices is None
                        else self.base.target[self.training_indices].copy())
+        if not np.isfinite(clash_weight) or clash_weight < 0.0:
+            raise ValueError("clash_weight must be finite and non-negative")
+        self.clash_weight = float(clash_weight)
+        self.clash_context = (
+            None if self.clash_weight == 0.0 else
+            build_context_for_runner(
+                self, pair_cutoff_A=clash_pair_cutoff_A,
+                threshold_scale=clash_threshold_scale,
+            )
+        )
         self.trajectory = []
 
     def _init_torch_kinematics(self):
@@ -780,6 +803,12 @@ class APrimeSequential:
                    parameters=parameters, initial_window=self.initial,
                    final_window=final["coordinates"])
         atomic_csv(self.output / "single_slot_trajectory.csv", trajectory)
+        result["provenance"] = runner_provenance(
+            self,
+            self.base.truth_path,
+            self.base.mtz_path,
+            {"single_slot_final": self.output / "single_slot_final.npz"},
+        )
         atomic_json(self.output / "single_slot_result.json", result)
         atomic_json(self.output / "single_slot_progress.json", {
             "status": "complete", "trajectory_rows": len(trajectory),
@@ -1118,6 +1147,12 @@ class APrimeSequential:
             deposited_A_window=self.initial,
         )
         atomic_csv(self.output / "trajectory.csv", self.trajectory)
+        result["provenance"] = runner_provenance(
+            self,
+            self.base.truth_path,
+            self.base.mtz_path,
+            {"final_slots": self.output / "final_slots.npz"},
+        )
         atomic_json(self.output / "result.json", result)
         atomic_json(self.output / "progress.json", {"status": "complete", "verdict": verdict, "trajectory_rows": len(self.trajectory)})
         return result

@@ -50,19 +50,47 @@ def atomic_json(path: Path, value: object) -> None:
 
 def make_map(mtz_path: Path):
     arrays = {array.info().label_string().replace(" ", ""): array for array in any_reflection_file(str(mtz_path)).as_miller_arrays()}
-    if "FWT,PHWT" in arrays:
-        map_coeffs = arrays["FWT,PHWT"]
-        map_source = "deposited_FWT_PHWT"
+    deposited_map_label = next(
+        (label for label in ("FWT,PHWT", "2FOFCWT,PHI2FOFCWT", "2FOFCWT,PH2FOFCWT")
+         if label in arrays),
+        None,
+    )
+    if deposited_map_label is not None:
+        map_coeffs = arrays[deposited_map_label]
+        map_source = f"deposited_{deposited_map_label}"
     else:
         try:
             fp = arrays.get("FP,SIGFP")
+            if fp is None:
+                # Some MTZ writers append anomalous/derivative columns to the
+                # amplitude label (for example FP,SIGFP,DP,SIGDP).  The first
+                # two columns are still a usable merged Fobs/SigmaF pair for
+                # this map construction.
+                fp = next(
+                    (array for label, array in arrays.items()
+                     if label.startswith("FP,SIGFP,")),
+                    None,
+                )
             if fp is None:
                 # Some deposited MTZs provide merged intensities rather than
                 # amplitudes.  Convert them before combining with the model
                 # phases; absence of both is a data-property failure, not a
                 # harness exception.
                 fp = arrays["IMEAN,SIGIMEAN"].f_sq_as_f()
-            fc = arrays["FC,PHIC"]
+            fc = arrays.get("FC,PHIC")
+            if fc is None and "FC" in arrays and "PHIC" in arrays:
+                fc_amp, phase = arrays["FC"].common_sets(arrays["PHIC"])
+                fc_data = [
+                    complex(float(amplitude), 0.0)
+                    * np.exp(1j * np.deg2rad(float(angle)))
+                    for amplitude, angle in zip(fc_amp.data(), phase.data())
+                ]
+                fc = miller.array(
+                    miller_set=fc_amp.set(),
+                    data=flex.complex_double(fc_data),
+                )
+            if fc is None:
+                raise KeyError("no model amplitude/phase array")
         except KeyError as exc:
             # A deposited experimental map may instead be represented by
             # Fobs plus FOM/Hendrickson--Lattman phase probabilities.  The
@@ -87,6 +115,13 @@ def make_map(mtz_path: Path):
                         resolution=Resolution(high=map_coeffs.d_min()),
                         hkl=np.asarray(list(map_coeffs.indices()), dtype=np.int32))
             return xmap, float(map_coeffs.d_min()), int(map_coeffs.data().size()), map_source
+        # Combined FP,SIGFP,DP,SIGDP columns can retain an anomalous Miller
+        # flag while model phases are non-anomalous.  The real-space map here
+        # uses merged amplitudes, so average Bijvoet mates before matching.
+        if fp.anomalous_flag():
+            fp = fp.average_bijvoet_mates()
+        if fc.anomalous_flag():
+            fc = fc.average_bijvoet_mates()
         fp, fc = fp.common_sets(fc)
         fobs = np.asarray(fp.data(), dtype=float)
         fcalc = np.asarray(fc.data(), dtype=np.complex128)

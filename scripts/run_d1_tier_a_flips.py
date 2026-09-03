@@ -85,6 +85,18 @@ def site_key(site):
 
 def source_path(pdb_id):
     """Resolve the frozen site source without assuming it belongs to train."""
+    wider_root = os.environ.get("CLEAN_D1_WIDER_ROOT")
+    if wider_root:
+        root = Path(wider_root)
+        candidates = (
+            root / f"{pdb_id.lower()}.pdb",
+            root / f"{pdb_id.upper()}.pdb",
+            root / f"{pdb_id.lower()}_qFit.pdb",
+            root / f"{pdb_id.upper()}_qFit.pdb",
+        )
+        for candidate in candidates:
+            if candidate.is_file():
+                return str(candidate), "zenodo"
     for split in ("train", "test"):
         path = f"/home/dev/qfit_unet_data/{split}/{pdb_id.lower()}.pdb"
         if os.path.exists(path):

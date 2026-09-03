@@ -44,6 +44,7 @@ from run_d1_reachability import BACKBONE_NAMES, dihedrals, local_index, rmsd
 from run_d1_tier_a_flips import atom_local_index, source_path
 from occupancy_selection import solve_affine_qp
 from run_d6_tier2_realmap import make_map
+from result_provenance import runner_provenance
 
 
 EPSILON = 1e-8
@@ -198,8 +199,18 @@ class SequentialBackbonePOC:
                  renderer_backend: str = "torch", map_scaler_structure: str = "a_only",
                  mask_scope: str = "central", device: str = "auto",
                  density_atom_scope: str = "backbone", start_pdb: str | Path | None = None,
-                 b_factor_mode: str | None = None):
-        path, split = source_path(pdb_id)
+                 b_factor_mode: str | None = None,
+                 mask_indices_cache: str | Path | None = None,
+                 verify_mask_cache: bool = True,
+                 source_pdb: str | Path | None = None,
+                 mtz_path: str | Path | None = None):
+        if source_pdb is None:
+            path, split = source_path(pdb_id)
+        else:
+            path = str(Path(source_pdb))
+            if not Path(path).is_file():
+                raise FileNotFoundError(path)
+            split = "explicit"
         self.output = output
         self.pdb_id, self.chain, self.resnum, self.split = pdb_id, chain, resnum, split
         self.truth_path = Path(path)
@@ -256,9 +267,15 @@ class SequentialBackbonePOC:
             float(np.median(self.truth_a_structure[chain].conformers[0][residue_id].q)),
             float(np.median(self.b_residue.q)),
         ])
-        mtz = Path(f"/home/dev/qfit_unet_data/cache/{split}/mtz/{pdb_id}.mtz")
+        configured_mtz_root = os.environ.get("D1_MTZ_ROOT")
+        mtz = Path(mtz_path) if mtz_path is not None else (
+            Path(configured_mtz_root) / f"{pdb_id.lower()}.mtz"
+            if configured_mtz_root
+            else Path(f"/home/dev/qfit_unet_data/cache/{split}/mtz/{pdb_id}.mtz")
+        )
         if not mtz.exists():
             raise FileNotFoundError(mtz)
+        self.mtz_path = mtz
         xmap, self.resolution, self.n_reflections, self.map_source = make_map(mtz)
         radius = 0.5 + self.resolution / 3.0
         scale, offset = MapScaler(xmap).scale(
@@ -289,13 +306,18 @@ class SequentialBackbonePOC:
         self.subtracted_atom_count = None
         self.subtracted_window_sidechain_atom_count = 0
         if not options.subtract:
-            self._subtract_window_neighbors(qfit_structure)
+            # Target construction is independent of the prospective start.
+            # With a published qFit start, ``qfit_structure`` contains qFit's
+            # alternate coordinates; subtract the deposited environment so
+            # the experiment does not change its density target merely by
+            # changing the initialization model.
+            self._subtract_window_neighbors(truth_structure)
             if density_atom_scope == "backbone":
                 # The B sidechain can occupy different voxels, so this A-position
                 # subtraction is necessarily an approximation.  It is still the
                 # only consistent residual for a backbone-only model: neither
                 # slot has chi parameters with which to explain sidechain density.
-                self._subtract_window_sidechains(self.a_structure)
+                self._subtract_window_sidechains(self.truth_a_structure)
         self.initial_window = self.window.coor.copy()
         self.central = self.window.residues[3]
         self.b_factors_a = np.asarray(self.window.b, dtype=float).copy()
@@ -369,19 +391,70 @@ class SequentialBackbonePOC:
             self.b_factors_b_model = self.b_factors_a_model.copy()
             self.b_factor_mode = "single_conformer_start_for_both_slots"
         self.b_factors = self.b_factors_a_model.copy()
-        self.mask = (
-            self.qfit._transformer.get_conformers_mask(  # pylint: disable=protected-access
-                mask_coordinates, self.qfit._rmask  # pylint: disable=protected-access
+        self.mask_cache_report = {
+            "cache_path": None,
+            "used_cached_mask": False,
+            "verified_against_recomputed": False,
+        }
+        if mask_indices_cache is not None:
+            cache_path = Path(mask_indices_cache)
+            if not cache_path.is_file():
+                raise FileNotFoundError(cache_path)
+            with np.load(cache_path, allow_pickle=False) as cached_npz:
+                if "mask_indices" not in cached_npz:
+                    raise KeyError(f"{cache_path} does not contain mask_indices")
+                cached_indices = np.asarray(cached_npz["mask_indices"], dtype=np.int64)
+            if cached_indices.ndim != 2 or cached_indices.shape[1] != 3:
+                raise ValueError(f"mask_indices must have shape [N,3], got {cached_indices.shape}")
+            shape = np.asarray(self.qfit.xmap.array.shape, dtype=np.int64)
+            if np.any(cached_indices < 0) or np.any(cached_indices >= shape[None, :]):
+                raise ValueError(f"cached mask indices exceed map shape {tuple(shape)}")
+            cached_mask = np.zeros(tuple(shape), dtype=bool)
+            cached_mask[tuple(cached_indices.T)] = True
+            same = None
+            recomputed_voxels = None
+            if verify_mask_cache:
+                recomputed_mask = (
+                    self.qfit._transformer.get_conformers_mask(  # pylint: disable=protected-access
+                        mask_coordinates, self.qfit._rmask  # pylint: disable=protected-access
+                    )
+                    if self.mask_scope == "central" else
+                    full_window_mask(self.qfit._transformer, self.qfit.xmap,
+                                     mask_coordinates, self.qfit._rmask)  # pylint: disable=protected-access
+                )
+                same = bool(np.array_equal(cached_mask, recomputed_mask))
+                recomputed_voxels = int(recomputed_mask.sum())
+                if not same:
+                    raise ValueError(
+                        f"cached mask mismatch for {cache_path}: "
+                        f"cached={int(cached_mask.sum())}, recomputed={recomputed_voxels}"
+                    )
+            self.mask = cached_mask
+            self.mask_cache_report = {
+                "cache_path": str(cache_path),
+                "used_cached_mask": True,
+                "verified_against_recomputed": bool(same) if same is not None else False,
+                "cached_voxels": int(cached_mask.sum()),
+                "recomputed_voxels": recomputed_voxels,
+                "indices_exact": bool(same) if same is not None else None,
+                "verification_skipped": not verify_mask_cache,
+            }
+        else:
+            recomputed_mask = (
+                self.qfit._transformer.get_conformers_mask(  # pylint: disable=protected-access
+                    mask_coordinates, self.qfit._rmask  # pylint: disable=protected-access
+                )
+                if self.mask_scope == "central" else
+                full_window_mask(self.qfit._transformer, self.qfit.xmap,
+                                 mask_coordinates, self.qfit._rmask)  # pylint: disable=protected-access
             )
-            if self.mask_scope == "central" else
-            full_window_mask(self.qfit._transformer, self.qfit.xmap,
-                             mask_coordinates, self.qfit._rmask)  # pylint: disable=protected-access
-        )
+            self.mask = recomputed_mask
         self._renderer_grid = None
         self._renderer_u_base = None
         self._renderer_b_factors = None
         self._renderer_coefficients = None
         self._renderer_cell = None
+        self._renderer_fractional_wrap_offsets = None
         self._renderer_atom_indices = self.model_atom_indices.copy()
         if self.renderer_backend == "torch":
             # xmap.array is indexed [z, y, x], while fractional coordinates
@@ -402,6 +475,9 @@ class SequentialBackbonePOC:
             )
             self._renderer_cell = torch.as_tensor(
                 orthogonalization, dtype=torch.float64, device=self.torch_device
+            )
+            self._set_renderer_reference_wrap_offsets(
+                self.initial_window[self._renderer_atom_indices]
             )
             self._renderer_u_base = float(
                 ext.calc_u_base(d_min=self.resolution, grid_resolution_factor=0.25)
@@ -684,6 +760,31 @@ class SequentialBackbonePOC:
         answer["profile_bracketed"] = True
         return answer
 
+    def _set_renderer_reference_wrap_offsets(self, reference_coordinates) -> None:
+        """Freeze each atom's periodic image at a reference geometry.
+
+        A live ``fractional - floor(fractional)`` is discontinuous when an
+        atom lies on a unit-cell face: an infinitesimal Cartesian perturbation
+        can move it by a complete unit cell in the differentiable graph.  The
+        periodic image is a discrete rendering choice, not an optimisable
+        coordinate.  Choose it once from the stage-zero geometry and retain
+        that branch for all subsequent derivatives.
+        """
+        import torch
+
+        if self._renderer_cell is None:
+            raise RuntimeError("renderer cell must be installed before wrap offsets")
+        reference = torch.as_tensor(
+            reference_coordinates, dtype=torch.float64, device=self.torch_device,
+        )
+        if reference.ndim != 2 or reference.shape[-1] != 3:
+            raise ValueError("reference_coordinates must have shape [atoms, 3]")
+        with torch.no_grad():
+            fractional = torch.linalg.solve(
+                self._renderer_cell, reference.transpose(-1, -2)
+            ).transpose(-1, -2)
+            self._renderer_fractional_wrap_offsets = torch.floor(fractional)
+
     def model_density_torch(self, coordinates, b_factors=None):
         """Differentiable density for the configured atom set on the fixed mask."""
         if self.renderer_backend != "torch":
@@ -701,7 +802,15 @@ class SequentialBackbonePOC:
         # graph and matches the periodic map convention.
         cell = self._renderer_cell
         fractional = torch.linalg.solve(cell, coordinates.transpose(-1, -2)).transpose(-1, -2)
-        fractional = fractional - torch.floor(fractional)
+        if self._renderer_fractional_wrap_offsets is None:
+            raise RuntimeError("renderer reference wrap offsets were not initialized")
+        wrap_offsets = self._renderer_fractional_wrap_offsets.to(device=coordinates.device)
+        if wrap_offsets.shape != coordinates.shape[-2:]:
+            raise ValueError(
+                "renderer wrap-offset atom count does not match coordinates: "
+                f"{tuple(wrap_offsets.shape)} != {tuple(coordinates.shape[-2:])}"
+            )
+        fractional = fractional - wrap_offsets.unsqueeze(0)
         base_cart = torch.matmul(fractional, cell.T)
         if self.mask_scope in {"window", "three"}:
             # The diagnostic full-window mask is made in the extracted qFit
@@ -736,6 +845,7 @@ class SequentialBackbonePOC:
         return render_cctbx_density(
             self._renderer_grid.to(device=coordinates.device), atom_xyz, b_factors,
             coefficients, u_base=self._renderer_u_base,
+            exp_table_one_over_step_size=0.0,
             voxel_chunk=(1024 if self.mask_scope in {"window", "three"} else 4096),
         )
 
@@ -940,6 +1050,12 @@ class SequentialBackbonePOC:
         }
         atomic_npz(self.output / "final_slots.npz", slot1_window=slot1, slot2_window=slot2, deposited_A_window=self.initial_window)
         atomic_csv(self.output / "trajectory.csv", trajectory)
+        result["provenance"] = runner_provenance(
+            self,
+            self.truth_path,
+            self.mtz_path,
+            {"final_slots": self.output / "final_slots.npz"},
+        )
         atomic_json(self.output / "result.json", result)
         atomic_json(self.output / "progress.json", {"status": "complete", "trajectory_rows": len(trajectory)})
         return result
@@ -959,34 +1075,67 @@ class SequentialBackbonePOC:
             for residue in b_segment.residues
             for name, b_value in zip(residue.name.tolist(), residue.b)
         }
+        a_chain = self.truth_a_structure[self.chain].conformers[0]
+        a_by_key = {
+            (residue.id, name): float(b_value)
+            for segment in a_chain.segments
+            for residue in segment.residues
+            for name, b_value in zip(residue.name.tolist(), residue.b)
+        }
         values = []
+        fallback_keys = []
         for residue in self.window.residues:
             for name in residue.name.tolist():
                 key = (residue.id, name)
-                if key not in b_by_key:
+                if key in b_by_key:
+                    values.append(b_by_key[key])
+                elif key in a_by_key:
+                    # Flanking residues are often single-conformer in the
+                    # deposited model.  Their A/B coordinates are still
+                    # valid, but a deposited-B B factor does not exist.
+                    # Keep the deposited-A value for that frozen atom rather
+                    # than rejecting an otherwise eligible seven-residue
+                    # window.
+                    values.append(a_by_key[key])
+                    fallback_keys.append(key)
+                else:
                     raise RuntimeError(f"deposited B is missing B factor for {key}")
-                values.append(b_by_key[key])
+        self.deposited_b_fallback_keys = fallback_keys
         return np.asarray(values, dtype=float)
 
     def window_for_deposited_b(self) -> np.ndarray:
         """Return full deposited-B window for fixed-mask/QP calibration only."""
         b_chain = self.b_structure[self.chain].conformers[0]
-        b_residue = b_chain[(self.resnum, "")]
-        b_segment = next(segment for segment in b_chain.segments
-                         if any(residue.id == b_residue.id for residue in segment.residues))
-        index = b_segment.find(b_residue.id)
-        window = b_segment[index - 3:index + 4]
-        if len(window.residues) != 7 or [res.id for res in window.residues] != [res.id for res in self.window.residues]:
-            raise RuntimeError("deposited-B strict window does not match deposited A")
+        a_chain = self.truth_a_structure[self.chain].conformers[0]
         b_by_key = {
             (residue.id, atom): np.asarray(coor, dtype=float)
-            for residue in window.residues
+            for segment in b_chain.segments
+            for residue in segment.residues
             for atom, coor in zip(residue.name.tolist(), residue.coor)
         }
-        return np.asarray([
-            b_by_key[(residue.id, atom)]
-            for residue in self.window.residues for atom in residue.name.tolist()
-        ], dtype=float)
+        a_by_key = {
+            (residue.id, atom): np.asarray(coor, dtype=float)
+            for segment in a_chain.segments
+            for residue in segment.residues
+            for atom, coor in zip(residue.name.tolist(), residue.coor)
+        }
+        values = []
+        fallback_keys = []
+        for residue in self.window.residues:
+            for atom in residue.name.tolist():
+                key = (residue.id, atom)
+                if key in b_by_key:
+                    values.append(b_by_key[key])
+                elif key in a_by_key:
+                    # Single-conformer flanks have no independent deposited-B
+                    # coordinates; use their deposited-A coordinates for the
+                    # fixed seven-residue mask reference.
+                    values.append(a_by_key[key])
+                    fallback_keys.append(key)
+                else:
+                    raise RuntimeError(f"deposited B is missing coordinates for {key}")
+        self.deposited_b_fallback_coordinate_keys = fallback_keys
+        return np.asarray(values, dtype=float)
 
     def window_for_deposited_a(self) -> np.ndarray:
         """Return the deposited-A window, independent of the optimization start."""

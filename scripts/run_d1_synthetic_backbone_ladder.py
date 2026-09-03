@@ -70,14 +70,17 @@ from run_d1_8d_sequential_poc import (
     atomic_json,
     atomic_npz,
     extract_window_neighbors,
+    window_backbone_indices,
 )
-from run_d1_aprime_sequential import APrimeSequential, internal_geometry, rmsd
+from run_d1_aprime_sequential import APrimeSequential, internal_geometry, rmsd, seam_vector
 from run_d1_reachability import BACKBONE_NAMES, dihedrals
 from run_d1_slot_coordination import (
+    DEFAULT_STATIONARITY_PROJECTED_GRADIENT_THRESHOLD,
     build_specs,
     inverse_seed,
     joint_evaluate,
     joint_run,
+    seam_quadratic_cost,
 )
 from d1_population_calibrated_weights import (
     D1_OMEGA_SCALE_DEG,
@@ -267,6 +270,9 @@ def _build_site_context(site: tuple[str, str, int], root: Path, device: str,
     real_target = runner.base.target.copy()
     deposited_a, deposited_a_fallback = _deposited_window_with_fallback(runner.base, "A")
     deposited_b, deposited_b_fallback = _deposited_window_with_fallback(runner.base, "B")
+    deposited_seam_a = seam_vector(runner.initial_backbone, deposited_a[runner.bb_indices])[0]
+    deposited_seam_b = seam_vector(runner.initial_backbone, deposited_b[runner.bb_indices])[0]
+    deposited_joint_seam_norm = float(np.linalg.norm(np.concatenate((deposited_seam_a, deposited_seam_b))))
     deposited_models = runner.base.model_density_batch(
         np.stack((deposited_a, deposited_b)), slots=np.asarray((0, 1))
     )
@@ -391,6 +397,14 @@ def _build_site_context(site: tuple[str, str, int], root: Path, device: str,
             "B": deposited_b_fallback,
             "definition": "occupancy-weighted raw deposited conformers used only where the selected A/B altloc lacks an atom required by the fixed seven-residue model topology",
         },
+        "deposited_seam_reference": {
+            "definition": "joint norm of the two six-component released-seam vectors at deposited A and B",
+            "A_vector_A_equivalent": deposited_seam_a.tolist(),
+            "B_vector_A_equivalent": deposited_seam_b.tolist(),
+            "A_norm_A": float(np.linalg.norm(deposited_seam_a)),
+            "B_norm_A": float(np.linalg.norm(deposited_seam_b)),
+            "joint_A_B_norm_A": deposited_joint_seam_norm,
+        },
         "discriminating_voxels_5pct_mean_AB": int(discriminating.sum()),
         "discriminating_fraction_5pct_mean_AB": float(discriminating.mean()),
         "frozen_metadata_check": "passed",
@@ -437,22 +451,47 @@ def _build_site_context(site: tuple[str, str, int], root: Path, device: str,
 
 
 def _rmsd_report(runner: APrimeSequential, slots: np.ndarray) -> dict[str, object]:
+    a_window = np.asarray(runner.base.window_for_deposited_a(), dtype=float)
+    b_window = np.asarray(runner.base.window_for_deposited_b(), dtype=float)
+    backbone_indices = window_backbone_indices(runner.base.window)
     rows = []
     for index, slot in enumerate(slots):
         central = runner.base.central_backbone(slot)
         to_a = float(rmsd(central, runner.a_backbone))
         to_b = float(rmsd(central, runner.b_backbone))
+        full_backbone = np.asarray(slot, dtype=float)[backbone_indices]
+        full_to_a = float(rmsd(full_backbone, a_window[backbone_indices]))
+        full_to_b = float(rmsd(full_backbone, b_window[backbone_indices]))
+        all_to_a = float(rmsd(slot, a_window))
+        all_to_b = float(rmsd(slot, b_window))
         rows.append({
             "slot": index + 1,
             "to_A_A": to_a,
             "to_B_A": to_b,
+            "central": {"to_A_A": to_a, "to_B_A": to_b},
+            "full_window_backbone": {"to_A_A": full_to_a, "to_B_A": full_to_b},
+            "all_atom": {"to_A_A": all_to_a, "to_B_A": all_to_b},
             "to_A_fraction_AB": to_a / runner.ab_distance,
             "to_B_fraction_AB": to_b / runner.ab_distance,
             "nearer": "A" if to_a <= to_b else "B",
         })
-    return {"slots": rows, "slot_to_slot_backbone_rmsd_A": float(rmsd(
+    central_pair = float(rmsd(
         runner.base.central_backbone(slots[0]), runner.base.central_backbone(slots[1])
-    )), "deposited_A_to_B_backbone_rmsd_A": float(runner.ab_distance)}
+    ))
+    backbone_pair = float(rmsd(
+        np.asarray(slots[0])[backbone_indices], np.asarray(slots[1])[backbone_indices]
+    ))
+    all_atom_pair = float(rmsd(slots[0], slots[1]))
+    return {
+        "slots": rows,
+        "slot_to_slot_backbone_rmsd_A": central_pair,
+        "slot_to_slot": {
+            "central": central_pair,
+            "full_window_backbone": backbone_pair,
+            "all_atom": all_atom_pair,
+        },
+        "deposited_A_to_B_backbone_rmsd_A": float(runner.ab_distance),
+    }
 
 
 def _objective_terms(runner: APrimeSequential, target: np.ndarray, slots: np.ndarray,
@@ -473,7 +512,7 @@ def _objective_terms(runner: APrimeSequential, target: np.ndarray, slots: np.nda
     return {
         "density_rss": rss,
         "density_term_normalized": rss / max(normalizer, 1e-12),
-        "seam_term": float(runner.rho / 2.0 * np.square(seam).sum()),
+        "seam_term": seam_quadratic_cost(runner, seam),
         "seam_vectors_A_equivalent": seam.tolist(),
         "ramachandran_term": float(runner.rama_weight * np.square(rama_barrier).sum()),
         "ramachandran_barriers": rama_barrier.tolist(),
@@ -482,7 +521,7 @@ def _objective_terms(runner: APrimeSequential, target: np.ndarray, slots: np.nda
         "rotamer_barrier_term": 0.0,
         "objective_without_AL_multiplier": float(
             rss / max(normalizer, 1e-12)
-            + runner.rho / 2.0 * np.square(seam).sum()
+            + seam_quadratic_cost(runner, seam)
             + runner.rama_weight * np.square(rama_barrier).sum()
             + runner.planar_weight * np.square(omega_delta / runner.omega_scale_deg).sum()
         ),
@@ -510,6 +549,11 @@ def _run_backbone_rung(runner: APrimeSequential, target: np.ndarray, output: Pat
                        density_normalizer: float = 1.0,
                        geometry_gradient_mode: str = "standard",
                        geometry_gradient_occupancy_floor: float = 0.05,
+                       lambda_damping_alpha: float = 0.3,
+                       deposited_seam_tolerance_factor: float = 1.5,
+                       stationarity_projected_gradient_threshold: float = DEFAULT_STATIONARITY_PROJECTED_GRADIENT_THRESHOLD,
+                       outer_updates: int = 200,
+                       seam_rho_vector_values: np.ndarray | None = None,
                        free_parameter_mask: np.ndarray | None = None) -> dict[str, object]:
     runner.target = np.asarray(target, dtype=float)
     runner.base.target = runner.target.copy()
@@ -517,6 +561,15 @@ def _run_backbone_rung(runner: APrimeSequential, target: np.ndarray, output: Pat
     output.mkdir(parents=True, exist_ok=True)
     runner.rama_floor = float(rama_floor)
     runner.omega_scale_deg = float(omega_scale_deg)
+    if seam_rho_vector_values is not None:
+        seam_rho_vector_values = np.asarray(seam_rho_vector_values, dtype=float)
+        if seam_rho_vector_values.shape != (6,) or not np.all(np.isfinite(seam_rho_vector_values)) or np.any(seam_rho_vector_values <= 0.0):
+            raise ValueError("seam rho vector must contain six finite positive values")
+        runner.rho_vector = seam_rho_vector_values.copy()
+    if deposited_seam_tolerance_factor <= 0.0:
+        raise ValueError("deposited_seam_tolerance_factor must be positive")
+    deposited_joint_seam = float(context["deposited_seam_reference"]["joint_A_B_norm_A"])
+    seam_tolerance_A = deposited_seam_tolerance_factor * deposited_joint_seam
     atomic_json(output / "run_config.json", {
         "site": context["site"], "rung": rung, "variant": "A_backbone_only",
         "target_artifact": str(output.parent.parent / "targets.npz"),
@@ -526,8 +579,17 @@ def _run_backbone_rung(runner: APrimeSequential, target: np.ndarray, output: Pat
         "per_slot_trust_radii": True,
         "occupancy_updates": {"method": "multiplicative mirror descent", "eta": 0.01, "gradient_normalization": "unit norm"},
         "rama_floor": float(rama_floor), "omega_scale_deg": float(omega_scale_deg), "omega_weight": 0.05,
-        "augmented_lagrangian_rho": 0.755,
-        "outer_updates_max": 200, "outer_stop": "seam norm <=0.01 A, otherwise max updates",
+        "augmented_lagrangian_rho": float(runner.rho),
+        "augmented_lagrangian_rho_vector": (
+            None if seam_rho_vector_values is None else seam_rho_vector_values.tolist()
+        ),
+        "lambda_damping_alpha": float(lambda_damping_alpha),
+        "deposited_seam_reference_joint_A": deposited_joint_seam,
+        "deposited_seam_tolerance_factor": float(deposited_seam_tolerance_factor),
+        "seam_tolerance_A": seam_tolerance_A,
+        "stationarity_projected_gradient_threshold": float(stationarity_projected_gradient_threshold),
+        "outer_updates_max": int(outer_updates),
+        "outer_stop": "seam norm <= deposited-derived tolerance AND projected gradient norm <= configured threshold, otherwise max updates",
         "inner_solver": {"method": "two independent scipy least_squares(method=trf)", "max_nfev": inner_nfev, "xtol": 1e-10, "ftol": 1e-10, "gtol": 1e-10},
         "jacobian": {"mode": "forward-mode", "tangent_chunk_size": int(os.environ.get("D1_JACOBIAN_CHUNK_SIZE", "40"))},
         "carry_trust_radii": bool(carry_trust_radii),
@@ -554,12 +616,14 @@ def _run_backbone_rung(runner: APrimeSequential, target: np.ndarray, output: Pat
             runner, p1, initial_p2, f"rung_{rung}_A_backbone_only", output,
             float(context["initialization"]["initial_slot_to_slot_backbone_rmsd_A"]),
             fixed_b_offset=0.0, occupancy_scheme="mirror", mirror_eta=0.01,
-            inner_nfev=inner_nfev, outer_updates=200, seam_tolerance_A=0.01,
+            inner_nfev=inner_nfev, outer_updates=outer_updates, seam_tolerance_A=seam_tolerance_A,
+            stationarity_projected_gradient_threshold=stationarity_projected_gradient_threshold,
             per_slot_trust_radii=True, torch_native_trf=False,
             carry_trust_radii=carry_trust_radii,
             density_normalizer=density_normalizer,
             geometry_gradient_mode=geometry_gradient_mode,
             geometry_gradient_occupancy_floor=geometry_gradient_occupancy_floor,
+            lambda_damping_alpha=lambda_damping_alpha,
             free_parameter_mask=free_parameter_mask,
         )
     saved = np.load(output / "final_slots.npz")
@@ -591,6 +655,9 @@ def _run_backbone_rung(runner: APrimeSequential, target: np.ndarray, output: Pat
             "outer_updates": result.get("outer_updates_completed"),
             "stopping_rule": result.get("stopping_rule"),
             "seam_tolerance_A": result.get("seam_tolerance_A"),
+            "stationarity_projected_gradient_threshold": result.get("stationarity_projected_gradient_threshold"),
+            "deposited_seam_reference_joint_A": deposited_joint_seam,
+            "deposited_seam_tolerance_factor": float(deposited_seam_tolerance_factor),
             "seam_tolerance_reached": bool(result.get("seam_tolerance_reached")),
             "final_seam_norm_A_equivalent": float(np.linalg.norm(result.get("final_seam_vectors", []))),
             "inner_diagnostics": result.get("inner_solve_diagnostics", []),
@@ -661,6 +728,11 @@ def run(args: argparse.Namespace) -> None:
             args.inner_nfev, args.carry_trust_radii,
             args.rama_floor, args.omega_scale_deg, args.density_normalizer,
             args.geometry_gradient_mode, args.geometry_gradient_occupancy_floor,
+            args.lambda_damping_alpha,
+            args.deposited_seam_tolerance_factor,
+            args.stationarity_projected_gradient_threshold,
+            args.outer_updates,
+            args.seam_rho_vector,
             free_parameter_mask=free_parameter_mask,
         )
         rows[f"1_{variant}"] = row
@@ -722,6 +794,17 @@ def main() -> None:
                         help="Leave the objective unchanged or precondition density geometry columns per slot.")
     parser.add_argument("--geometry-gradient-occupancy-floor", type=float, default=0.05,
                         help="Minimum occupancy used by per-slot density-Jacobian decoupling.")
+    parser.add_argument("--lambda-damping-alpha", type=float, default=0.3,
+                        help="Multiplier update damping in (0, 1]; 0.3 avoids augmented-Lagrangian cycling.")
+    parser.add_argument("--deposited-seam-tolerance-factor", type=float, default=1.5,
+                        help="Converge when the joint seam is this multiple of deposited A/B's joint seam norm.")
+    parser.add_argument("--stationarity-projected-gradient-threshold", type=float,
+                        default=DEFAULT_STATIONARITY_PROJECTED_GRADIENT_THRESHOLD,
+                        help="Second stopping condition: projected gradient norm threshold after the inner solve.")
+    parser.add_argument("--outer-updates", type=int, default=200,
+                        help="Maximum number of augmented-Lagrangian outer updates.")
+    parser.add_argument("--seam-rho-vector", type=str, default=None,
+                        help="Six comma-separated componentwise seam penalties; default is legacy scalar rho.")
     parser.add_argument("--slot2-fixed-deposited-b", action="store_true",
                         help="Freeze slot 2 at deposited-B torsions and solve only the free-index mask.")
     parser.add_argument("--carry-trust-radii", action="store_true",
@@ -729,6 +812,16 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
     args.site = (args.pdb_id, args.chain, args.resnum)
+    if args.seam_rho_vector is not None:
+        try:
+            args.seam_rho_vector = np.asarray(
+                [float(value.strip()) for value in args.seam_rho_vector.split(",")],
+                dtype=float,
+            )
+        except ValueError as exc:
+            raise ValueError("--seam-rho-vector must be six comma-separated numbers") from exc
+        if args.seam_rho_vector.shape != (6,) or not np.all(np.isfinite(args.seam_rho_vector)) or np.any(args.seam_rho_vector <= 0.0):
+            raise ValueError("--seam-rho-vector must contain six finite positive values")
     if args.site not in SITES:
         raise ValueError(f"site is not one of the frozen two-site panel: {args.site}")
     if args.variant != "A":
@@ -744,6 +837,13 @@ def main() -> None:
         "density_normalizer": float(args.density_normalizer),
         "geometry_gradient_mode": args.geometry_gradient_mode,
         "geometry_gradient_occupancy_floor": float(args.geometry_gradient_occupancy_floor),
+        "lambda_damping_alpha": float(args.lambda_damping_alpha),
+        "deposited_seam_tolerance_factor": float(args.deposited_seam_tolerance_factor),
+        "stationarity_projected_gradient_threshold": float(args.stationarity_projected_gradient_threshold),
+        "outer_updates": int(args.outer_updates),
+        "seam_rho_vector": (
+            None if args.seam_rho_vector is None else args.seam_rho_vector.tolist()
+        ),
         "slot2_fixed_deposited_b": bool(args.slot2_fixed_deposited_b),
         "rungs": {"1": "clean production-rendered synthetic", "2": "plus matched noise", "3": "plus fitted intercept", "4": "plus neighbours then exact production subtraction", "5": "real experimental production target"},
         "policy": "stop after rung 1 failure",

@@ -17,6 +17,10 @@ from density_denoiser.data_pipeline import (
     residue_frame,
     synthetic_patch,
 )
+from density_denoiser.differentiable_renderer import (
+    coefficients_for_elements,
+    render_cctbx_density,
+)
 from density_denoiser.model import ResidualDensityDenoiser, spatial_gradient
 from density_denoiser.five_site_optimizer import (
     _canonical_centers,
@@ -30,6 +34,51 @@ from density_denoiser.landscape import (
 from density_denoiser.prepare_landscape_cache import _build_site
 
 DATA = Path(__file__).resolve().parents[1] / "data"
+
+
+def test_differentiable_renderer_supports_fluorine_n_gaussian_coefficients():
+    coefficients = coefficients_for_elements(["F"])
+    assert coefficients.shape == (1, 6, 2)
+    assert torch.isfinite(coefficients).all()
+
+
+def test_differentiable_renderer_supports_selenium_n_gaussian_coefficients():
+    coefficients = coefficients_for_elements(["SE"])
+    assert coefficients.shape == (1, 6, 2)
+    assert torch.isfinite(coefficients).all()
+
+
+def test_differentiable_renderer_default_matches_direct_exp_derivative():
+    grid = torch.tensor([
+        [0.0, 0.0, 0.0],
+        [0.3, 0.2, -0.1],
+        [-0.4, 0.1, 0.25],
+    ], dtype=torch.float64)
+    atom = torch.tensor([[0.12, -0.08, 0.15]], dtype=torch.float64,
+                        requires_grad=True)
+    b_factors = torch.tensor([10.0], dtype=torch.float64)
+    coefficients = coefficients_for_elements(["C"], dtype=torch.float64)
+
+    density = render_cctbx_density(grid, atom, b_factors, coefficients).sum()
+    gradient = torch.autograd.grad(density, atom)[0].detach().numpy()
+    step = 1e-5
+    finite_difference = np.zeros((1, 3), dtype=float)
+    for axis in range(3):
+        plus = atom.detach().clone()
+        minus = atom.detach().clone()
+        plus[0, axis] += step
+        minus[0, axis] -= step
+        plus_value = render_cctbx_density(
+            grid, plus, b_factors, coefficients
+        ).sum()
+        minus_value = render_cctbx_density(
+            grid, minus, b_factors, coefficients
+        ).sum()
+        finite_difference[0, axis] = float(
+            (plus_value - minus_value) / (2.0 * step)
+        )
+
+    np.testing.assert_allclose(gradient, finite_difference, rtol=1e-5, atol=1e-7)
 
 
 def test_unet_preserves_32_cube_shape():
