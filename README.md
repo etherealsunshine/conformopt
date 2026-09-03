@@ -1,6 +1,6 @@
 # ConformOpt
 
-User-friendly A′ optimization for qFit multi-conformer protein models. Supply
+User-friendly optimization pipeline for qFit multi-conformer protein models. Supply
 one target site or a batch of sites, let the pipeline optimize the qFit
 starting model, and collect the A′ and Phenix results in a structured output
 directory.
@@ -23,10 +23,10 @@ For each manifest row, the pipeline:
 deposited PDB + qFit PDB + MTZ + site manifest
                          │
                          ▼
-                   A′ optimization
+                    optimization
                          │
                          ▼
-       A′ model + Phenix refinement + diagnostics
+        model + Phenix refinement + diagnostics
 ```
 
 ## Installation
