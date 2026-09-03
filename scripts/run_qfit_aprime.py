@@ -35,6 +35,7 @@ from density_denoiser.residue_geometry import (
 from run_d1_aprime_sequential import APrimeSequential, atomic_json, atomic_npz, seam_vector
 from run_d1_slot_coordination import inverse_seed, joint_run, seam_rho_vector
 from result_provenance import runner_provenance, sha256_file
+from check_runtime import required_runtime_ok, runtime_report
 
 
 BACKBONE = {"N", "CA", "C", "O"}
@@ -1158,6 +1159,7 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
              rotamer_weight: float = 0.0,
              rotamer_calibration: Path | None = None,
              map_protocol: str = "native_deposited",
+             device: str = "auto",
              preflight_only: bool = False) -> dict[str, object]:
     if map_protocol not in {"native_deposited", "rebuilt_fmodel"}:
         raise ValueError(f"unknown map protocol: {map_protocol}")
@@ -1205,6 +1207,7 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
         "seam_rho": [7.42, 15.87, 46.91, 79.14, 148.52, 207.27],
         "fitting_mask_radius_A": float(fitting_mask_radius_A),
         "map_protocol": map_protocol,
+        "device": device,
         "fitting_mask_grid": (
             "native_deposited_coefficient_lattice"
             if map_protocol == "native_deposited" else "rebuilt_fmodel_full_map"
@@ -1235,7 +1238,7 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
         out / "backbone_qfit_to_aprime", inner_nfev, outer_updates,
         record["pdb_id"], record["chain"], int(record["residue_number"]),
         renderer_backend="torch", map_scaler_structure="full", mask_scope="window",
-        density_atom_scope="all", b_factor_mode="deposited_A_B", device="auto",
+        density_atom_scope="all", b_factor_mode="deposited_A_B", device=device,
         clash_weight=clash_weight,
         source_pdb=source, mtz_path=map_path,
     )
@@ -1497,6 +1500,10 @@ def main() -> int:
         help="use deposited map coefficients by default; rebuilt fmodel is diagnostic-only",
     )
     parser.add_argument(
+        "--device", choices=("auto", "cpu", "cuda"), default="auto",
+        help="Torch device for differentiable density calculations (default: auto)",
+    )
+    parser.add_argument(
         "--preflight-only", action="store_true",
         help="run the mandatory atom-on-peak gate and stop before optimization",
     )
@@ -1510,6 +1517,15 @@ def main() -> int:
     if args.rotamer_calibration is not None and not args.rotamer_calibration.is_file():
         raise FileNotFoundError(args.rotamer_calibration)
     args.output.mkdir(parents=True, exist_ok=False)
+    environment = runtime_report()
+    atomic_json(args.output / "environment.json", environment)
+    if args.clash_weight > 0.0 and not required_runtime_ok(
+        environment, clash_weight=args.clash_weight
+    ):
+        raise RuntimeError(
+            "clash-weighted optimization requires qFit/CCTBX, NumPy, SciPy, "
+            "PyTorch, Gemmi, and PHENIX_ROOT; run scripts/check_runtime.py for details"
+        )
     status_path = args.output / "status.txt"
     lock_path = args.output / "controller.lock"
     status_path.write_text("optimizing\n")
@@ -1529,7 +1545,7 @@ def main() -> int:
                                         args.normalize_clash_by_pair_count,
                                         args.rotamer_weight,
                                         args.rotamer_calibration,
-                                        args.map_protocol, args.preflight_only))
+                                        args.map_protocol, args.device, args.preflight_only))
             except Exception as exc:  # checkpoint failure and continue to next site
                 label = site_label(row); site_dir = args.output / label; site_dir.mkdir(exist_ok=True)
                 atomic_json(site_dir / "status.json", {"status": "failed", "site": label,

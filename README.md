@@ -50,8 +50,20 @@ their installation is environment-specific. Confirm the environment before
 starting a production run:
 
 ```bash
+python3 scripts/check_runtime.py --strict
 python3 scripts/run_qfit_aprime.py --help
 ```
+
+`check_runtime.py` reports whether qFit, CCTBX, NumPy, SciPy, PyTorch, and
+Gemmi import successfully, whether CUDA is visible to PyTorch, and whether
+`phenix.refine` is on `PATH`. The runner writes the same report to
+`environment.json` in each output directory.
+
+If qFit is provided from a source checkout, expose its `src` directory through
+`PYTHONPATH` before running the commands. `Gemmi` is included in the report
+because it supplies the monomer-library connectivity used by clash-weighted
+optimization. Clash-weighted runs also require `PHENIX_ROOT` to identify the
+Phenix monomer library.
 
 ## Quick start
 
@@ -168,6 +180,7 @@ the optimization and objective settings:
 --density-mode raw|zscore  density residual convention
 --fitting-mask-radius X    radius of the observed-map fitting mask in Å
 --map-protocol NAME        native_deposited or rebuilt_fmodel
+--device auto|cpu|cuda     Torch device for differentiable density calculations
 --free-occupancy-ratio     optimize the A/B ratio with total occupancy fixed
 --normalize-clash-by-pair-count
                             normalize clash residuals by monitored pair count
@@ -190,6 +203,7 @@ results/
 ├── status.txt
 └── 1ABC_A_MET112/
     ├── status.json
+    ├── environment.json
     ├── run_config.json
     ├── qfit_input.npz
     ├── qfit_input_objective.json
