@@ -19,7 +19,7 @@ from run_d1_8d_sequential_poc import (
     EPSILON, SequentialBackbonePOC, atomic_csv, atomic_json, atomic_npz,
     backbone_coordinates, rama_category, rmsd,
 )
-from run_d1_aprime_representability_gate import PhiPsiOmegaRotator, frame, rotation_vector
+from run_d1_conformopt_representability_gate import PhiPsiOmegaRotator, frame, rotation_vector
 from run_d1_reachability import (
     BACKBONE_NAMES,
     dihedrals,
@@ -29,7 +29,7 @@ from run_d1_reachability import (
 from qfit.structure.math import dihedral_angle
 from run_d1_tier_a_flips import atom_local_index
 from d1_population_calibrated_weights import D1_OMEGA_SCALE_DEG, D1_RAMA_FLOOR
-from aprime_clash import build_context_for_runner
+from conformopt_clash import build_context_for_runner
 from result_provenance import runner_provenance
 from occupancy_selection import (
     DEFAULT_CARDINALITY_CAP,
@@ -1267,7 +1267,7 @@ def main():
     parser.add_argument("--residual-scale-mode", choices=("none", "deposited_ab"), default="none",
                         help="Residual target scaling; use none for shared-target comparisons.")
     parser.add_argument("--sequential-output", type=Path,
-                        default=Path("/home/dev/qfit_unet_data/qfit_audit/d1_aprime_7utc_sequential_v3"))
+                        default=Path("/home/dev/qfit_unet_data/qfit_audit/d1_conformopt_7utc_sequential_v3"))
     args = parser.parse_args(); args.output.mkdir(parents=True, exist_ok=False)
     run_config = {
         key: str(value) if isinstance(value, Path) else value

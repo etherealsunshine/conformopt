@@ -32,7 +32,7 @@ from density_denoiser.residue_geometry import (
     canonical_centers_radians,
     canonical_width_degrees,
 )
-from run_d1_aprime_sequential import APrimeSequential, atomic_json, atomic_npz, seam_vector
+from run_d1_conformopt_sequential import APrimeSequential, atomic_json, atomic_npz, seam_vector
 from run_d1_slot_coordination import inverse_seed, joint_run, seam_rho_vector
 from result_provenance import runner_provenance, sha256_file
 from check_runtime import required_runtime_ok, runtime_report
@@ -1235,7 +1235,7 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
     if map_path is None:
         raise FileNotFoundError(f"MTZ missing: {map_candidates[0]}")
     runner = PairInitialAPrime(
-        out / "backbone_qfit_to_aprime", inner_nfev, outer_updates,
+        out / "backbone_to_conformopt", inner_nfev, outer_updates,
         record["pdb_id"], record["chain"], int(record["residue_number"]),
         renderer_backend="torch", map_scaler_structure="full", mask_scope="window",
         density_atom_scope="all", b_factor_mode="deposited_A_B", device=device,
@@ -1332,9 +1332,9 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
     p1 = np.zeros(runner.rotator.ndofs); p2 = np.zeros(runner.rotator.ndofs)
     occupancy_scheme = "mirror_ratio" if free_occupancy_ratio else "mirror"
     fixed_occupancy_weights = None if free_occupancy_ratio else occupancy
-    backbone_out = out / "aprime_backbone_1"; backbone_out.mkdir()
+    backbone_out = out / "conformopt_backbone_1"; backbone_out.mkdir()
     backbone_result = joint_run(
-        runner, p1, p2, "aprime_backbone_1", backbone_out,
+        runner, p1, p2, "conformopt_backbone_1", backbone_out,
         float(runner.ab_distance), fixed_b_offset=0.0, occupancy_scheme=occupancy_scheme,
         mirror_eta=0.1, initial_occupancy_weights=occupancy,
         fixed_occupancy_weights=fixed_occupancy_weights, per_slot_trust_radii=True,
@@ -1346,17 +1346,17 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
         occupancy = np.asarray(backbone_result["final_occupancies"], dtype=float)
     pair = np.stack((np.load(backbone_out / "final_slots.npz")["slot1_window"],
                      np.load(backbone_out / "final_slots.npz")["slot2_window"]))
-    atomic_json(out / "aprime_backbone_1_objective.json", objective(runner, pair, occupancy))
+    atomic_json(out / "conformopt_backbone_1_objective.json", objective(runner, pair, occupancy))
     # Strict backbone-only control: apply the second backbone block directly
     # to B1, with no intervening chi update.  The production sequence below
     # remains B1 -> chi1 -> B2 -> chi2; this side branch isolates how much of
     # the endpoint signal the independently converged backbone path supplies.
     backbone_1_pair = pair.copy()
     runner.set_pair_initial(backbone_1_pair)
-    backbone_only_second = out / "aprime_backbone_only_2"; backbone_only_second.mkdir()
+    backbone_only_second = out / "conformopt_backbone_only_2"; backbone_only_second.mkdir()
     backbone_only_result_2 = joint_run(
         runner, np.zeros(runner.rotator.ndofs), np.zeros(runner.rotator.ndofs),
-        "aprime_backbone_only_2", backbone_only_second,
+        "conformopt_backbone_only_2", backbone_only_second,
         float(runner.ab_distance), fixed_b_offset=0.0,
         occupancy_scheme=occupancy_scheme, mirror_eta=0.1,
         initial_occupancy_weights=occupancy,
@@ -1375,19 +1375,19 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
         np.load(backbone_only_second / "final_slots.npz")["slot2_window"],
     ))
     atomic_json(
-        out / "aprime_backbone_only_2_objective.json",
+        out / "conformopt_backbone_only_2_objective.json",
         objective(runner, backbone_only_pair, backbone_only_occupancy),
     )
     # Restore the production branch to the B1 checkpoint before chi1.
     runner.set_pair_initial(backbone_1_pair)
     pair = backbone_1_pair
-    chi_out = out / "aprime_sidechain_chi"; chi_out.mkdir()
+    chi_out = out / "conformopt_sidechain_chi"; chi_out.mkdir()
     pair, chi_result = chi_stage(runner, pair, occupancy, chi_out, chi_nfev)
-    atomic_json(out / "aprime_sidechain_chi_objective.json", objective(runner, pair, occupancy))
+    atomic_json(out / "conformopt_sidechain_chi_objective.json", objective(runner, pair, occupancy))
     runner.set_pair_initial(pair)
-    second = out / "aprime_backbone_2"; second.mkdir()
+    second = out / "conformopt_backbone_2"; second.mkdir()
     backbone_result_2 = joint_run(runner, np.zeros(runner.rotator.ndofs), np.zeros(runner.rotator.ndofs),
-              "aprime_backbone_2", second, float(runner.ab_distance),
+              "conformopt_backbone_2", second, float(runner.ab_distance),
               fixed_b_offset=0.0, occupancy_scheme=occupancy_scheme, mirror_eta=0.1,
               initial_occupancy_weights=occupancy, fixed_occupancy_weights=fixed_occupancy_weights,
               per_slot_trust_radii=True, carry_trust_radii=True,
@@ -1398,10 +1398,10 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
         occupancy = np.asarray(backbone_result_2["final_occupancies"], dtype=float)
     pair = np.stack((np.load(second / "final_slots.npz")["slot1_window"],
                      np.load(second / "final_slots.npz")["slot2_window"]))
-    atomic_json(out / "aprime_backbone_2_objective.json", objective(runner, pair, occupancy))
-    final_chi = out / "aprime_sidechain_chi_2"; final_chi.mkdir()
+    atomic_json(out / "conformopt_backbone_2_objective.json", objective(runner, pair, occupancy))
+    final_chi = out / "conformopt_sidechain_chi_2"; final_chi.mkdir()
     pair, _ = chi_stage(runner, pair, occupancy, final_chi, chi_nfev)
-    atomic_json(out / "aprime_sidechain_chi_2_objective.json", objective(runner, pair, occupancy))
+    atomic_json(out / "conformopt_sidechain_chi_2_objective.json", objective(runner, pair, occupancy))
     phenix_pdb = out / "phenix_input.pdb"; write_stage_pdb(runner, pair, occupancy, source, phenix_pdb)
     phenix_dir = out / "phenix"; phenix_dir.mkdir()
     command = ["phenix.refine", str(phenix_pdb),
@@ -1426,21 +1426,21 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
         map_path,
         {
             "qfit_input": out / "qfit_input.npz",
-            "aprime_backbone_1": backbone_out / "final_slots.npz",
-            "aprime_backbone_only_2": backbone_only_second / "final_slots.npz",
-            "aprime_sidechain_chi_1": chi_out / "final_slots.npz",
-            "aprime_backbone_2": second / "final_slots.npz",
-            "aprime_sidechain_chi_2": final_chi / "final_slots.npz",
+            "conformopt_backbone_1": backbone_out / "final_slots.npz",
+            "conformopt_backbone_only_2": backbone_only_second / "final_slots.npz",
+            "conformopt_sidechain_chi_1": chi_out / "final_slots.npz",
+            "conformopt_backbone_2": second / "final_slots.npz",
+            "conformopt_sidechain_chi_2": final_chi / "final_slots.npz",
         },
     )
     result = {"status": "complete", "site": label, "qfit_input": objective(runner, qfit_pair, qfit_occupancy),
-              "aprime_backbone_1": json.loads((out / "aprime_backbone_1_objective.json").read_text()),
-              "aprime_backbone_only_2": json.loads(
-                  (out / "aprime_backbone_only_2_objective.json").read_text()
+              "conformopt_backbone_1": json.loads((out / "conformopt_backbone_1_objective.json").read_text()),
+              "conformopt_backbone_only_2": json.loads(
+                  (out / "conformopt_backbone_only_2_objective.json").read_text()
               ),
-              "aprime_sidechain_chi_1": json.loads((out / "aprime_sidechain_chi_objective.json").read_text()),
-              "aprime_backbone_2": json.loads((out / "aprime_backbone_2_objective.json").read_text()),
-              "aprime_sidechain_chi_2": json.loads((out / "aprime_sidechain_chi_2_objective.json").read_text()),
+              "conformopt_sidechain_chi_1": json.loads((out / "conformopt_sidechain_chi_objective.json").read_text()),
+              "conformopt_backbone_2": json.loads((out / "conformopt_backbone_2_objective.json").read_text()),
+              "conformopt_sidechain_chi_2": json.loads((out / "conformopt_sidechain_chi_2_objective.json").read_text()),
               "chi_integration": chi_result, "phenix": phenix_status,
               "clash_weight": float(clash_weight),
               "rotamer_weight": float(rotamer_weight),

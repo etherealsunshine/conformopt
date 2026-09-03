@@ -30,7 +30,7 @@ from scipy.optimize._lsq import common as scipy_lsq_common
 from scipy.optimize._lsq import trf as scipy_trf
 
 import torch
-from run_d1_aprime_sequential import APrimeSequential, rmsd, seam_vector
+from run_d1_conformopt_sequential import APrimeSequential, rmsd, seam_vector
 from run_d1_8d_sequential_poc import window_backbone_indices
 from run_d1_reachability import BACKBONE_NAMES, dihedrals, wrapped_delta
 from torch_trf import least_squares as torch_least_squares

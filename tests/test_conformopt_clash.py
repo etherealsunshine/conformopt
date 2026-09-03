@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from scripts.aprime_clash import ClashResidualContext
+from scripts.conformopt_clash import ClashResidualContext
 
 
 def test_clash_residual_and_jacobian_match_finite_difference():

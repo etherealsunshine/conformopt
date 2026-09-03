@@ -51,7 +51,7 @@ starting a production run:
 
 ```bash
 python3 scripts/check_runtime.py --strict
-python3 scripts/run_qfit_aprime.py --help
+python3 scripts/run_conformopt.py --help
 ```
 
 `check_runtime.py` reports whether qFit, CCTBX, NumPy, SciPy, PyTorch, and
@@ -71,7 +71,7 @@ Prepare a panel directory containing the input files and manifest described
 below. Run one target site with:
 
 ```bash
-python3 scripts/run_qfit_aprime.py \
+python3 scripts/run_conformopt.py \
   --panel /path/to/panel \
   --output /path/to/results \
   --site 1ABC_A_MET112
@@ -80,7 +80,7 @@ python3 scripts/run_qfit_aprime.py \
 Run every row in the manifest as one batch:
 
 ```bash
-python3 scripts/run_qfit_aprime.py \
+python3 scripts/run_conformopt.py \
   --panel /path/to/panel \
   --output /path/to/results
 ```
@@ -88,7 +88,7 @@ python3 scripts/run_qfit_aprime.py \
 Run a selected batch by repeating `--site`:
 
 ```bash
-python3 scripts/run_qfit_aprime.py \
+python3 scripts/run_conformopt.py \
   --panel /path/to/panel \
   --output /path/to/results \
   --site 1ABC_A_MET112 \
@@ -190,7 +190,7 @@ the optimization and objective settings:
 Always inspect the version of the interface in the checkout being used:
 
 ```bash
-python3 scripts/run_qfit_aprime.py --help
+python3 scripts/run_conformopt.py --help
 ```
 
 ## Results
@@ -207,11 +207,11 @@ results/
     ├── run_config.json
     ├── qfit_input.npz
     ├── qfit_input_objective.json
-    ├── aprime_backbone_1/
-    ├── aprime_backbone_only_2/
-    ├── aprime_sidechain_chi/
-    ├── aprime_backbone_2/
-    ├── aprime_sidechain_chi_2/
+    ├── conformopt_backbone_1/
+    ├── conformopt_backbone_only_2/
+    ├── conformopt_sidechain_chi/
+    ├── conformopt_backbone_2/
+    ├── conformopt_sidechain_chi_2/
     ├── phenix_input.pdb
     ├── phenix/
     │   ├── phenix.log
@@ -265,5 +265,5 @@ Preserve the input files with the output directory. `run_config.json` and
 The reusable command-line entry point is:
 
 ```text
-scripts/run_qfit_aprime.py
+scripts/run_conformopt.py
 ```
