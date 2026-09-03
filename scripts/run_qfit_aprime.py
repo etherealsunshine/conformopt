@@ -1235,7 +1235,7 @@ def run_site(record: dict[str, str], panel: Path, out_root: Path,
         out / "backbone_qfit_to_aprime", inner_nfev, outer_updates,
         record["pdb_id"], record["chain"], int(record["residue_number"]),
         renderer_backend="torch", map_scaler_structure="full", mask_scope="window",
-        density_atom_scope="all", b_factor_mode="deposited_A_B", device="cuda",
+        density_atom_scope="all", b_factor_mode="deposited_A_B", device="auto",
         clash_weight=clash_weight,
         source_pdb=source, mtz_path=map_path,
     )
