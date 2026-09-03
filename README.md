@@ -1,4 +1,4 @@
-# qFit on Steroids
+# ConformOpt
 
 User-friendly A′ optimization for qFit multi-conformer protein models. Supply
 one target site or a batch of sites, let the pipeline optimize the qFit
@@ -34,8 +34,8 @@ deposited PDB + qFit PDB + MTZ + site manifest
 Clone the repository into the environment where you want to run the pipeline:
 
 ```bash
-git clone <repository-url> qfit-on-steroids
-cd qfit-on-steroids
+git clone https://github.com/etherealsunshine/conformopt.git conformopt
+cd conformopt
 ```
 
 Run the pipeline in a Python environment containing the scientific packages
